@@ -1,0 +1,23 @@
+name: frontend
+on:
+  push: { paths: ['frontend/**', 'shared/**', 'pnpm-lock.yaml'] }
+  pull_request: { paths: ['frontend/**', 'shared/**', 'pnpm-lock.yaml'] }
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @thunikart/ui --filter @thunikart/admin --filter @thunikart/storefront typecheck
+      - run: pnpm --filter @thunikart/ui --filter @thunikart/admin --filter @thunikart/storefront lint
+      - run: pnpm --filter @thunikart/ui test
+      - run: pnpm --filter @thunikart/admin build
+      - run: pnpm --filter @thunikart/storefront build
+      - run: pnpm --filter @thunikart/admin exec playwright install --with-deps chromium
+      - run: pnpm --filter @thunikart/admin e2e   # runs against the MSW mock API at 390 px and 1440 px
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with: { name: playwright-report, path: frontend/admin/playwright-report }

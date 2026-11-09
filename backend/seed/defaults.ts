@@ -29,12 +29,15 @@ export const SYSTEM_ROLE_DESCRIPTIONS: Record<string, string> = {
   Accounts: 'Accounts, GST, payments and reports.',
 };
 
+/** Terms from the client's 4x6 invoice PDF (confirmed correct), plus the not-returnable garment rule. Editable in Settings. */
 export const DEFAULT_TERMS = [
-  '1. Original thermal invoice copy required for exchanges.',
-  '2. Exchanges processed within 7 days at Krishnas Orchids Hub.',
-  '3. No returns/exchanges on washed, worn, or customized garments.',
-  '4. Web orders: shortages must be reported within 48 hours.',
-].join('\n');
+  '1. Original invoice mandatory for exchanges.',
+  '2. Items can be exchanged within 7 days.',
+  '3. Discounted items cannot be returned/refunded.',
+  '4. Defective items must be reported within 48h.',
+  '5. No returns/exchanges on washed, worn or customized garments.',
+].join('
+');
 
 export const STORES = [
   { code: 'KOH', name: 'Krishnas Orchids Hub', type: 'shop' },
