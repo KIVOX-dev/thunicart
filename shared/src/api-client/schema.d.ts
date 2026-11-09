@@ -1098,6 +1098,543 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/purchase-orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List purchase orders */
+        get: operations["getApiV1PurchaseOrders"];
+        put?: never;
+        /** Create a draft purchase order. Costs exclude GST. Above the approval limit it needs an Admin to approve. */
+        post: operations["postApiV1PurchaseOrders"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-orders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One purchase order with pending quantities */
+        get: operations["getApiV1PurchaseOrdersId"];
+        /** Edit a draft. Send the version you loaded in If-Match; a stale version is a 409. */
+        put: operations["putApiV1PurchaseOrdersId"];
+        post?: never;
+        /** Delete a draft purchase order */
+        delete: operations["deleteApiV1PurchaseOrdersId"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-orders/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve a draft (needed above the limit set in Settings) */
+        post: operations["postApiV1PurchaseOrdersIdApprove"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-orders/{id}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark the order as sent to the vendor. Needs approval first when above the limit. */
+        post: operations["postApiV1PurchaseOrdersIdSend"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-orders/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel an order nothing was received against */
+        post: operations["postApiV1PurchaseOrdersIdCancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-orders/{id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close a partly received order (the pending balance is dropped) */
+        post: operations["postApiV1PurchaseOrdersIdClose"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/grn": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List goods receipt notes */
+        get: operations["getApiV1Grn"];
+        put?: never;
+        /** Receive goods (from a PO or directly). Only accepted quantity enters stock. Updates weighted average cost. Idempotency-Key required: a retry never adds stock twice. */
+        post: operations["postApiV1Grn"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/grn/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One GRN with taxes and landed cost */
+        get: operations["getApiV1GrnId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-bills": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List purchase bills */
+        get: operations["getApiV1PurchaseBills"];
+        put?: never;
+        /** Create a purchase bill from one or more GRNs. The vendor bill number must be unique for that vendor. */
+        post: operations["postApiV1PurchaseBills"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-bills/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One purchase bill with paid and outstanding */
+        get: operations["getApiV1PurchaseBillsId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-returns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List purchase returns (with debit notes) */
+        get: operations["getApiV1PurchaseReturns"];
+        put?: never;
+        /** Return goods against a bill or a GRN. Makes a debit note and removes the stock. */
+        post: operations["postApiV1PurchaseReturns"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-returns/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One purchase return with its debit note */
+        get: operations["getApiV1PurchaseReturnsId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vendor-payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List vendor payments */
+        get: operations["getApiV1VendorPayments"];
+        put?: never;
+        /** Record a payment to a vendor (cash, bank, UPI or cheque). Part payment and advance are allowed. */
+        post: operations["postApiV1VendorPayments"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vendors/{id}/outstanding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What we owe a vendor (bills - debit notes - payments) with ageing from the due date */
+        get: operations["getApiV1VendorsIdOutstanding"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stock on hand, reserved and available per variant (all stores or one), with status and values. Reads the same balances the POS and website use. */
+        get: operations["getApiV1Stock"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stock/ledger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The stock ledger: every movement, append only. Newest first. */
+        get: operations["getApiV1StockLedger"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stock/adjustments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Adjust stock up or down with a reason (damage, loss, found). Negative adjustments cannot go below zero unless an Admin allowed it. */
+        post: operations["postApiV1StockAdjustments"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stock/reorder-alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Items at or below their reorder level, grouped by vendor, with a suggested order quantity */
+        get: operations["getApiV1StockReorderAlerts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stock/audits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stock audits */
+        get: operations["getApiV1StockAudits"];
+        put?: never;
+        /** Start an audit for a store (optionally one category or bin). System quantity is a snapshot as at the start; stock is not frozen. */
+        post: operations["postApiV1StockAudits"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stock/audits/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The audit sheet: system, counted and variance with value, and items that moved during the audit */
+        get: operations["getApiV1StockAuditsId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stock/audits/{id}/scan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Scan a barcode to add to the count */
+        post: operations["postApiV1StockAuditsIdScan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stock/audits/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve the audit: posts each variance as an AUDIT ledger entry */
+        post: operations["postApiV1StockAuditsIdApprove"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stock/transfers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stock transfers between stores */
+        get: operations["getApiV1StockTransfers"];
+        put?: never;
+        /** Request a transfer between stores (a Sales user can request one) */
+        post: operations["postApiV1StockTransfers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stock/transfers/discrepancies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Shortfalls from transfers. They stay here until someone resolves them. */
+        get: operations["getApiV1StockTransfersDiscrepancies"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stock/transfers/discrepancies/{id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resolve a shortfall: found at the destination or source (stock is put back) or written off */
+        post: operations["postApiV1StockTransfersDiscrepanciesIdResolve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stock/transfers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One transfer with quantities in transit */
+        get: operations["getApiV1StockTransfersId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stock/transfers/{id}/dispatch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Dispatch: reduces the source store and puts the quantity in the transit pool */
+        post: operations["postApiV1StockTransfersIdDispatch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stock/transfers/{id}/receive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Receive at the destination. Any shortfall (with final: true) goes to the discrepancy list. */
+        post: operations["postApiV1StockTransfersIdReceive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stock/transfers/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a transfer that was only requested */
+        post: operations["postApiV1StockTransfersIdCancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/purchase-orders/from-alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Draft a purchase order from the reorder alerts for one vendor */
+        post: operations["postApiV1PurchaseOrdersFromAlerts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/operations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Operations settings: negative stock, PO approval limit, reorder target */
+        get: operations["getApiV1SettingsOperations"];
+        /** Change operations settings (Admin) */
+        put: operations["putApiV1SettingsOperations"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -9366,6 +9903,4274 @@ export interface operations {
             };
             /** @description Not found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getApiV1PurchaseOrders: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                sort?: string;
+                q?: string;
+                from?: string;
+                to?: string;
+                store?: string;
+                category?: string;
+                brand?: string;
+                vendor?: string;
+                status?: string;
+                vendorId?: string;
+                poStatus?: "draft" | "approved" | "sent" | "partly_received" | "closed" | "cancelled";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            id: string;
+                            poNumber: string;
+                            /** @enum {string} */
+                            status: "draft" | "approved" | "sent" | "partly_received" | "closed" | "cancelled";
+                            vendorId: string;
+                            vendorName: string;
+                            vendorStateCode: string;
+                            storeId: string;
+                            storeName: string;
+                            date: string;
+                            expectedDate: string | null;
+                            lines: {
+                                taxable: number;
+                                cgst: number;
+                                sgst: number;
+                                igst: number;
+                                total: number;
+                                gross: number;
+                                discount: number;
+                                id: string;
+                                variantId: string;
+                                itemCode: string;
+                                description: string;
+                                qty: number;
+                                receivedQty: number;
+                                pendingQty: number;
+                                unitCost: number;
+                                discountPercent: number;
+                                gstRate: number | null;
+                            }[];
+                            totals: {
+                                taxable: number;
+                                cgst: number;
+                                sgst: number;
+                                igst: number;
+                                tax: number;
+                                total: number;
+                                /** @constant */
+                                currency: "INR";
+                            };
+                            /** @enum {string} */
+                            gstMode: "on" | "off";
+                            supply: ("intra" | "inter") | null;
+                            terms: string;
+                            notes: string;
+                            requiresApproval: boolean;
+                            approvalLimit: number;
+                            approvedBy: string | null;
+                            approvedAt: string | null;
+                            sentAt: string | null;
+                            version: number;
+                            createdAt: string;
+                        }[];
+                        total: number;
+                        nextPage: number | null;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    postApiV1PurchaseOrders: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Unique key (8 to 128 chars) per logical request. A retry with the same key never posts twice. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "vendorId": "665f0c2a9b1e4c0012ab34cd",
+                 *       "storeId": "665f0c2a9b1e4c0012ab34ce",
+                 *       "lines": [
+                 *         {
+                 *           "variantId": "665f0c2a9b1e4c0012ab34cf",
+                 *           "qty": 500,
+                 *           "unitCost": 15000,
+                 *           "gstRate": 5
+                 *         }
+                 *       ]
+                 *     }
+                 */
+                "application/json": {
+                    vendorId: string;
+                    storeId: string;
+                    /** Format: date-time */
+                    date?: string;
+                    expectedDate?: string | null;
+                    lines: {
+                        variantId: string;
+                        qty: number;
+                        unitCost: number;
+                        /** @default 0 */
+                        discountPercent?: number;
+                        gstRate?: number | null;
+                    }[];
+                    /** @default  */
+                    terms?: string;
+                    /** @default  */
+                    notes?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        poNumber: string;
+                        /** @enum {string} */
+                        status: "draft" | "approved" | "sent" | "partly_received" | "closed" | "cancelled";
+                        vendorId: string;
+                        vendorName: string;
+                        vendorStateCode: string;
+                        storeId: string;
+                        storeName: string;
+                        date: string;
+                        expectedDate: string | null;
+                        lines: {
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            total: number;
+                            gross: number;
+                            discount: number;
+                            id: string;
+                            variantId: string;
+                            itemCode: string;
+                            description: string;
+                            qty: number;
+                            receivedQty: number;
+                            pendingQty: number;
+                            unitCost: number;
+                            discountPercent: number;
+                            gstRate: number | null;
+                        }[];
+                        totals: {
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            tax: number;
+                            total: number;
+                            /** @constant */
+                            currency: "INR";
+                        };
+                        /** @enum {string} */
+                        gstMode: "on" | "off";
+                        supply: ("intra" | "inter") | null;
+                        terms: string;
+                        notes: string;
+                        requiresApproval: boolean;
+                        approvalLimit: number;
+                        approvedBy: string | null;
+                        approvedAt: string | null;
+                        sentAt: string | null;
+                        version: number;
+                        createdAt: string;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Business rule broken */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getApiV1PurchaseOrdersId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        poNumber: string;
+                        /** @enum {string} */
+                        status: "draft" | "approved" | "sent" | "partly_received" | "closed" | "cancelled";
+                        vendorId: string;
+                        vendorName: string;
+                        vendorStateCode: string;
+                        storeId: string;
+                        storeName: string;
+                        date: string;
+                        expectedDate: string | null;
+                        lines: {
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            total: number;
+                            gross: number;
+                            discount: number;
+                            id: string;
+                            variantId: string;
+                            itemCode: string;
+                            description: string;
+                            qty: number;
+                            receivedQty: number;
+                            pendingQty: number;
+                            unitCost: number;
+                            discountPercent: number;
+                            gstRate: number | null;
+                        }[];
+                        totals: {
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            tax: number;
+                            total: number;
+                            /** @constant */
+                            currency: "INR";
+                        };
+                        /** @enum {string} */
+                        gstMode: "on" | "off";
+                        supply: ("intra" | "inter") | null;
+                        terms: string;
+                        notes: string;
+                        requiresApproval: boolean;
+                        approvalLimit: number;
+                        approvedBy: string | null;
+                        approvedAt: string | null;
+                        sentAt: string | null;
+                        version: number;
+                        createdAt: string;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    putApiV1PurchaseOrdersId: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Version of the document you loaded. A stale version returns 409. */
+                "If-Match": number;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    vendorId?: string;
+                    storeId?: string;
+                    /** Format: date-time */
+                    date?: string;
+                    expectedDate?: string | null;
+                    lines?: {
+                        variantId: string;
+                        qty: number;
+                        unitCost: number;
+                        /** @default 0 */
+                        discountPercent?: number;
+                        gstRate?: number | null;
+                    }[];
+                    /** @default  */
+                    terms?: string;
+                    /** @default  */
+                    notes?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        poNumber: string;
+                        /** @enum {string} */
+                        status: "draft" | "approved" | "sent" | "partly_received" | "closed" | "cancelled";
+                        vendorId: string;
+                        vendorName: string;
+                        vendorStateCode: string;
+                        storeId: string;
+                        storeName: string;
+                        date: string;
+                        expectedDate: string | null;
+                        lines: {
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            total: number;
+                            gross: number;
+                            discount: number;
+                            id: string;
+                            variantId: string;
+                            itemCode: string;
+                            description: string;
+                            qty: number;
+                            receivedQty: number;
+                            pendingQty: number;
+                            unitCost: number;
+                            discountPercent: number;
+                            gstRate: number | null;
+                        }[];
+                        totals: {
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            tax: number;
+                            total: number;
+                            /** @constant */
+                            currency: "INR";
+                        };
+                        /** @enum {string} */
+                        gstMode: "on" | "off";
+                        supply: ("intra" | "inter") | null;
+                        terms: string;
+                        notes: string;
+                        requiresApproval: boolean;
+                        approvalLimit: number;
+                        approvedBy: string | null;
+                        approvedAt: string | null;
+                        sentAt: string | null;
+                        version: number;
+                        createdAt: string;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Business rule broken */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    deleteApiV1PurchaseOrdersId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        ok: true;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Business rule broken */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    postApiV1PurchaseOrdersIdApprove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        poNumber: string;
+                        /** @enum {string} */
+                        status: "draft" | "approved" | "sent" | "partly_received" | "closed" | "cancelled";
+                        vendorId: string;
+                        vendorName: string;
+                        vendorStateCode: string;
+                        storeId: string;
+                        storeName: string;
+                        date: string;
+                        expectedDate: string | null;
+                        lines: {
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            total: number;
+                            gross: number;
+                            discount: number;
+                            id: string;
+                            variantId: string;
+                            itemCode: string;
+                            description: string;
+                            qty: number;
+                            receivedQty: number;
+                            pendingQty: number;
+                            unitCost: number;
+                            discountPercent: number;
+                            gstRate: number | null;
+                        }[];
+                        totals: {
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            tax: number;
+                            total: number;
+                            /** @constant */
+                            currency: "INR";
+                        };
+                        /** @enum {string} */
+                        gstMode: "on" | "off";
+                        supply: ("intra" | "inter") | null;
+                        terms: string;
+                        notes: string;
+                        requiresApproval: boolean;
+                        approvalLimit: number;
+                        approvedBy: string | null;
+                        approvedAt: string | null;
+                        sentAt: string | null;
+                        version: number;
+                        createdAt: string;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Business rule broken */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    postApiV1PurchaseOrdersIdSend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        poNumber: string;
+                        /** @enum {string} */
+                        status: "draft" | "approved" | "sent" | "partly_received" | "closed" | "cancelled";
+                        vendorId: string;
+                        vendorName: string;
+                        vendorStateCode: string;
+                        storeId: string;
+                        storeName: string;
+                        date: string;
+                        expectedDate: string | null;
+                        lines: {
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            total: number;
+                            gross: number;
+                            discount: number;
+                            id: string;
+                            variantId: string;
+                            itemCode: string;
+                            description: string;
+                            qty: number;
+                            receivedQty: number;
+                            pendingQty: number;
+                            unitCost: number;
+                            discountPercent: number;
+                            gstRate: number | null;
+                        }[];
+                        totals: {
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            tax: number;
+                            total: number;
+                            /** @constant */
+                            currency: "INR";
+                        };
+                        /** @enum {string} */
+                        gstMode: "on" | "off";
+                        supply: ("intra" | "inter") | null;
+                        terms: string;
+                        notes: string;
+                        requiresApproval: boolean;
+                        approvalLimit: number;
+                        approvedBy: string | null;
+                        approvedAt: string | null;
+                        sentAt: string | null;
+                        version: number;
+                        createdAt: string;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Business rule broken */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    postApiV1PurchaseOrdersIdCancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        poNumber: string;
+                        /** @enum {string} */
+                        status: "draft" | "approved" | "sent" | "partly_received" | "closed" | "cancelled";
+                        vendorId: string;
+                        vendorName: string;
+                        vendorStateCode: string;
+                        storeId: string;
+                        storeName: string;
+                        date: string;
+                        expectedDate: string | null;
+                        lines: {
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            total: number;
+                            gross: number;
+                            discount: number;
+                            id: string;
+                            variantId: string;
+                            itemCode: string;
+                            description: string;
+                            qty: number;
+                            receivedQty: number;
+                            pendingQty: number;
+                            unitCost: number;
+                            discountPercent: number;
+                            gstRate: number | null;
+                        }[];
+                        totals: {
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            tax: number;
+                            total: number;
+                            /** @constant */
+                            currency: "INR";
+                        };
+                        /** @enum {string} */
+                        gstMode: "on" | "off";
+                        supply: ("intra" | "inter") | null;
+                        terms: string;
+                        notes: string;
+                        requiresApproval: boolean;
+                        approvalLimit: number;
+                        approvedBy: string | null;
+                        approvedAt: string | null;
+                        sentAt: string | null;
+                        version: number;
+                        createdAt: string;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Business rule broken */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    postApiV1PurchaseOrdersIdClose: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        poNumber: string;
+                        /** @enum {string} */
+                        status: "draft" | "approved" | "sent" | "partly_received" | "closed" | "cancelled";
+                        vendorId: string;
+                        vendorName: string;
+                        vendorStateCode: string;
+                        storeId: string;
+                        storeName: string;
+                        date: string;
+                        expectedDate: string | null;
+                        lines: {
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            total: number;
+                            gross: number;
+                            discount: number;
+                            id: string;
+                            variantId: string;
+                            itemCode: string;
+                            description: string;
+                            qty: number;
+                            receivedQty: number;
+                            pendingQty: number;
+                            unitCost: number;
+                            discountPercent: number;
+                            gstRate: number | null;
+                        }[];
+                        totals: {
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            tax: number;
+                            total: number;
+                            /** @constant */
+                            currency: "INR";
+                        };
+                        /** @enum {string} */
+                        gstMode: "on" | "off";
+                        supply: ("intra" | "inter") | null;
+                        terms: string;
+                        notes: string;
+                        requiresApproval: boolean;
+                        approvalLimit: number;
+                        approvedBy: string | null;
+                        approvedAt: string | null;
+                        sentAt: string | null;
+                        version: number;
+                        createdAt: string;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Business rule broken */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getApiV1Grn: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                sort?: string;
+                q?: string;
+                from?: string;
+                to?: string;
+                store?: string;
+                category?: string;
+                brand?: string;
+                vendor?: string;
+                status?: string;
+                vendorId?: string;
+                grnStatus?: "open" | "partly_billed" | "billed";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            id: string;
+                            grnNumber: string;
+                            /** @enum {string} */
+                            status: "open" | "partly_billed" | "billed";
+                            poId: string | null;
+                            poNumber: string | null;
+                            vendorId: string;
+                            vendorName: string;
+                            vendorStateCode: string;
+                            storeId: string;
+                            storeName: string;
+                            vendorInvoiceNo: string;
+                            vendorInvoiceDate: string;
+                            date: string;
+                            lines: {
+                                taxable: number;
+                                cgst: number;
+                                sgst: number;
+                                igst: number;
+                                total: number;
+                                gross: number;
+                                discount: number;
+                                id: string;
+                                poLineId: string | null;
+                                variantId: string;
+                                itemCode: string;
+                                description: string;
+                                orderedQty: number | null;
+                                receivedQty: number;
+                                rejectedQty: number;
+                                acceptedQty: number;
+                                unitCost: number;
+                                discountPercent: number;
+                                gstRate: number | null;
+                                landedUnitCost: number;
+                                batchRef: string | null;
+                                binLocation: string | null;
+                                billedQty: number;
+                                returnedQty: number;
+                            }[];
+                            freight: number;
+                            totals: {
+                                taxable: number;
+                                cgst: number;
+                                sgst: number;
+                                igst: number;
+                                tax: number;
+                                total: number;
+                                /** @constant */
+                                currency: "INR";
+                            };
+                            /** @enum {string} */
+                            gstMode: "on" | "off";
+                            supply: ("intra" | "inter") | null;
+                            overReceiptApproved: boolean;
+                            notes: string;
+                            createdAt: string;
+                        }[];
+                        total: number;
+                        nextPage: number | null;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    postApiV1Grn: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Unique key (8 to 128 chars) per logical request. A retry with the same key never posts twice. */
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "poId": "665f0c2a9b1e4c0012ab34d0",
+                 *       "vendorInvoiceNo": "KH/2026/118",
+                 *       "vendorInvoiceDate": "2026-11-06T00:00:00.000Z",
+                 *       "lines": [
+                 *         {
+                 *           "variantId": "665f0c2a9b1e4c0012ab34cf",
+                 *           "receivedQty": 495
+                 *         }
+                 *       ]
+                 *     }
+                 */
+                "application/json": {
+                    poId?: string;
+                    vendorId?: string;
+                    storeId?: string;
+                    vendorInvoiceNo: string;
+                    /** Format: date-time */
+                    vendorInvoiceDate: string;
+                    /** @default 0 */
+                    freight?: number;
+                    /** @default false */
+                    approveOverReceipt?: boolean;
+                    lines: {
+                        poLineId?: string;
+                        variantId: string;
+                        receivedQty: number;
+                        /** @default 0 */
+                        rejectedQty?: number;
+                        unitCost?: number;
+                        discountPercent?: number;
+                        gstRate?: number | null;
+                        batchRef?: string;
+                        binLocation?: string;
+                    }[];
+                    /** @default  */
+                    notes?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        grnNumber: string;
+                        /** @enum {string} */
+                        status: "open" | "partly_billed" | "billed";
+                        poId: string | null;
+                        poNumber: string | null;
+                        vendorId: string;
+                        vendorName: string;
+                        vendorStateCode: string;
+                        storeId: string;
+                        storeName: string;
+                        vendorInvoiceNo: string;
+                        vendorInvoiceDate: string;
+                        date: string;
+                        lines: {
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            total: number;
+                            gross: number;
+                            discount: number;
+                            id: string;
+                            poLineId: string | null;
+                            variantId: string;
+                            itemCode: string;
+                            description: string;
+                            orderedQty: number | null;
+                            receivedQty: number;
+                            rejectedQty: number;
+                            acceptedQty: number;
+                            unitCost: number;
+                            discountPercent: number;
+                            gstRate: number | null;
+                            landedUnitCost: number;
+                            batchRef: string | null;
+                            binLocation: string | null;
+                            billedQty: number;
+                            returnedQty: number;
+                        }[];
+                        freight: number;
+                        totals: {
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            tax: number;
+                            total: number;
+                            /** @constant */
+                            currency: "INR";
+                        };
+                        /** @enum {string} */
+                        gstMode: "on" | "off";
+                        supply: ("intra" | "inter") | null;
+                        overReceiptApproved: boolean;
+                        notes: string;
+                        createdAt: string;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Business rule broken */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getApiV1GrnId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        grnNumber: string;
+                        /** @enum {string} */
+                        status: "open" | "partly_billed" | "billed";
+                        poId: string | null;
+                        poNumber: string | null;
+                        vendorId: string;
+                        vendorName: string;
+                        vendorStateCode: string;
+                        storeId: string;
+                        storeName: string;
+                        vendorInvoiceNo: string;
+                        vendorInvoiceDate: string;
+                        date: string;
+                        lines: {
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            total: number;
+                            gross: number;
+                            discount: number;
+                            id: string;
+                            poLineId: string | null;
+                            variantId: string;
+                            itemCode: string;
+                            description: string;
+                            orderedQty: number | null;
+                            receivedQty: number;
+                            rejectedQty: number;
+                            acceptedQty: number;
+                            unitCost: number;
+                            discountPercent: number;
+                            gstRate: number | null;
+                            landedUnitCost: number;
+                            batchRef: string | null;
+                            binLocation: string | null;
+                            billedQty: number;
+                            returnedQty: number;
+                        }[];
+                        freight: number;
+                        totals: {
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            tax: number;
+                            total: number;
+                            /** @constant */
+                            currency: "INR";
+                        };
+                        /** @enum {string} */
+                        gstMode: "on" | "off";
+                        supply: ("intra" | "inter") | null;
+                        overReceiptApproved: boolean;
+                        notes: string;
+                        createdAt: string;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getApiV1PurchaseBills: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                sort?: string;
+                q?: string;
+                from?: string;
+                to?: string;
+                store?: string;
+                category?: string;
+                brand?: string;
+                vendor?: string;
+                status?: string;
+                vendorId?: string;
+                billStatus?: "open" | "paid";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            id: string;
+                            billNumber: string;
+                            vendorBillNo: string;
+                            vendorId: string;
+                            vendorName: string;
+                            billDate: string;
+                            dueDate: string;
+                            paymentTerms: string;
+                            grnIds: string[];
+                            grnNumbers: string[];
+                            lines: {
+                                variantId: string;
+                                itemCode: string;
+                                description: string;
+                                acceptedQty: number;
+                                unitCost: number;
+                                discountPercent: number;
+                                gstRate: number | null;
+                                taxable: number;
+                                cgst: number;
+                                sgst: number;
+                                igst: number;
+                                total: number;
+                            }[];
+                            totals: {
+                                taxable: number;
+                                cgst: number;
+                                sgst: number;
+                                igst: number;
+                                tax: number;
+                                total: number;
+                                /** @constant */
+                                currency: "INR";
+                            };
+                            freight: number;
+                            otherCharges: number;
+                            roundOff: number;
+                            grandTotal: number;
+                            /** @enum {string} */
+                            gstMode: "on" | "off";
+                            supply: ("intra" | "inter") | null;
+                            inputTaxCredit: number;
+                            paid: number;
+                            debitNotes: number;
+                            outstanding: number;
+                            notes: string;
+                            createdAt: string;
+                        }[];
+                        total: number;
+                        nextPage: number | null;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    postApiV1PurchaseBills: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Unique key (8 to 128 chars) per logical request. A retry with the same key never posts twice. */
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    vendorId: string;
+                    vendorBillNo: string;
+                    /** Format: date-time */
+                    billDate: string;
+                    grnIds: string[];
+                    /** @default 0 */
+                    freight?: number;
+                    /** @default 0 */
+                    otherCharges?: number;
+                    /** @default 0 */
+                    roundOff?: number;
+                    /** @default  */
+                    notes?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        billNumber: string;
+                        vendorBillNo: string;
+                        vendorId: string;
+                        vendorName: string;
+                        billDate: string;
+                        dueDate: string;
+                        paymentTerms: string;
+                        grnIds: string[];
+                        grnNumbers: string[];
+                        lines: {
+                            variantId: string;
+                            itemCode: string;
+                            description: string;
+                            acceptedQty: number;
+                            unitCost: number;
+                            discountPercent: number;
+                            gstRate: number | null;
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            total: number;
+                        }[];
+                        totals: {
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            tax: number;
+                            total: number;
+                            /** @constant */
+                            currency: "INR";
+                        };
+                        freight: number;
+                        otherCharges: number;
+                        roundOff: number;
+                        grandTotal: number;
+                        /** @enum {string} */
+                        gstMode: "on" | "off";
+                        supply: ("intra" | "inter") | null;
+                        inputTaxCredit: number;
+                        paid: number;
+                        debitNotes: number;
+                        outstanding: number;
+                        notes: string;
+                        createdAt: string;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Business rule broken */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getApiV1PurchaseBillsId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        billNumber: string;
+                        vendorBillNo: string;
+                        vendorId: string;
+                        vendorName: string;
+                        billDate: string;
+                        dueDate: string;
+                        paymentTerms: string;
+                        grnIds: string[];
+                        grnNumbers: string[];
+                        lines: {
+                            variantId: string;
+                            itemCode: string;
+                            description: string;
+                            acceptedQty: number;
+                            unitCost: number;
+                            discountPercent: number;
+                            gstRate: number | null;
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            total: number;
+                        }[];
+                        totals: {
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            tax: number;
+                            total: number;
+                            /** @constant */
+                            currency: "INR";
+                        };
+                        freight: number;
+                        otherCharges: number;
+                        roundOff: number;
+                        grandTotal: number;
+                        /** @enum {string} */
+                        gstMode: "on" | "off";
+                        supply: ("intra" | "inter") | null;
+                        inputTaxCredit: number;
+                        paid: number;
+                        debitNotes: number;
+                        outstanding: number;
+                        notes: string;
+                        createdAt: string;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getApiV1PurchaseReturns: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                sort?: string;
+                q?: string;
+                from?: string;
+                to?: string;
+                store?: string;
+                category?: string;
+                brand?: string;
+                vendor?: string;
+                status?: string;
+                vendorId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            id: string;
+                            returnNumber: string;
+                            debitNoteNumber: string;
+                            vendorId: string;
+                            vendorName: string;
+                            billId: string | null;
+                            billNumber: string | null;
+                            grnId: string | null;
+                            storeId: string;
+                            reason: string;
+                            lines: {
+                                taxable: number;
+                                cgst: number;
+                                sgst: number;
+                                igst: number;
+                                total: number;
+                                gross: number;
+                                discount: number;
+                                variantId: string;
+                                itemCode: string;
+                                qty: number;
+                                unitCost: number;
+                                gstRate: number | null;
+                            }[];
+                            totals: {
+                                taxable: number;
+                                cgst: number;
+                                sgst: number;
+                                igst: number;
+                                tax: number;
+                                total: number;
+                                /** @constant */
+                                currency: "INR";
+                            };
+                            /** @enum {string} */
+                            gstMode: "on" | "off";
+                            createdAt: string;
+                        }[];
+                        total: number;
+                        nextPage: number | null;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    postApiV1PurchaseReturns: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Unique key (8 to 128 chars) per logical request. A retry with the same key never posts twice. */
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    billId?: string;
+                    grnId?: string;
+                    storeId?: string;
+                    reason: string;
+                    lines: {
+                        variantId: string;
+                        qty: number;
+                    }[];
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        returnNumber: string;
+                        debitNoteNumber: string;
+                        vendorId: string;
+                        vendorName: string;
+                        billId: string | null;
+                        billNumber: string | null;
+                        grnId: string | null;
+                        storeId: string;
+                        reason: string;
+                        lines: {
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            total: number;
+                            gross: number;
+                            discount: number;
+                            variantId: string;
+                            itemCode: string;
+                            qty: number;
+                            unitCost: number;
+                            gstRate: number | null;
+                        }[];
+                        totals: {
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            tax: number;
+                            total: number;
+                            /** @constant */
+                            currency: "INR";
+                        };
+                        /** @enum {string} */
+                        gstMode: "on" | "off";
+                        createdAt: string;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Business rule broken */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getApiV1PurchaseReturnsId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        returnNumber: string;
+                        debitNoteNumber: string;
+                        vendorId: string;
+                        vendorName: string;
+                        billId: string | null;
+                        billNumber: string | null;
+                        grnId: string | null;
+                        storeId: string;
+                        reason: string;
+                        lines: {
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            total: number;
+                            gross: number;
+                            discount: number;
+                            variantId: string;
+                            itemCode: string;
+                            qty: number;
+                            unitCost: number;
+                            gstRate: number | null;
+                        }[];
+                        totals: {
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            tax: number;
+                            total: number;
+                            /** @constant */
+                            currency: "INR";
+                        };
+                        /** @enum {string} */
+                        gstMode: "on" | "off";
+                        createdAt: string;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getApiV1VendorPayments: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                sort?: string;
+                q?: string;
+                from?: string;
+                to?: string;
+                store?: string;
+                category?: string;
+                brand?: string;
+                vendor?: string;
+                status?: string;
+                vendorId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            id: string;
+                            paymentNumber: string;
+                            vendorId: string;
+                            vendorName: string;
+                            date: string;
+                            /** @enum {string} */
+                            mode: "cash" | "bank" | "upi" | "cheque";
+                            reference: string;
+                            amount: number;
+                            allocated: number;
+                            advance: number;
+                            allocations: {
+                                billId: string;
+                                billNumber: string;
+                                amount: number;
+                            }[];
+                            /** @constant */
+                            currency: "INR";
+                            createdAt: string;
+                        }[];
+                        total: number;
+                        nextPage: number | null;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    postApiV1VendorPayments: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Unique key (8 to 128 chars) per logical request. A retry with the same key never posts twice. */
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    vendorId: string;
+                    /** Format: date-time */
+                    date: string;
+                    /** @enum {string} */
+                    mode: "cash" | "bank" | "upi" | "cheque";
+                    /** @default  */
+                    reference?: string;
+                    amount: number;
+                    /** @default [] */
+                    allocations?: {
+                        billId: string;
+                        amount: number;
+                    }[];
+                    /** @default  */
+                    notes?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        paymentNumber: string;
+                        vendorId: string;
+                        vendorName: string;
+                        date: string;
+                        /** @enum {string} */
+                        mode: "cash" | "bank" | "upi" | "cheque";
+                        reference: string;
+                        amount: number;
+                        allocated: number;
+                        advance: number;
+                        allocations: {
+                            billId: string;
+                            billNumber: string;
+                            amount: number;
+                        }[];
+                        /** @constant */
+                        currency: "INR";
+                        createdAt: string;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Business rule broken */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getApiV1VendorsIdOutstanding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        vendorId: string;
+                        vendorName: string;
+                        paymentTerms: string;
+                        billed: number;
+                        debitNotes: number;
+                        paid: number;
+                        outstanding: number;
+                        advance: number;
+                        netPayable: number;
+                        /** @constant */
+                        currency: "INR";
+                        ageing: {
+                            current: number;
+                            d0_30: number;
+                            d31_60: number;
+                            d61_90: number;
+                            over90: number;
+                        };
+                        bills: {
+                            billId: string;
+                            billNumber: string;
+                            vendorBillNo: string;
+                            billDate: string;
+                            dueDate: string;
+                            total: number;
+                            debitNotes: number;
+                            paid: number;
+                            outstanding: number;
+                            daysOverdue: number;
+                        }[];
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getApiV1Stock: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                sort?: string;
+                q?: string;
+                from?: string;
+                to?: string;
+                store?: string;
+                category?: string;
+                brand?: string;
+                vendor?: string;
+                status?: string;
+                storeId?: string;
+                stockStatus?: "In Stock" | "Low Stock" | "Out of Stock";
+                size?: string;
+                includeZero?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            variantId: string;
+                            itemId: string;
+                            itemCode: string;
+                            name: string;
+                            size: string | null;
+                            color: string | null;
+                            storeId: string | null;
+                            storeName: string | null;
+                            onHand: number;
+                            reserved: number;
+                            available: number;
+                            reorderLevel: number;
+                            /** @enum {string} */
+                            stockStatus: "In Stock" | "Low Stock" | "Out of Stock";
+                            baseCost: number;
+                            costValue: number;
+                            mrp: number;
+                            mrpValue: number;
+                        }[];
+                        total: number;
+                        nextPage: number | null;
+                        totals: {
+                            onHand: number;
+                            costValue: number;
+                            mrpValue: number;
+                            /** @constant */
+                            currency: "INR";
+                        };
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getApiV1StockLedger: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                sort?: string;
+                q?: string;
+                from?: string;
+                to?: string;
+                store?: string;
+                category?: string;
+                brand?: string;
+                vendor?: string;
+                status?: string;
+                variantId?: string;
+                storeId?: string;
+                type?: "OPENING" | "GRN" | "PURCHASE_RETURN" | "SALE" | "SALE_RETURN" | "ONLINE_ORDER_RESERVE" | "ONLINE_ORDER_RELEASE" | "TRANSFER_OUT" | "TRANSFER_IN" | "ADJUSTMENT" | "AUDIT";
+                docNumber?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            id: string;
+                            at: string;
+                            /** @enum {string} */
+                            type: "OPENING" | "GRN" | "PURCHASE_RETURN" | "SALE" | "SALE_RETURN" | "ONLINE_ORDER_RESERVE" | "ONLINE_ORDER_RELEASE" | "TRANSFER_OUT" | "TRANSFER_IN" | "ADJUSTMENT" | "AUDIT";
+                            variantId: string;
+                            itemCode: string | null;
+                            storeId: string;
+                            storeName: string | null;
+                            qty: number;
+                            unitCost: number;
+                            docType: string | null;
+                            docNumber: string | null;
+                            userId: string | null;
+                            note: string | null;
+                        }[];
+                        total: number;
+                        nextPage: number | null;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    postApiV1StockAdjustments: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Unique key (8 to 128 chars) per logical request. A retry with the same key never posts twice. */
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "storeId": "665f0c2a9b1e4c0012ab34ce",
+                 *       "reason": "Damaged in storage",
+                 *       "lines": [
+                 *         {
+                 *           "variantId": "665f0c2a9b1e4c0012ab34cf",
+                 *           "qty": -2
+                 *         }
+                 *       ]
+                 *     }
+                 */
+                "application/json": {
+                    storeId: string;
+                    reason: string;
+                    lines: {
+                        variantId: string;
+                        qty: number;
+                        note?: string;
+                    }[];
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        docNumber: string;
+                        storeId: string;
+                        reason: string;
+                        lines: {
+                            variantId: string;
+                            itemCode: string;
+                            qty: number;
+                            unitCost: number;
+                            onHandAfter: number;
+                        }[];
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Business rule broken */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getApiV1StockReorderAlerts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        generatedAt: string;
+                        groups: {
+                            vendorId: string | null;
+                            vendorName: string;
+                            items: {
+                                variantId: string;
+                                itemCode: string;
+                                name: string;
+                                size: string | null;
+                                available: number;
+                                reorderLevel: number;
+                                suggestedQty: number;
+                                lastUnitCost: number;
+                            }[];
+                        }[];
+                        totalItems: number;
+                    };
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getApiV1StockAudits: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                sort?: string;
+                q?: string;
+                from?: string;
+                to?: string;
+                store?: string;
+                category?: string;
+                brand?: string;
+                vendor?: string;
+                status?: string;
+                storeId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            id: string;
+                            auditNumber: string;
+                            name: string;
+                            storeId: string;
+                            storeName: string;
+                            categoryId: string | null;
+                            binLocation: string | null;
+                            /** @enum {string} */
+                            status: "in_progress" | "approved";
+                            startedAt: string;
+                            approvedAt: string | null;
+                            summary: {
+                                lines: number;
+                                counted: number;
+                                uncounted: number;
+                                withVariance: number;
+                                movedDuringAudit: number;
+                                varianceValue: number;
+                                varianceQty: number;
+                                /** @constant */
+                                currency: "INR";
+                            };
+                        }[];
+                        total: number;
+                        nextPage: number | null;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    postApiV1StockAudits: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    storeId: string;
+                    categoryId?: string;
+                    binLocation?: string;
+                    name?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        auditNumber: string;
+                        name: string;
+                        storeId: string;
+                        storeName: string;
+                        categoryId: string | null;
+                        binLocation: string | null;
+                        /** @enum {string} */
+                        status: "in_progress" | "approved";
+                        startedAt: string;
+                        approvedAt: string | null;
+                        summary: {
+                            lines: number;
+                            counted: number;
+                            uncounted: number;
+                            withVariance: number;
+                            movedDuringAudit: number;
+                            varianceValue: number;
+                            varianceQty: number;
+                            /** @constant */
+                            currency: "INR";
+                        };
+                        lines: {
+                            variantId: string;
+                            itemCode: string;
+                            name: string;
+                            size: string | null;
+                            binLocation: string | null;
+                            systemQty: number;
+                            countedQty: number | null;
+                            variance: number;
+                            varianceValue: number;
+                            movedDuringAudit: boolean;
+                            movementSinceStart: number;
+                            unitCost: number;
+                        }[];
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getApiV1StockAuditsId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        auditNumber: string;
+                        name: string;
+                        storeId: string;
+                        storeName: string;
+                        categoryId: string | null;
+                        binLocation: string | null;
+                        /** @enum {string} */
+                        status: "in_progress" | "approved";
+                        startedAt: string;
+                        approvedAt: string | null;
+                        summary: {
+                            lines: number;
+                            counted: number;
+                            uncounted: number;
+                            withVariance: number;
+                            movedDuringAudit: number;
+                            varianceValue: number;
+                            varianceQty: number;
+                            /** @constant */
+                            currency: "INR";
+                        };
+                        lines: {
+                            variantId: string;
+                            itemCode: string;
+                            name: string;
+                            size: string | null;
+                            binLocation: string | null;
+                            systemQty: number;
+                            countedQty: number | null;
+                            variance: number;
+                            varianceValue: number;
+                            movedDuringAudit: boolean;
+                            movementSinceStart: number;
+                            unitCost: number;
+                        }[];
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    postApiV1StockAuditsIdScan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    barcode: string;
+                    /** @default 1 */
+                    qty?: number;
+                    /** @default false */
+                    set?: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        itemCode: string;
+                        name: string;
+                        size: string | null;
+                        countedQty: number;
+                        systemQty: number;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Business rule broken */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    postApiV1StockAuditsIdApprove: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Unique key (8 to 128 chars) per logical request. A retry with the same key never posts twice. */
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * @default skip
+                     * @enum {string}
+                     */
+                    uncounted?: "skip" | "zero";
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        auditNumber: string;
+                        name: string;
+                        storeId: string;
+                        storeName: string;
+                        categoryId: string | null;
+                        binLocation: string | null;
+                        /** @enum {string} */
+                        status: "in_progress" | "approved";
+                        startedAt: string;
+                        approvedAt: string | null;
+                        summary: {
+                            lines: number;
+                            counted: number;
+                            uncounted: number;
+                            withVariance: number;
+                            movedDuringAudit: number;
+                            varianceValue: number;
+                            varianceQty: number;
+                            /** @constant */
+                            currency: "INR";
+                        };
+                        lines: {
+                            variantId: string;
+                            itemCode: string;
+                            name: string;
+                            size: string | null;
+                            binLocation: string | null;
+                            systemQty: number;
+                            countedQty: number | null;
+                            variance: number;
+                            varianceValue: number;
+                            movedDuringAudit: boolean;
+                            movementSinceStart: number;
+                            unitCost: number;
+                        }[];
+                        postedLines: number;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Business rule broken */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getApiV1StockTransfers: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                sort?: string;
+                q?: string;
+                from?: string;
+                to?: string;
+                store?: string;
+                category?: string;
+                brand?: string;
+                vendor?: string;
+                status?: string;
+                transferStatus?: "requested" | "dispatched" | "partly_received" | "received" | "cancelled";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            id: string;
+                            transferNumber: string;
+                            /** @enum {string} */
+                            status: "requested" | "dispatched" | "partly_received" | "received" | "cancelled";
+                            fromStoreId: string;
+                            fromStoreName: string;
+                            toStoreId: string;
+                            toStoreName: string;
+                            lines: {
+                                variantId: string;
+                                itemCode: string;
+                                qty: number;
+                                dispatchedQty: number;
+                                receivedQty: number;
+                                shortQty: number;
+                                inTransit: number;
+                            }[];
+                            inTransitTotal: number;
+                            notes: string;
+                            requestedAt: string;
+                            dispatchedAt: string | null;
+                            receivedAt: string | null;
+                        }[];
+                        total: number;
+                        nextPage: number | null;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    postApiV1StockTransfers: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Unique key (8 to 128 chars) per logical request. A retry with the same key never posts twice. */
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    fromStoreId: string;
+                    toStoreId: string;
+                    lines: {
+                        variantId: string;
+                        qty: number;
+                    }[];
+                    /** @default  */
+                    notes?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        transferNumber: string;
+                        /** @enum {string} */
+                        status: "requested" | "dispatched" | "partly_received" | "received" | "cancelled";
+                        fromStoreId: string;
+                        fromStoreName: string;
+                        toStoreId: string;
+                        toStoreName: string;
+                        lines: {
+                            variantId: string;
+                            itemCode: string;
+                            qty: number;
+                            dispatchedQty: number;
+                            receivedQty: number;
+                            shortQty: number;
+                            inTransit: number;
+                        }[];
+                        inTransitTotal: number;
+                        notes: string;
+                        requestedAt: string;
+                        dispatchedAt: string | null;
+                        receivedAt: string | null;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Business rule broken */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getApiV1StockTransfersDiscrepancies: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                sort?: string;
+                q?: string;
+                from?: string;
+                to?: string;
+                store?: string;
+                category?: string;
+                brand?: string;
+                vendor?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            id: string;
+                            transferId: string;
+                            transferNumber: string;
+                            variantId: string;
+                            itemCode: string;
+                            qty: number;
+                            fromStoreName: string;
+                            toStoreName: string;
+                            /** @enum {string} */
+                            status: "open" | "resolved";
+                            at: string;
+                            resolution: string | null;
+                        }[];
+                        total: number;
+                        nextPage: number | null;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    postApiV1StockTransfersDiscrepanciesIdResolve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    action: "found_at_destination" | "return_to_source" | "write_off";
+                    /** @default  */
+                    note?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        transferId: string;
+                        transferNumber: string;
+                        variantId: string;
+                        itemCode: string;
+                        qty: number;
+                        fromStoreName: string;
+                        toStoreName: string;
+                        /** @enum {string} */
+                        status: "open" | "resolved";
+                        at: string;
+                        resolution: string | null;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Business rule broken */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getApiV1StockTransfersId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        transferNumber: string;
+                        /** @enum {string} */
+                        status: "requested" | "dispatched" | "partly_received" | "received" | "cancelled";
+                        fromStoreId: string;
+                        fromStoreName: string;
+                        toStoreId: string;
+                        toStoreName: string;
+                        lines: {
+                            variantId: string;
+                            itemCode: string;
+                            qty: number;
+                            dispatchedQty: number;
+                            receivedQty: number;
+                            shortQty: number;
+                            inTransit: number;
+                        }[];
+                        inTransitTotal: number;
+                        notes: string;
+                        requestedAt: string;
+                        dispatchedAt: string | null;
+                        receivedAt: string | null;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    postApiV1StockTransfersIdDispatch: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Unique key (8 to 128 chars) per logical request. A retry with the same key never posts twice. */
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        transferNumber: string;
+                        /** @enum {string} */
+                        status: "requested" | "dispatched" | "partly_received" | "received" | "cancelled";
+                        fromStoreId: string;
+                        fromStoreName: string;
+                        toStoreId: string;
+                        toStoreName: string;
+                        lines: {
+                            variantId: string;
+                            itemCode: string;
+                            qty: number;
+                            dispatchedQty: number;
+                            receivedQty: number;
+                            shortQty: number;
+                            inTransit: number;
+                        }[];
+                        inTransitTotal: number;
+                        notes: string;
+                        requestedAt: string;
+                        dispatchedAt: string | null;
+                        receivedAt: string | null;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Business rule broken */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    postApiV1StockTransfersIdReceive: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Unique key (8 to 128 chars) per logical request. A retry with the same key never posts twice. */
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    lines: {
+                        variantId: string;
+                        receivedQty: number;
+                    }[];
+                    /** @default false */
+                    final?: boolean;
+                    /** @default  */
+                    notes?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        transferNumber: string;
+                        /** @enum {string} */
+                        status: "requested" | "dispatched" | "partly_received" | "received" | "cancelled";
+                        fromStoreId: string;
+                        fromStoreName: string;
+                        toStoreId: string;
+                        toStoreName: string;
+                        lines: {
+                            variantId: string;
+                            itemCode: string;
+                            qty: number;
+                            dispatchedQty: number;
+                            receivedQty: number;
+                            shortQty: number;
+                            inTransit: number;
+                        }[];
+                        inTransitTotal: number;
+                        notes: string;
+                        requestedAt: string;
+                        dispatchedAt: string | null;
+                        receivedAt: string | null;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Business rule broken */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    postApiV1StockTransfersIdCancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        transferNumber: string;
+                        /** @enum {string} */
+                        status: "requested" | "dispatched" | "partly_received" | "received" | "cancelled";
+                        fromStoreId: string;
+                        fromStoreName: string;
+                        toStoreId: string;
+                        toStoreName: string;
+                        lines: {
+                            variantId: string;
+                            itemCode: string;
+                            qty: number;
+                            dispatchedQty: number;
+                            receivedQty: number;
+                            shortQty: number;
+                            inTransit: number;
+                        }[];
+                        inTransitTotal: number;
+                        notes: string;
+                        requestedAt: string;
+                        dispatchedAt: string | null;
+                        receivedAt: string | null;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Business rule broken */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    postApiV1PurchaseOrdersFromAlerts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    vendorId: string;
+                    storeId: string;
+                    variantIds?: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        poNumber: string;
+                        /** @enum {string} */
+                        status: "draft" | "approved" | "sent" | "partly_received" | "closed" | "cancelled";
+                        vendorId: string;
+                        vendorName: string;
+                        vendorStateCode: string;
+                        storeId: string;
+                        storeName: string;
+                        date: string;
+                        expectedDate: string | null;
+                        lines: {
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            total: number;
+                            gross: number;
+                            discount: number;
+                            id: string;
+                            variantId: string;
+                            itemCode: string;
+                            description: string;
+                            qty: number;
+                            receivedQty: number;
+                            pendingQty: number;
+                            unitCost: number;
+                            discountPercent: number;
+                            gstRate: number | null;
+                        }[];
+                        totals: {
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            tax: number;
+                            total: number;
+                            /** @constant */
+                            currency: "INR";
+                        };
+                        /** @enum {string} */
+                        gstMode: "on" | "off";
+                        supply: ("intra" | "inter") | null;
+                        terms: string;
+                        notes: string;
+                        requiresApproval: boolean;
+                        approvalLimit: number;
+                        approvedBy: string | null;
+                        approvedAt: string | null;
+                        sentAt: string | null;
+                        version: number;
+                        createdAt: string;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Business rule broken */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getApiV1SettingsOperations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        allowNegativeStock: boolean;
+                        poApprovalLimit: number;
+                        reorderTargetMultiplier: number;
+                        version: number;
+                        updatedAt: string;
+                    };
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    putApiV1SettingsOperations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    allowNegativeStock: boolean;
+                    poApprovalLimit: number;
+                    reorderTargetMultiplier: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        allowNegativeStock: boolean;
+                        poApprovalLimit: number;
+                        reorderTargetMultiplier: number;
+                        version: number;
+                        updatedAt: string;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

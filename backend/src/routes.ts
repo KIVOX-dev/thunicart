@@ -10,6 +10,8 @@ import { itemRoutes } from './modules/items/items.routes';
 import { partyRoutes } from './modules/parties/parties.routes';
 import { importRoutes } from './modules/imports/imports.routes';
 import { uploadRoutes } from './modules/uploads/uploads.routes';
+import { purchaseRoutes } from './modules/purchase/purchase.routes';
+import { stockRoutes } from './modules/stock/stock.routes';
 
 /** Every route in the API. Later phases append their module routes here. */
 export const allRoutes = [
@@ -25,4 +27,6 @@ export const allRoutes = [
   ...partyRoutes,
   ...importRoutes,
   ...uploadRoutes,
+  ...purchaseRoutes,
+  ...stockRoutes,
 ];

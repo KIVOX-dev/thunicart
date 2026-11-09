@@ -25,6 +25,7 @@ function parametersOf(def: RouteDef<any, any, any, any>) {
   };
   add(def.params, 'path');
   add(def.query, 'query');
+  if (def.ifMatch) out.push({ name: 'If-Match', in: 'header', required: true, description: 'Version of the document you loaded. A stale version returns 409.', schema: { type: 'integer' } });
   if (def.idempotency) {
     out.push({
       name: 'Idempotency-Key', in: 'header', required: def.idempotency === 'required',

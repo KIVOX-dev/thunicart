@@ -56,6 +56,17 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
     }
     return payload;
   });
+  // Action routes such as /approve or /send have no body. Clients that still send Content-Type: application/json get {} instead of an error.
+  app.removeContentTypeParser('application/json');
+  app.addContentTypeParser('application/json', { parseAs: 'string', bodyLimit: 1024 * 1024 }, (_req, body, done) => {
+    const text = String(body).trim();
+    if (!text) return done(null, {});
+    try { done(null, JSON.parse(text)); } catch {
+      const err: any = new Error('Request body is not valid JSON');
+      err.statusCode = 400; err.code = 'FST_ERR_CTP_INVALID_JSON_BODY';
+      done(err, undefined);
+    }
+  });
   // Raw file bodies, used only by the mock storage upload route (the real browser upload goes straight to B2).
   app.addContentTypeParser('*', { parseAs: 'buffer', bodyLimit: 12 * 1024 * 1024 }, (_req, body, done) => done(null, body));
   app.setErrorHandler(errorHandler);

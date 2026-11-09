@@ -109,6 +109,7 @@ export const StockLedger = defineModel('StockLedger', 'stock_ledger', {
   unitCost: { ...paise },
   docType: String,
   docNumber: String,
+  docId: String,
   userId: { ...oid('User') },
   at: { type: Date, default: Date.now },
   note: String,

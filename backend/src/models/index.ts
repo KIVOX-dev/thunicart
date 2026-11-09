@@ -4,4 +4,6 @@ export { NumberSeries, ActivityLog, IdempotencyKey, RateLimit, Lock } from './sy
 export { Store, Category, Brand, Hsn, GstRate, Item, Variant, StockLedger, StockBalance } from './masters';
 export { Vendor, Customer, LoyaltyLedger, WalletLedger } from './parties';
 export { ImportBatch, ImportEffect, ReviewItem, ImportMapping, LabelTemplate } from './imports';
+export { PurchaseOrder, Grn, PurchaseBill, PurchaseReturn, VendorPayment } from './purchase';
+export { AppSettings, StockAudit, StockTransfer, TransferDiscrepancy } from './stockops';
 export { syncAllIndexes } from './indexes';

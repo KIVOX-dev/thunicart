@@ -53,6 +53,11 @@ export const DEFAULT_SERIES = [
   { key: 'DN', prefix: 'DN', padding: 6, perFinancialYear: true },
   { key: 'CUST', prefix: 'CUST', padding: 6, perFinancialYear: false },
   { key: 'VND', prefix: 'VND', padding: 6, perFinancialYear: false },
+  { key: 'PB', prefix: 'PB', padding: 6, perFinancialYear: true },
+  { key: 'VP', prefix: 'VP', padding: 6, perFinancialYear: true },
+  { key: 'ADJ', prefix: 'ADJ', padding: 6, perFinancialYear: true },
+  { key: 'AUD', prefix: 'AUD', padding: 6, perFinancialYear: true },
+  { key: 'TRF', prefix: 'TRF', padding: 6, perFinancialYear: true },
   // Item codes look like KO1000369: prefix KO, no separator, never restarts.
   { key: 'ITEM', prefix: 'KO', padding: 7, perFinancialYear: false, separator: '', startAt: 1000000 },
   // In-store EAN-13 numbers: prefix 20 to 29 + 10 digit sequence + check digit. The counter only moves forward.

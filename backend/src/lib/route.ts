@@ -5,7 +5,7 @@ import { authenticate, type AuthUser } from '../middleware/auth';
 import { beginIdempotency, type IdempotencyMode } from '../middleware/idempotency';
 import { rateLimitHit } from '../middleware/rateLimit';
 import type { AuditEntry } from '../middleware/audit';
-import { forbidden } from './errors';
+import { badRequest, forbidden } from './errors';
 
 type Schema = z.ZodType;
 type Infer<S> = S extends Schema ? z.output<S> : undefined;
@@ -18,6 +18,8 @@ export interface RouteContext<P, Q, B> {
   query: Q;
   body: B;
   audit: (entry: AuditEntry) => void;
+  /** Parsed If-Match header (document version) for routes that declare ifMatch. */
+  version: number | undefined;
 }
 
 export interface RouteDef<PS extends Schema | undefined, QS extends Schema | undefined, BS extends Schema | undefined, RS extends Schema> {
@@ -39,6 +41,8 @@ export interface RouteDef<PS extends Schema | undefined, QS extends Schema | und
   errors?: number[];
   /** For file downloads (PDF, CSV, XLSX). The handler sends the reply itself and the response schema is z.any(). */
   responseContentType?: string;
+  /** Draft edits send the document version in If-Match so two people cannot overwrite each other. */
+  ifMatch?: boolean;
   /** Registered at the server root instead of under /api/v1 (health checks). */
   root?: boolean;
   handler: (ctx: RouteContext<Infer<PS>, Infer<QS>, Infer<BS>>) => Promise<z.input<RS>>;
@@ -77,6 +81,12 @@ export function registerRoutes(app: FastifyInstance, defs: RouteDef<any, any, an
         const query = def.query ? def.query.parse(req.query) : undefined;
         const body = def.body ? def.body.parse(req.body ?? {}) : undefined;
 
+        let version: number | undefined;
+        if (def.ifMatch) {
+          const h = String(req.headers['if-match'] ?? '').replace(/"/g, '');
+          if (!/^\d+$/.test(h)) throw badRequest('If-Match header with the document version is required', [{ path: 'If-Match', message: 'Send the version you loaded' }]);
+          version = Number(h);
+        }
         const idem = def.idempotency
           ? await beginIdempotency(def.idempotency, req.headers['idempotency-key'], user?.id ?? 'anon', { m: def.method, p: req.url.split('?')[0], b: body })
           : null;
@@ -91,7 +101,7 @@ export function registerRoutes(app: FastifyInstance, defs: RouteDef<any, any, an
         try {
           const result = await def.handler({
             req, reply, user: user as AuthUser, params, query, body,
-            audit: (e) => req.auditEntries.push(e),
+            audit: (e) => req.auditEntries.push(e), version,
           });
           // Handlers that stream a file (PDF, CSV) send the reply themselves.
           if (sentByHandler) { reply.send = originalSend as typeof reply.send; await idem?.release(); return reply; }
