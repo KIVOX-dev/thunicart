@@ -1,0 +1,11 @@
+packages:
+  - backend
+  - shared
+  - tooling
+  - frontend/*
+onlyBuiltDependencies:
+  - argon2
+  - esbuild
+  - sharp
+  - msw
+  - unrs-resolver

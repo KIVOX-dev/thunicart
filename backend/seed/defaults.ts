@@ -1,0 +1,43 @@
+import type { Action, ModuleKey } from '@thunikart/shared';
+
+const V = 'view', C = 'create', E = 'edit', D = 'delete', A = 'approve', X = 'export';
+export type Matrix = Partial<Record<ModuleKey, Action[]>>;
+const ALL: Action[] = [V, C, E, D, A, X];
+
+/**
+ * Default permission matrix from the brief. Admin can change any cell later.
+ * Mapping notes (also in docs/decisions.md): "request transfer" and "receive/adjust" use stock.create / stock.edit,
+ * "pay" uses accounts.create, "cancel" uses sales.delete, "return" uses sales.create.
+ */
+export const DEFAULT_MATRIX: Record<string, Matrix> = {
+  Sales: {
+    items: [V], customers: [V, C, E], stock: [V, C], pos: [V, C], sales: [V, C], reports: [V], orders: [V, E],
+  },
+  'Buyer Purchase': {
+    items: [V, C, E], vendors: [V, C, E], purchase: [V, C, E, D, X], stock: [V, C, E], pos: [V], sales: [V], reports: [V],
+  },
+  Accounts: {
+    items: [V], vendors: [V], customers: [V], purchase: [V], stock: [V], pos: [V], sales: [V, D],
+    accounts: ALL, gst: ALL, reports: ALL, orders: [V], cms: [V],
+  },
+};
+
+export const SYSTEM_ROLE_DESCRIPTIONS: Record<string, string> = {
+  Admin: 'Full access. Can create roles and edit permissions.',
+  Sales: 'Counter billing and customers.',
+  'Buyer Purchase': 'Buying, vendors, receiving and stock adjustments.',
+  Accounts: 'Accounts, GST, payments and reports.',
+};
+
+export const DEFAULT_TERMS = [
+  '1. Original thermal invoice copy required for exchanges.',
+  '2. Exchanges processed within 7 days at Krishnas Orchids Hub.',
+  '3. No returns/exchanges on washed, worn, or customized garments.',
+  '4. Web orders: shortages must be reported within 48 hours.',
+].join('\n');
+
+export const STORES = [
+  { code: 'KOH', name: 'Krishnas Orchids Hub', type: 'shop' },
+  { code: 'MAINWH', name: 'Main Warehouse', type: 'warehouse' },
+  { code: 'ONLINE', name: 'Online', type: 'online' },
+] as const;

@@ -1,0 +1,38 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Lint (includes the rule that backend never imports frontend)
+        run: pnpm --filter @thunikart/backend --filter @thunikart/shared lint
+      - name: Type check
+        run: pnpm --filter @thunikart/backend --filter @thunikart/shared typecheck
+      - name: Tests (in-memory MongoDB replica set, clean seeded database)
+        run: pnpm --filter @thunikart/backend test
+      - name: OpenAPI spec and typed client are up to date
+        run: |
+          pnpm openapi
+          git diff --exit-code docs/api/openapi.json shared/src/api-client/schema.d.ts
+      - name: Build
+        run: pnpm --filter @thunikart/backend build
+
+  docker-image:
+    runs-on: ubuntu-latest
+    needs: backend
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f backend/Dockerfile --target runtime --platform linux/amd64 -t thunikart-backend:ci .

@@ -1,0 +1,3990 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Thunikart API",
+    "version": "0.1.0",
+    "description": "Connected ERP, POS and online store for Thunikart by Krishnas Orchids. Money is integer paise. Dates are ISO 8601 UTC. Errors always look like { code, message, fields[], requestId }."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:4000"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth"
+    },
+    {
+      "name": "Users"
+    },
+    {
+      "name": "Roles"
+    },
+    {
+      "name": "Settings"
+    },
+    {
+      "name": "Health"
+    }
+  ],
+  "paths": {
+    "/api/v1/auth/login": {
+      "post": {
+        "summary": "Staff login with email and password",
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "postApiV1AuthLogin",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accessToken": {
+                      "type": "string"
+                    },
+                    "expiresInSeconds": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "pattern": "^[a-f\\d]{24}$"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "roleId": {
+                          "type": "string",
+                          "pattern": "^[a-f\\d]{24}$"
+                        },
+                        "roleName": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "email",
+                        "roleId",
+                        "roleName"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "accessToken",
+                    "expiresInSeconds",
+                    "user"
+                  ],
+                  "additionalProperties": false
+                },
+                "example": {
+                  "accessToken": "eyJ...",
+                  "expiresInSeconds": 900,
+                  "user": {
+                    "id": "665f0c2a9b1e4c0012ab34cd",
+                    "name": "Thunikart Admin",
+                    "email": "admin@thunikart.local",
+                    "roleId": "665f0c2a9b1e4c0012ab34ce",
+                    "roleName": "Admin"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "public",
+        "x-idempotency": "none",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ]
+              },
+              "example": {
+                "email": "admin@thunikart.local",
+                "password": "Your-Password-1"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "summary": "Get a new access token using the refresh cookie",
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "postApiV1AuthRefresh",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accessToken": {
+                      "type": "string"
+                    },
+                    "expiresInSeconds": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "accessToken",
+                    "expiresInSeconds"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "public",
+        "x-idempotency": "none",
+        "security": []
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "summary": "End this session",
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "postApiV1AuthLogout",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "public",
+        "x-idempotency": "none",
+        "security": []
+      }
+    },
+    "/api/v1/me": {
+      "get": {
+        "summary": "Who am I, with my role and permissions",
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "getApiV1Me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-f\\d]{24}$"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "role": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "pattern": "^[a-f\\d]{24}$"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "isAdmin": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "isAdmin"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "permissions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "gst": {
+                      "type": "object",
+                      "properties": {
+                        "gstMode": {
+                          "type": "string",
+                          "enum": [
+                            "on",
+                            "off"
+                          ]
+                        },
+                        "gstin": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "goLiveAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "gstMode",
+                        "gstin",
+                        "goLiveAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "email",
+                    "role",
+                    "permissions",
+                    "gst"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "authenticated",
+        "x-idempotency": "none",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/sessions": {
+      "get": {
+        "summary": "My active sessions",
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "getApiV1AuthSessions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "pattern": "^[a-f\\d]{24}$"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "lastUsedAt": {
+                            "type": "string"
+                          },
+                          "expiresAt": {
+                            "type": "string"
+                          },
+                          "ip": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "userAgent": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "current": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "createdAt",
+                          "lastUsedAt",
+                          "expiresAt",
+                          "ip",
+                          "userAgent",
+                          "current"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "authenticated",
+        "x-idempotency": "none",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/sessions/{id}/revoke": {
+      "post": {
+        "summary": "End one of my sessions",
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "postApiV1AuthSessionsIdRevoke",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "authenticated",
+        "x-idempotency": "none",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users": {
+      "get": {
+        "summary": "List staff users",
+        "tags": [
+          "Users"
+        ],
+        "operationId": "getApiV1Users",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "store",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "brand",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "vendor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "roleId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "pattern": "^[a-f\\d]{24}$"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "email": {
+                            "type": "string"
+                          },
+                          "mobile": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "roleId": {
+                            "type": "string",
+                            "pattern": "^[a-f\\d]{24}$"
+                          },
+                          "roleName": {
+                            "type": "string"
+                          },
+                          "active": {
+                            "type": "boolean"
+                          },
+                          "lockedUntil": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "lastLoginAt": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "email",
+                          "mobile",
+                          "roleId",
+                          "roleName",
+                          "active",
+                          "lockedUntil",
+                          "lastLoginAt",
+                          "createdAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "nextPage": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "total",
+                    "nextPage"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "users.view",
+        "x-idempotency": "none",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create a staff user",
+        "tags": [
+          "Users"
+        ],
+        "operationId": "postApiV1Users",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Unique key (8 to 128 chars) per logical request. A retry with the same key never posts twice.",
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 128
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-f\\d]{24}$"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "mobile": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "roleId": {
+                      "type": "string",
+                      "pattern": "^[a-f\\d]{24}$"
+                    },
+                    "roleName": {
+                      "type": "string"
+                    },
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "lockedUntil": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "lastLoginAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "email",
+                    "mobile",
+                    "roleId",
+                    "roleName",
+                    "active",
+                    "lockedUntil",
+                    "lastLoginAt",
+                    "createdAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule broken",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "users.create",
+        "x-idempotency": "optional",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 100
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                  },
+                  "mobile": {
+                    "type": "string",
+                    "pattern": "^[6-9]\\d{9}$"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 200
+                  },
+                  "roleId": {
+                    "type": "string",
+                    "pattern": "^[a-f\\d]{24}$"
+                  },
+                  "active": {
+                    "default": true,
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "name",
+                  "email",
+                  "password",
+                  "roleId"
+                ]
+              },
+              "example": {
+                "name": "Meena K",
+                "email": "meena@thunikart.local",
+                "password": "Shop-Floor-2026",
+                "roleId": "665f0c2a9b1e4c0012ab34ce"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{id}": {
+      "get": {
+        "summary": "One user",
+        "tags": [
+          "Users"
+        ],
+        "operationId": "getApiV1UsersId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-f\\d]{24}$"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "mobile": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "roleId": {
+                      "type": "string",
+                      "pattern": "^[a-f\\d]{24}$"
+                    },
+                    "roleName": {
+                      "type": "string"
+                    },
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "lockedUntil": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "lastLoginAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "email",
+                    "mobile",
+                    "roleId",
+                    "roleName",
+                    "active",
+                    "lockedUntil",
+                    "lastLoginAt",
+                    "createdAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "users.view",
+        "x-idempotency": "none",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "summary": "Edit a user, change their role, or deactivate",
+        "tags": [
+          "Users"
+        ],
+        "operationId": "putApiV1UsersId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-f\\d]{24}$"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "mobile": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "roleId": {
+                      "type": "string",
+                      "pattern": "^[a-f\\d]{24}$"
+                    },
+                    "roleName": {
+                      "type": "string"
+                    },
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "lockedUntil": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "lastLoginAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "email",
+                    "mobile",
+                    "roleId",
+                    "roleName",
+                    "active",
+                    "lockedUntil",
+                    "lastLoginAt",
+                    "createdAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule broken",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "users.edit",
+        "x-idempotency": "none",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 100
+                  },
+                  "mobile": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^[6-9]\\d{9}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "roleId": {
+                    "type": "string",
+                    "pattern": "^[a-f\\d]{24}$"
+                  },
+                  "active": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a user (soft delete)",
+        "tags": [
+          "Users"
+        ],
+        "operationId": "deleteApiV1UsersId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule broken",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "users.delete",
+        "x-idempotency": "none",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users/{id}/unlock": {
+      "post": {
+        "summary": "Clear a login lock",
+        "tags": [
+          "Users"
+        ],
+        "operationId": "postApiV1UsersIdUnlock",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-f\\d]{24}$"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "mobile": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "roleId": {
+                      "type": "string",
+                      "pattern": "^[a-f\\d]{24}$"
+                    },
+                    "roleName": {
+                      "type": "string"
+                    },
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "lockedUntil": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "lastLoginAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "email",
+                    "mobile",
+                    "roleId",
+                    "roleName",
+                    "active",
+                    "lockedUntil",
+                    "lastLoginAt",
+                    "createdAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "users.edit",
+        "x-idempotency": "none",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users/{id}/reset-password": {
+      "post": {
+        "summary": "Set a new password and end all their sessions",
+        "tags": [
+          "Users"
+        ],
+        "operationId": "postApiV1UsersIdResetPassword",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "users.edit",
+        "x-idempotency": "none",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "password": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 200
+                  }
+                },
+                "required": [
+                  "password"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/permissions": {
+      "get": {
+        "summary": "Every module and action that can be granted",
+        "tags": [
+          "Roles"
+        ],
+        "operationId": "getApiV1Permissions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "actions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "modules": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "actions": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "label",
+                          "actions"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "keys": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "actions",
+                    "modules",
+                    "keys"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "roles.view",
+        "x-idempotency": "none",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/roles": {
+      "get": {
+        "summary": "List roles with their permissions",
+        "tags": [
+          "Roles"
+        ],
+        "operationId": "getApiV1Roles",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "pattern": "^[a-f\\d]{24}$"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "isSystem": {
+                            "type": "boolean"
+                          },
+                          "isAdmin": {
+                            "type": "boolean"
+                          },
+                          "permissions": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "userCount": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "description",
+                          "isSystem",
+                          "isAdmin",
+                          "permissions",
+                          "createdAt",
+                          "updatedAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "roles.view",
+        "x-idempotency": "none",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create a role",
+        "tags": [
+          "Roles"
+        ],
+        "operationId": "postApiV1Roles",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Unique key (8 to 128 chars) per logical request. A retry with the same key never posts twice.",
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 128
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-f\\d]{24}$"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "isSystem": {
+                      "type": "boolean"
+                    },
+                    "isAdmin": {
+                      "type": "boolean"
+                    },
+                    "permissions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "userCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "description",
+                    "isSystem",
+                    "isAdmin",
+                    "permissions",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule broken",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "roles.create",
+        "x-idempotency": "optional",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 60
+                  },
+                  "description": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  "permissions": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              },
+              "example": {
+                "name": "Store Manager",
+                "description": "Runs the shop floor",
+                "permissions": [
+                  "items.view",
+                  "stock.view",
+                  "pos.view",
+                  "pos.create"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/roles/{id}": {
+      "get": {
+        "summary": "One role",
+        "tags": [
+          "Roles"
+        ],
+        "operationId": "getApiV1RolesId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-f\\d]{24}$"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "isSystem": {
+                      "type": "boolean"
+                    },
+                    "isAdmin": {
+                      "type": "boolean"
+                    },
+                    "permissions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "userCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "description",
+                    "isSystem",
+                    "isAdmin",
+                    "permissions",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "roles.view",
+        "x-idempotency": "none",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "summary": "Rename a role or change its description",
+        "tags": [
+          "Roles"
+        ],
+        "operationId": "putApiV1RolesId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-f\\d]{24}$"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "isSystem": {
+                      "type": "boolean"
+                    },
+                    "isAdmin": {
+                      "type": "boolean"
+                    },
+                    "permissions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "userCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "description",
+                    "isSystem",
+                    "isAdmin",
+                    "permissions",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule broken",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "roles.edit",
+        "x-idempotency": "none",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 60
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 300
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a role nobody uses",
+        "tags": [
+          "Roles"
+        ],
+        "operationId": "deleteApiV1RolesId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule broken",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "roles.delete",
+        "x-idempotency": "none",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/roles/{id}/permissions": {
+      "put": {
+        "summary": "Replace the permissions of a role",
+        "tags": [
+          "Roles"
+        ],
+        "operationId": "putApiV1RolesIdPermissions",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-f\\d]{24}$"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "isSystem": {
+                      "type": "boolean"
+                    },
+                    "isAdmin": {
+                      "type": "boolean"
+                    },
+                    "permissions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "userCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "description",
+                    "isSystem",
+                    "isAdmin",
+                    "permissions",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule broken",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "roles.edit",
+        "x-idempotency": "none",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "permissions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "permissions"
+                ]
+              },
+              "example": {
+                "permissions": [
+                  "items.view",
+                  "items.create",
+                  "stock.view"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/settings/business": {
+      "get": {
+        "summary": "Business profile (name, address, GSTIN, terms)",
+        "tags": [
+          "Settings"
+        ],
+        "operationId": "getApiV1SettingsBusiness",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "legalName": {
+                      "type": "string",
+                      "minLength": 2,
+                      "maxLength": 150
+                    },
+                    "brandName": {
+                      "type": "string",
+                      "minLength": 2,
+                      "maxLength": 100
+                    },
+                    "addressLines": {
+                      "maxItems": 5,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "maxLength": 150
+                      }
+                    },
+                    "city": {
+                      "type": "string",
+                      "maxLength": 80
+                    },
+                    "state": {
+                      "type": "string",
+                      "maxLength": 80
+                    },
+                    "stateCode": {
+                      "type": "string",
+                      "pattern": "^\\d{2}$"
+                    },
+                    "pincode": {
+                      "type": "string",
+                      "pattern": "^\\d{6}$"
+                    },
+                    "phone": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "email": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "email",
+                          "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                        },
+                        {
+                          "type": "string",
+                          "const": ""
+                        }
+                      ]
+                    },
+                    "website": {
+                      "type": "string",
+                      "maxLength": 200
+                    },
+                    "logoKey": {
+                      "default": null,
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 300
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "gstin": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^\\d{2}[A-Z]{5}\\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$"
+                        },
+                        {
+                          "type": "string",
+                          "const": ""
+                        }
+                      ]
+                    },
+                    "pan": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^[A-Z]{5}\\d{4}[A-Z]$"
+                        },
+                        {
+                          "type": "string",
+                          "const": ""
+                        }
+                      ]
+                    },
+                    "defaultPrintSize": {
+                      "type": "string",
+                      "enum": [
+                        "a4",
+                        "2in",
+                        "3in",
+                        "4x6"
+                      ]
+                    },
+                    "termsText": {
+                      "type": "string",
+                      "maxLength": 2000
+                    },
+                    "invoiceFooter": {
+                      "type": "string",
+                      "maxLength": 300
+                    },
+                    "brandColors": {
+                      "type": "object",
+                      "properties": {
+                        "primary": {
+                          "type": "string"
+                        },
+                        "accent": {
+                          "type": "string"
+                        },
+                        "secondary": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "primary",
+                        "accent",
+                        "secondary"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "gstEnabled": {
+                      "type": "boolean"
+                    },
+                    "gstGoLiveAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "version": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "legalName",
+                    "brandName",
+                    "addressLines",
+                    "city",
+                    "state",
+                    "stateCode",
+                    "pincode",
+                    "phone",
+                    "email",
+                    "website",
+                    "logoKey",
+                    "gstin",
+                    "pan",
+                    "defaultPrintSize",
+                    "termsText",
+                    "invoiceFooter",
+                    "gstEnabled",
+                    "gstGoLiveAt",
+                    "version",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "settings.view",
+        "x-idempotency": "none",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "summary": "Save the business profile. A valid GSTIN switches GST on; an empty GSTIN switches it off (needs confirmGstClear).",
+        "tags": [
+          "Settings"
+        ],
+        "operationId": "putApiV1SettingsBusiness",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "legalName": {
+                      "type": "string",
+                      "minLength": 2,
+                      "maxLength": 150
+                    },
+                    "brandName": {
+                      "type": "string",
+                      "minLength": 2,
+                      "maxLength": 100
+                    },
+                    "addressLines": {
+                      "maxItems": 5,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "maxLength": 150
+                      }
+                    },
+                    "city": {
+                      "type": "string",
+                      "maxLength": 80
+                    },
+                    "state": {
+                      "type": "string",
+                      "maxLength": 80
+                    },
+                    "stateCode": {
+                      "type": "string",
+                      "pattern": "^\\d{2}$"
+                    },
+                    "pincode": {
+                      "type": "string",
+                      "pattern": "^\\d{6}$"
+                    },
+                    "phone": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "email": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "email",
+                          "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                        },
+                        {
+                          "type": "string",
+                          "const": ""
+                        }
+                      ]
+                    },
+                    "website": {
+                      "type": "string",
+                      "maxLength": 200
+                    },
+                    "logoKey": {
+                      "default": null,
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 300
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "gstin": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^\\d{2}[A-Z]{5}\\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$"
+                        },
+                        {
+                          "type": "string",
+                          "const": ""
+                        }
+                      ]
+                    },
+                    "pan": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^[A-Z]{5}\\d{4}[A-Z]$"
+                        },
+                        {
+                          "type": "string",
+                          "const": ""
+                        }
+                      ]
+                    },
+                    "defaultPrintSize": {
+                      "type": "string",
+                      "enum": [
+                        "a4",
+                        "2in",
+                        "3in",
+                        "4x6"
+                      ]
+                    },
+                    "termsText": {
+                      "type": "string",
+                      "maxLength": 2000
+                    },
+                    "invoiceFooter": {
+                      "type": "string",
+                      "maxLength": 300
+                    },
+                    "brandColors": {
+                      "type": "object",
+                      "properties": {
+                        "primary": {
+                          "type": "string"
+                        },
+                        "accent": {
+                          "type": "string"
+                        },
+                        "secondary": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "primary",
+                        "accent",
+                        "secondary"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "gstEnabled": {
+                      "type": "boolean"
+                    },
+                    "gstGoLiveAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "version": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "legalName",
+                    "brandName",
+                    "addressLines",
+                    "city",
+                    "state",
+                    "stateCode",
+                    "pincode",
+                    "phone",
+                    "email",
+                    "website",
+                    "logoKey",
+                    "gstin",
+                    "pan",
+                    "defaultPrintSize",
+                    "termsText",
+                    "invoiceFooter",
+                    "gstEnabled",
+                    "gstGoLiveAt",
+                    "version",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule broken",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "settings.edit",
+        "x-idempotency": "none",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "legalName": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 150
+                  },
+                  "brandName": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 100
+                  },
+                  "addressLines": {
+                    "maxItems": 5,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 150
+                    }
+                  },
+                  "city": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "state": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "stateCode": {
+                    "type": "string",
+                    "pattern": "^\\d{2}$"
+                  },
+                  "pincode": {
+                    "type": "string",
+                    "pattern": "^\\d{6}$"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "email": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "email",
+                        "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                      },
+                      {
+                        "type": "string",
+                        "const": ""
+                      }
+                    ]
+                  },
+                  "website": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "logoKey": {
+                    "default": null,
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 300
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "gstin": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^\\d{2}[A-Z]{5}\\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$"
+                      },
+                      {
+                        "type": "string",
+                        "const": ""
+                      }
+                    ]
+                  },
+                  "pan": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^[A-Z]{5}\\d{4}[A-Z]$"
+                      },
+                      {
+                        "type": "string",
+                        "const": ""
+                      }
+                    ]
+                  },
+                  "defaultPrintSize": {
+                    "type": "string",
+                    "enum": [
+                      "a4",
+                      "2in",
+                      "3in",
+                      "4x6"
+                    ]
+                  },
+                  "termsText": {
+                    "type": "string",
+                    "maxLength": 2000
+                  },
+                  "invoiceFooter": {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  "brandColors": {
+                    "type": "object",
+                    "properties": {
+                      "primary": {
+                        "type": "string"
+                      },
+                      "accent": {
+                        "type": "string"
+                      },
+                      "secondary": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "primary",
+                      "accent",
+                      "secondary"
+                    ]
+                  },
+                  "confirmGstClear": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "legalName",
+                  "brandName",
+                  "addressLines",
+                  "city",
+                  "state",
+                  "stateCode",
+                  "pincode",
+                  "phone",
+                  "email",
+                  "website",
+                  "gstin",
+                  "pan",
+                  "defaultPrintSize",
+                  "termsText",
+                  "invoiceFooter"
+                ]
+              },
+              "example": {
+                "legalName": "Krishnas Orchids",
+                "brandName": "Thunikart",
+                "addressLines": [
+                  "Near KN Hall",
+                  "Peedampalli Main Road, Pattanam"
+                ],
+                "city": "Coimbatore",
+                "state": "Tamil Nadu",
+                "stateCode": "33",
+                "pincode": "641016",
+                "phone": "8400044191",
+                "email": "",
+                "website": "",
+                "logoKey": null,
+                "gstin": "",
+                "pan": "",
+                "defaultPrintSize": "4x6",
+                "termsText": "",
+                "invoiceFooter": "Thank you for shopping at Thunikart!"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/settings/gst-status": {
+      "get": {
+        "summary": "Is GST on? Used by every screen that shows tax",
+        "tags": [
+          "Settings"
+        ],
+        "operationId": "getApiV1SettingsGstStatus",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "gstMode": {
+                      "type": "string",
+                      "enum": [
+                        "on",
+                        "off"
+                      ]
+                    },
+                    "gstin": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "goLiveAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "gstMode",
+                    "gstin",
+                    "goLiveAt"
+                  ],
+                  "additionalProperties": false
+                },
+                "example": {
+                  "gstMode": "off",
+                  "gstin": null,
+                  "goLiveAt": null
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "authenticated",
+        "x-idempotency": "none",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/number-series": {
+      "get": {
+        "summary": "Document number series with the next number to be issued",
+        "tags": [
+          "Settings"
+        ],
+        "operationId": "getApiV1NumberSeries",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "prefix": {
+                            "type": "string"
+                          },
+                          "padding": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "perFinancialYear": {
+                            "type": "boolean"
+                          },
+                          "financialYear": {
+                            "type": "string"
+                          },
+                          "counter": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "next": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "prefix",
+                          "padding",
+                          "perFinancialYear",
+                          "financialYear",
+                          "counter",
+                          "next"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "settings.view",
+        "x-idempotency": "none",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/number-series/{key}": {
+      "put": {
+        "summary": "Change prefix or padding, or move the counter forward",
+        "tags": [
+          "Settings"
+        ],
+        "operationId": "putApiV1NumberSeriesKey",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Z]{2,6}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "prefix": {
+                      "type": "string"
+                    },
+                    "padding": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "perFinancialYear": {
+                      "type": "boolean"
+                    },
+                    "financialYear": {
+                      "type": "string"
+                    },
+                    "counter": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "next": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "prefix",
+                    "padding",
+                    "perFinancialYear",
+                    "financialYear",
+                    "counter",
+                    "next"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule broken",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "settings.edit",
+        "x-idempotency": "none",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "prefix": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 10,
+                    "pattern": "^[A-Z0-9]+$"
+                  },
+                  "padding": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10
+                  },
+                  "counter": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/activity-log": {
+      "get": {
+        "summary": "Who changed what and when, with before and after values",
+        "tags": [
+          "Settings"
+        ],
+        "operationId": "getApiV1ActivityLog",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "store",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "brand",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "vendor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            }
+          },
+          {
+            "name": "entity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "pattern": "^[a-f\\d]{24}$"
+                          },
+                          "at": {
+                            "type": "string"
+                          },
+                          "userId": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "pattern": "^[a-f\\d]{24}$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "userName": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "method": {
+                            "type": "string"
+                          },
+                          "path": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "entity": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "entityId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "action": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "before": {
+                            "anyOf": [
+                              {},
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "after": {
+                            "anyOf": [
+                              {},
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "ip": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "requestId": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "at",
+                          "userId",
+                          "userName",
+                          "method",
+                          "path",
+                          "status",
+                          "entity",
+                          "entityId",
+                          "action",
+                          "before",
+                          "after",
+                          "ip",
+                          "requestId"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "nextPage": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "total",
+                    "nextPage"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "settings.view",
+        "x-idempotency": "none",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Is the process up? (used by AppSail and uptime checks)",
+        "tags": [
+          "Health"
+        ],
+        "operationId": "getHealth",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "const": "ok"
+                    },
+                    "time": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "time"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "public",
+        "x-idempotency": "none",
+        "security": []
+      }
+    },
+    "/ready": {
+      "get": {
+        "summary": "Is the database reachable?",
+        "tags": [
+          "Health"
+        ],
+        "operationId": "getReady",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "const": "ready"
+                    },
+                    "database": {
+                      "type": "string",
+                      "const": "up"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "database"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Not ready",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "public",
+        "x-idempotency": "none",
+        "security": []
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path",
+                "message"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "requestId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "fields",
+          "requestId"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}
