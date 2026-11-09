@@ -1,0 +1,6 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tokens are imported from @thunikart/ui/tokens.css in main.tsx. */
+body { min-height: 100vh; }

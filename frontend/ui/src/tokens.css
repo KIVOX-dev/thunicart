@@ -1,0 +1,44 @@
+/* Thunikart design tokens. Shared by the admin app and the storefront. */
+:root {
+  --color-navy: #0b1b54;
+  --color-orange: #f67025;
+  --color-teal: #0bbbb4;
+  --color-white: #ffffff;
+  --color-mist: #f5f7fb;
+  --color-line: #e3e7f0;
+  --color-muted: #5b6482;
+  --color-danger: #c62828;
+  --color-warning: #8a5a00;
+  --color-warning-bg: #fff4d6;
+  --color-success-bg: #dcf6f4;
+  --color-danger-bg: #fdeaea;
+
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-6: 24px; --space-8: 32px; --space-12: 48px; --space-16: 64px;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --shadow-overlay: 0 8px 24px rgba(11, 27, 84, 0.18);
+  --motion-fast: 160ms;
+  --motion-base: 220ms;
+  --focus-ring: 2px solid var(--color-teal);
+}
+
+html { font-family: var(--font-sans); color: var(--color-navy); background: var(--color-white); font-size: 16px; -webkit-text-size-adjust: 100%; }
+body { margin: 0; }
+h1, h2, h3 { text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin: 0; }
+:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+::selection { background: var(--color-teal); color: var(--color-navy); }
+
+@keyframes tk-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes tk-slide-up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes tk-slide-right { from { transform: translateX(-24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes tk-pulse { 50% { opacity: 0.5; } }
+.tk-fade { animation: tk-fade var(--motion-fast) ease-out; }
+.tk-slide-up { animation: tk-slide-up var(--motion-base) ease-out; }
+.tk-slide-right { animation: tk-slide-right var(--motion-base) ease-out; }
+.tk-skeleton { animation: tk-pulse 1.4s ease-in-out infinite; }
+dialog.tk-dialog::backdrop { background: rgba(11, 27, 84, 0.45); }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}

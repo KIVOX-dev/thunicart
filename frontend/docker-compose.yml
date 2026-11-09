@@ -1,0 +1,13 @@
+# Frontend in mock mode (no backend, no keys needed): docker compose -f frontend/docker-compose.yml up
+services:
+  admin:
+    build: { context: .., dockerfile: frontend/admin/Dockerfile }
+    environment:
+      VITE_API_URL: REPLACE_ME_http://localhost:4000
+    ports: ["5173:5173"]
+  storefront:
+    build: { context: .., dockerfile: frontend/storefront/Dockerfile }
+    environment:
+      NEXT_PUBLIC_API_URL: REPLACE_ME_http://localhost:4000
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+    ports: ["3000:3000"]
