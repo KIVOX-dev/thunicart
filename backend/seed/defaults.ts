@@ -36,8 +36,7 @@ export const DEFAULT_TERMS = [
   '3. Discounted items cannot be returned/refunded.',
   '4. Defective items must be reported within 48h.',
   '5. No returns/exchanges on washed, worn or customized garments.',
-].join('
-');
+].join('\n');
 
 export const STORES = [
   { code: 'KOH', name: 'Krishnas Orchids Hub', type: 'shop' },
