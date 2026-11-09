@@ -5,6 +5,11 @@ import { settingsRoutes } from './modules/settings/settings.routes';
 import { numberSeriesRoutes } from './modules/numberSeries/numberSeries.routes';
 import { activityRoutes } from './modules/activity/activity.routes';
 import { healthRoutes } from './modules/health/health.routes';
+import { masterRoutes } from './modules/masters/masters.routes';
+import { itemRoutes } from './modules/items/items.routes';
+import { partyRoutes } from './modules/parties/parties.routes';
+import { importRoutes } from './modules/imports/imports.routes';
+import { uploadRoutes } from './modules/uploads/uploads.routes';
 
 /** Every route in the API. Later phases append their module routes here. */
 export const allRoutes = [
@@ -15,4 +20,9 @@ export const allRoutes = [
   ...settingsRoutes,
   ...numberSeriesRoutes,
   ...activityRoutes,
+  ...masterRoutes,
+  ...itemRoutes,
+  ...partyRoutes,
+  ...importRoutes,
+  ...uploadRoutes,
 ];

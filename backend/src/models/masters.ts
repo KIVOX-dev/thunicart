@@ -63,6 +63,7 @@ export const Item = defineModel('Item', 'items', {
   showOnWebsite: { type: Boolean, default: false },
   slug: String,
   active: { type: Boolean, default: true },
+  importBatchId: { ...oid('ImportBatch') },
 }, [
   [{ categoryId: 1, active: 1 }],
   [{ brandId: 1 }],
@@ -86,6 +87,9 @@ export const Variant = defineModel('Variant', 'variants', {
   batchRef: String,
   active: { type: Boolean, default: true },
   hasStockHistory: { type: Boolean, default: false },
+  /** Set by an import when the source row had no usable price. Cleared when a price is saved. */
+  priceMissing: { type: Boolean, default: false },
+  importBatchId: { ...oid('ImportBatch') },
 }, [
   [{ itemCode: 1 }, { unique: true }],
   [{ sku: 1 }, { unique: true }],

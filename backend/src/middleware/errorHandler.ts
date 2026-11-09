@@ -23,7 +23,12 @@ export function errorHandler(err: FastifyError | Error, req: FastifyRequest, rep
     body = { code: 'VALIDATION_ERROR', message: 'Some fields are not valid', fields: zodFields(err), requestId };
   } else if ((err as any).code === 11000) {
     status = 409;
-    const keys = Object.keys((err as any).keyPattern ?? {});
+    let keys = Object.keys((err as any).keyPattern ?? (err as any).keyValue ?? {});
+    if (!keys.length) {
+      // Inside a transaction the driver may only give the index name: "index: itemCode_1 dup key"
+      const m = /index: (\S+) dup key/.exec(String((err as any).message ?? ''));
+      if (m) keys = m[1]!.split(/_-?1(?:_|$)/).filter(Boolean);
+    }
     body = {
       code: 'DUPLICATE', message: `That ${keys.join(', ') || 'value'} already exists`,
       fields: keys.map((k) => ({ path: k, message: 'Already exists' })), requestId,
@@ -34,6 +39,7 @@ export function errorHandler(err: FastifyError | Error, req: FastifyRequest, rep
     body = { code, message: status === 413 ? 'Request is too large' : err.message, fields: [], requestId };
   } else {
     req.log.error({ err }, 'Unhandled error');
+    if (process.env.LOG_ERRORS) console.error(err);
   }
   return reply.status(status).send(body);
 }

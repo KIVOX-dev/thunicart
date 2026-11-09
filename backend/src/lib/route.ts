@@ -37,6 +37,8 @@ export interface RouteDef<PS extends Schema | undefined, QS extends Schema | und
   rateLimit?: { name: string; limit: number; windowSec: number; by?: (req: FastifyRequest) => string };
   examples?: { request?: unknown; response?: unknown };
   errors?: number[];
+  /** For file downloads (PDF, CSV, XLSX). The handler sends the reply itself and the response schema is z.any(). */
+  responseContentType?: string;
   /** Registered at the server root instead of under /api/v1 (health checks). */
   root?: boolean;
   handler: (ctx: RouteContext<Infer<PS>, Infer<QS>, Infer<BS>>) => Promise<z.input<RS>>;
@@ -82,15 +84,21 @@ export function registerRoutes(app: FastifyInstance, defs: RouteDef<any, any, an
           reply.header('idempotent-replay', 'true');
           return reply.status(idem.replay.status).send(idem.replay.body);
         }
+        // Handlers that stream a file call reply.send themselves. Fastify 5's reply.sent is not reliable for that, so track it.
+        let sentByHandler = false;
+        const originalSend = reply.send.bind(reply);
+        reply.send = ((...args: Parameters<typeof reply.send>) => { sentByHandler = true; return originalSend(...args); }) as typeof reply.send;
         try {
           const result = await def.handler({
             req, reply, user: user as AuthUser, params, query, body,
             audit: (e) => req.auditEntries.push(e),
           });
+          // Handlers that stream a file (PDF, CSV) send the reply themselves.
+          if (sentByHandler) { reply.send = originalSend as typeof reply.send; await idem?.release(); return reply; }
+          reply.send = originalSend as typeof reply.send;
           const parsed = def.response.parse(result);
           const status = def.status ?? 200;
           await idem?.complete(status, parsed);
-          if (reply.sent) return reply;
           return reply.status(status).send(parsed);
         } catch (e) {
           await idem?.release();

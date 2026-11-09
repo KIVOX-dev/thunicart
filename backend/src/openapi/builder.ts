@@ -50,7 +50,9 @@ export function buildOpenApi() {
     const responses: Record<string, any> = {
       [status]: {
         description: 'Success',
-        content: { 'application/json': { schema: schemaOf(def.response, 'output'), ...(def.examples?.response ? { example: def.examples.response } : {}) } },
+        content: def.responseContentType
+          ? { [def.responseContentType]: { schema: { type: 'string', format: 'binary' } } }
+          : { 'application/json': { schema: schemaOf(def.response, 'output'), ...(def.examples?.response ? { example: def.examples.response } : {}) } },
       },
     };
     for (const code of [...errors].sort()) {

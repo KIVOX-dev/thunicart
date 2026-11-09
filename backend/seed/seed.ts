@@ -1,7 +1,9 @@
 import { randomBytes } from 'node:crypto';
 import argon2 from 'argon2';
 import { ACTIONS, ALL_PERMISSION_KEYS, MODULES } from '@thunikart/shared';
-import { BusinessProfile, NumberSeries, Permission, Role, RolePermission, Store, User } from '../src/models';
+import hsnMaster from './hsn-master.json';
+import { BusinessProfile, GstRate, Hsn, ImportMapping, LabelTemplate, NumberSeries, Permission, Role, RolePermission, Store, User } from '../src/models';
+import { BUILTIN_MAPPINGS } from '../src/modules/imports/targets';
 import { syncAllIndexes } from '../src/models/indexes';
 import { DEFAULT_SERIES } from '../src/lib/numberSeries';
 import { financialYearOf } from '../src/lib/financialYear';
@@ -50,9 +52,26 @@ export async function runSeed(opts: SeedOptions): Promise<SeedResult> {
   for (const s of STORES) await Store.updateOne({ code: s.code }, { $setOnInsert: { ...s, active: true } }, { upsert: true });
 
   const fy = financialYearOf();
-  for (const s of DEFAULT_SERIES) {
-    await NumberSeries.updateOne({ key: s.key, financialYear: s.perFinancialYear ? fy : '' }, { $setOnInsert: { ...s, financialYear: s.perFinancialYear ? fy : '', counter: 0 } }, { upsert: true });
+  for (const series of DEFAULT_SERIES) {
+    const { startAt, ...s } = series as any;
+    await NumberSeries.updateOne({ key: s.key, financialYear: s.perFinancialYear ? fy : '' }, { $setOnInsert: { ...s, financialYear: s.perFinancialYear ? fy : '', counter: startAt ?? 0 } }, { upsert: true });
   }
+
+  // HSN master (25 headings from the HSN Master sheet). The 5% up to Rs 1,000 and 12% above rule is UNCONFIRMED until an Admin confirms it.
+  const hsnRows: any[] = hsnMaster as any[];
+  for (const h of hsnRows) {
+    await Hsn.updateOne({ code: h.code }, { $setOnInsert: { code: h.code, description: h.description, chapter: h.chapter, active: true } }, { upsert: true });
+    const rule = h.rule.type === 'slab'
+      ? { ruleType: 'slab', slabLimit: h.rule.limitRupees * 100, rateBelow: h.rule.below, rateAbove: h.rule.above }
+      : { ruleType: 'flat', rate: h.rule.rate };
+    await GstRate.updateOne({ hsnCode: h.code, ruleType: rule.ruleType }, { $setOnInsert: { hsnCode: h.code, ...rule, effectiveFrom: new Date('2017-07-01T00:00:00Z'), effectiveTo: null, confirmed: false } }, { upsert: true });
+  }
+  log(`hsn: ${hsnRows.length} headings`);
+
+  for (const m of BUILTIN_MAPPINGS) for (const target of m.targets) {
+    await ImportMapping.updateOne({ target, name: m.name }, { $setOnInsert: { target, name: m.name, headers: Object.values(m.mapping), mapping: m.mapping, options: m.options ?? {}, builtin: true } }, { upsert: true });
+  }
+  await LabelTemplate.updateOne({ name: '50 x 25 mm' }, { $setOnInsert: { name: '50 x 25 mm', widthMm: 50, heightMm: 25, fields: ['barcode', 'name', 'size', 'color', 'mrp', 'itemCode'], isDefault: true } }, { upsert: true });
 
   // First Admin, only when no Admin exists
   const adminRole: any = await Role.findOne({ isAdmin: true }).lean();

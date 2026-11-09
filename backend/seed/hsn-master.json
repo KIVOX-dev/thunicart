@@ -1,0 +1,300 @@
+[
+ {
+  "chapter": "61",
+  "code": "6101",
+  "description": "Men's/Boys' Overcoats, Capes, Wind-jackets (Knitted or Crocheted)",
+  "rule": {
+   "type": "slab",
+   "limitRupees": 1000,
+   "below": 5,
+   "above": 12
+  },
+  "ruleText": "Value <= ₹1000: 5% | Value > ₹1000: 12%"
+ },
+ {
+  "chapter": "61",
+  "code": "6102",
+  "description": "Women's/Girls' Overcoats, Capes, Wind-jackets (Knitted or Crocheted)",
+  "rule": {
+   "type": "slab",
+   "limitRupees": 1000,
+   "below": 5,
+   "above": 12
+  },
+  "ruleText": "Value <= ₹1000: 5% | Value > ₹1000: 12%"
+ },
+ {
+  "chapter": "61",
+  "code": "6103",
+  "description": "Men's/Boys' Suits, Ensembles, Jackets, Blazers, Trousers (Knitted)",
+  "rule": {
+   "type": "slab",
+   "limitRupees": 1000,
+   "below": 5,
+   "above": 12
+  },
+  "ruleText": "Value <= ₹1000: 5% | Value > ₹1000: 12%"
+ },
+ {
+  "chapter": "61",
+  "code": "6104",
+  "description": "Women's/Girls' Suits, Ensembles, Jackets, Blazers, Dresses, Skirts, Trousers (Knitted)",
+  "rule": {
+   "type": "slab",
+   "limitRupees": 1000,
+   "below": 5,
+   "above": 12
+  },
+  "ruleText": "Value <= ₹1000: 5% | Value > ₹1000: 12%"
+ },
+ {
+  "chapter": "61",
+  "code": "6105",
+  "description": "Men's or Boys' Shirts (Knitted or Crocheted)",
+  "rule": {
+   "type": "slab",
+   "limitRupees": 1000,
+   "below": 5,
+   "above": 12
+  },
+  "ruleText": "Value <= ₹1000: 5% | Value > ₹1000: 12%"
+ },
+ {
+  "chapter": "61",
+  "code": "6106",
+  "description": "Women's or Girls' Blouses, Shirts, Shirt-blouses (Knitted or Crocheted)",
+  "rule": {
+   "type": "slab",
+   "limitRupees": 1000,
+   "below": 5,
+   "above": 12
+  },
+  "ruleText": "Value <= ₹1000: 5% | Value > ₹1000: 12%"
+ },
+ {
+  "chapter": "61",
+  "code": "6107",
+  "description": "Men's/Boys' Underpants, Briefs, Nightshirts, Pyjamas, Bathrobes (Knitted)",
+  "rule": {
+   "type": "slab",
+   "limitRupees": 1000,
+   "below": 5,
+   "above": 12
+  },
+  "ruleText": "Value <= ₹1000: 5% | Value > ₹1000: 12%"
+ },
+ {
+  "chapter": "61",
+  "code": "6108",
+  "description": "Women's/Girls' Slips, Petticoats, Briefs, Panties, Nightdresses, Pyjamas (Knitted)",
+  "rule": {
+   "type": "slab",
+   "limitRupees": 1000,
+   "below": 5,
+   "above": 12
+  },
+  "ruleText": "Value <= ₹1000: 5% | Value > ₹1000: 12%"
+ },
+ {
+  "chapter": "61",
+  "code": "6109",
+  "description": "T-shirts, Singlets, Tank Tops and Other Vests (Knitted or Crocheted)",
+  "rule": {
+   "type": "slab",
+   "limitRupees": 1000,
+   "below": 5,
+   "above": 12
+  },
+  "ruleText": "Value <= ₹1000: 5% | Value > ₹1000: 12%"
+ },
+ {
+  "chapter": "61",
+  "code": "6110",
+  "description": "Jerseys, Pullovers, Cardigans, Waistcoats and Similar Articles (Knitted)",
+  "rule": {
+   "type": "slab",
+   "limitRupees": 1000,
+   "below": 5,
+   "above": 12
+  },
+  "ruleText": "Value <= ₹1000: 5% | Value > ₹1000: 12%"
+ },
+ {
+  "chapter": "62",
+  "code": "6201",
+  "description": "Men's/Boys' Overcoats, Raincoats, Wind-jackets (Not Knitted)",
+  "rule": {
+   "type": "slab",
+   "limitRupees": 1000,
+   "below": 5,
+   "above": 12
+  },
+  "ruleText": "Value <= ₹1000: 5% | Value > ₹1000: 12%"
+ },
+ {
+  "chapter": "62",
+  "code": "6202",
+  "description": "Women's/Girls' Overcoats, Raincoats, Wind-jackets (Not Knitted)",
+  "rule": {
+   "type": "slab",
+   "limitRupees": 1000,
+   "below": 5,
+   "above": 12
+  },
+  "ruleText": "Value <= ₹1000: 5% | Value > ₹1000: 12%"
+ },
+ {
+  "chapter": "62",
+  "code": "6203",
+  "description": "Men's/Boys' Suits, Ensembles, Jackets, Blazers, Trousers (Not Knitted/Woven)",
+  "rule": {
+   "type": "slab",
+   "limitRupees": 1000,
+   "below": 5,
+   "above": 12
+  },
+  "ruleText": "Value <= ₹1000: 5% | Value > ₹1000: 12%"
+ },
+ {
+  "chapter": "62",
+  "code": "6204",
+  "description": "Women's/Girls' Suits, Ensembles, Jackets, Blazers, Dresses, Skirts, Trousers (Woven)",
+  "rule": {
+   "type": "slab",
+   "limitRupees": 1000,
+   "below": 5,
+   "above": 12
+  },
+  "ruleText": "Value <= ₹1000: 5% | Value > ₹1000: 12%"
+ },
+ {
+  "chapter": "62",
+  "code": "6205",
+  "description": "Men's or Boys' Shirts (Not Knitted/Woven)",
+  "rule": {
+   "type": "slab",
+   "limitRupees": 1000,
+   "below": 5,
+   "above": 12
+  },
+  "ruleText": "Value <= ₹1000: 5% | Value > ₹1000: 12%"
+ },
+ {
+  "chapter": "62",
+  "code": "6206",
+  "description": "Women's or Girls' Blouses, Shirts and Shirt-blouses (Not Knitted/Woven)",
+  "rule": {
+   "type": "slab",
+   "limitRupees": 1000,
+   "below": 5,
+   "above": 12
+  },
+  "ruleText": "Value <= ₹1000: 5% | Value > ₹1000: 12%"
+ },
+ {
+  "chapter": "62",
+  "code": "6207",
+  "description": "Men's/Boys' Underpants, Briefs, Nightshirts, Pyjamas (Not Knitted)",
+  "rule": {
+   "type": "slab",
+   "limitRupees": 1000,
+   "below": 5,
+   "above": 12
+  },
+  "ruleText": "Value <= ₹1000: 5% | Value > ₹1000: 12%"
+ },
+ {
+  "chapter": "62",
+  "code": "6208",
+  "description": "Women's/Girls' Slips, Petticoats, Briefs, Nightdresses, Pyjamas (Not Knitted)",
+  "rule": {
+   "type": "slab",
+   "limitRupees": 1000,
+   "below": 5,
+   "above": 12
+  },
+  "ruleText": "Value <= ₹1000: 5% | Value > ₹1000: 12%"
+ },
+ {
+  "chapter": "62",
+  "code": "6211",
+  "description": "Tracksuits, Ski-suits, Swimwear and Other Garments (Not Knitted)",
+  "rule": {
+   "type": "slab",
+   "limitRupees": 1000,
+   "below": 5,
+   "above": 12
+  },
+  "ruleText": "Value <= ₹1000: 5% | Value > ₹1000: 12%"
+ },
+ {
+  "chapter": "62",
+  "code": "6214",
+  "description": "Shawls, Scarves, Mufflers, Mantillas, Veils and the like (Woven)",
+  "rule": {
+   "type": "slab",
+   "limitRupees": 1000,
+   "below": 5,
+   "above": 12
+  },
+  "ruleText": "Value <= ₹1000: 5% | Value > ₹1000: 12%"
+ },
+ {
+  "chapter": "63",
+  "code": "6301",
+  "description": "Blankets and Travelling Rugs",
+  "rule": {
+   "type": "slab",
+   "limitRupees": 1000,
+   "below": 5,
+   "above": 12
+  },
+  "ruleText": "Value <= ₹1000: 5% | Value > ₹1000: 12%"
+ },
+ {
+  "chapter": "63",
+  "code": "6302",
+  "description": "Bed Linen, Table Linen, Toilet Linen and Kitchen Linen",
+  "rule": {
+   "type": "slab",
+   "limitRupees": 1000,
+   "below": 5,
+   "above": 12
+  },
+  "ruleText": "Value <= ₹1000: 5% | Value > ₹1000: 12%"
+ },
+ {
+  "chapter": "64",
+  "code": "6403",
+  "description": "Footwear with Outer Soles of Rubber/Plastics & Uppers of Leather",
+  "rule": {
+   "type": "slab",
+   "limitRupees": 1000,
+   "below": 5,
+   "above": 12
+  },
+  "ruleText": "Value <= ₹1000: 5% | Value > ₹1000: 12%"
+ },
+ {
+  "chapter": "64",
+  "code": "6404",
+  "description": "Footwear with Outer Soles of Rubber/Plastics & Uppers of Textile Materials",
+  "rule": {
+   "type": "slab",
+   "limitRupees": 1000,
+   "below": 5,
+   "above": 12
+  },
+  "ruleText": "Value <= ₹1000: 5% | Value > ₹1000: 12%"
+ },
+ {
+  "chapter": "42",
+  "code": "4202",
+  "description": "Trunks, Suit-cases, Executive-cases, Handbags, Wallets, Purses",
+  "rule": {
+   "type": "flat",
+   "rate": 18
+  },
+  "ruleText": "Standard GST: 18%"
+ }
+]

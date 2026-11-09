@@ -23,5 +23,5 @@ export function defineModel(
 }
 
 /** Money fields are whole paise. */
-export const paise = { type: Number, default: 0, validate: { validator: Number.isSafeInteger, message: 'Money must be whole paise' } };
+export const paise = { type: Number, default: 0, validate: { validator: (v: unknown) => v === null || v === undefined || Number.isSafeInteger(v), message: 'Money must be whole paise' } };
 export const oid = (ref: string, required = false): Record<string, any> => ({ type: mongoose.Schema.Types.ObjectId, ref, required });

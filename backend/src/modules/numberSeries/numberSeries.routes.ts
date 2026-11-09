@@ -10,7 +10,7 @@ const keyParam = z.object({ key: z.string().regex(/^[A-Z]{2,6}$/) });
 
 const dto = (s: any) => ({
   key: s.key, prefix: s.prefix, padding: s.padding, perFinancialYear: !!s.perFinancialYear, financialYear: s.financialYear ?? '',
-  counter: s.counter, next: formatNumber(s.prefix, s.financialYear ?? '', s.counter + 1, s.padding),
+  counter: s.counter, next: formatNumber(s.prefix, s.financialYear ?? '', s.counter + 1, s.padding, s.separator ?? '-'),
 });
 
 async function current(key: string) {
@@ -45,7 +45,7 @@ export const numberSeriesRoutes = [
         // Only forward: moving back could reissue a number that was already used.
         const r = await NumberSeries.updateOne(
           { key: params.key, financialYear: before.financialYear, counter: { $lte: body.counter } },
-          { $set: { counter: body.counter }, $setOnInsert: { prefix: before.prefix, padding: before.padding, perFinancialYear: before.perFinancialYear } },
+          { $set: { counter: body.counter }, $setOnInsert: { prefix: before.prefix, padding: before.padding, perFinancialYear: before.perFinancialYear, separator: before.separator ?? '-' } },
           { upsert: before.counter === 0 },
         );
         if (!r.matchedCount && !r.upsertedCount) throw businessRule('The counter can only move forward, so a used number is never reissued', 'COUNTER_BACKWARDS', [{ path: 'counter', message: `Must be at least ${before.counter}` }]);

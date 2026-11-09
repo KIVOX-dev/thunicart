@@ -3,6 +3,8 @@ import './businessProfile';
 import './auth';
 import './system';
 import './masters';
+import './parties';
+import './imports';
 
 /** Create or update every index declared in code. Run from seed or the migrate script, never at request time. */
 export async function syncAllIndexes(): Promise<void> {

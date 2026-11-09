@@ -3,9 +3,9 @@ import { NumberSeries } from '../models';
 import { financialYearOf } from './financialYear';
 import { AppError } from './errors';
 
-export const formatNumber = (prefix: string, financialYear: string, counter: number, padding: number) => {
+export const formatNumber = (prefix: string, financialYear: string, counter: number, padding: number, separator = '-') => {
   const num = String(counter).padStart(padding, '0');
-  return financialYear ? `${prefix}-${financialYear}-${num}` : `${prefix}-${num}`;
+  return financialYear ? `${prefix}${separator}${financialYear}${separator}${num}` : `${prefix}${separator}${num}`;
 };
 
 /**
@@ -22,7 +22,7 @@ export async function nextNumber(key: string, opts: { date?: Date; session?: Cli
   const attempt = () =>
     NumberSeries.findOneAndUpdate(
       { key, financialYear: fy },
-      { $inc: { counter: 1 }, $setOnInsert: { prefix: base.prefix, padding: base.padding, perFinancialYear: base.perFinancialYear } },
+      { $inc: { counter: 1 }, $setOnInsert: { prefix: base.prefix, padding: base.padding, perFinancialYear: base.perFinancialYear, separator: base.separator ?? '-' } },
       { upsert: true, new: true, session: opts.session ?? undefined },
     ).lean() as Promise<any>;
 
@@ -34,7 +34,12 @@ export async function nextNumber(key: string, opts: { date?: Date; session?: Cli
     if (e?.code === 11000) doc = await attempt();
     else throw e;
   }
-  return formatNumber(doc.prefix, doc.financialYear, doc.counter, doc.padding);
+  return formatNumber(doc.prefix, doc.financialYear, doc.counter, doc.padding, doc.separator ?? '-');
+}
+
+/** Moves a series forward so that numbers up to `atLeast` count as used. Never moves back. */
+export async function bumpSeriesTo(key: string, atLeast: number): Promise<void> {
+  await NumberSeries.updateOne({ key, counter: { $lt: atLeast } }, { $set: { counter: atLeast } });
 }
 
 export const DEFAULT_SERIES = [
@@ -48,4 +53,8 @@ export const DEFAULT_SERIES = [
   { key: 'DN', prefix: 'DN', padding: 6, perFinancialYear: true },
   { key: 'CUST', prefix: 'CUST', padding: 6, perFinancialYear: false },
   { key: 'VND', prefix: 'VND', padding: 6, perFinancialYear: false },
+  // Item codes look like KO1000369: prefix KO, no separator, never restarts.
+  { key: 'ITEM', prefix: 'KO', padding: 7, perFinancialYear: false, separator: '', startAt: 1000000 },
+  // In-store EAN-13 numbers: prefix 20 to 29 + 10 digit sequence + check digit. The counter only moves forward.
+  { key: 'EAN', prefix: '20', padding: 10, perFinancialYear: false, separator: '', startAt: 0 },
 ] as const;

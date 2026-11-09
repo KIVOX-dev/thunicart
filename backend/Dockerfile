@@ -10,6 +10,7 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.base.json turbo.js
 COPY backend/package.json backend/
 COPY shared/package.json shared/
 COPY tooling/package.json tooling/
+COPY vendor vendor
 # The frontend packages are not part of the backend image.
 RUN sed -i '/frontend/d' pnpm-workspace.yaml && pnpm install --filter @thunikart/backend... --no-frozen-lockfile
 COPY shared shared
@@ -31,6 +32,7 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY backend/package.json backend/
 COPY shared/package.json shared/
 COPY tooling/package.json tooling/
+COPY vendor vendor
 RUN sed -i '/frontend/d' pnpm-workspace.yaml && pnpm install --filter @thunikart/backend... --prod --no-frozen-lockfile
 
 # ---- runtime ----

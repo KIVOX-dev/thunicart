@@ -5,6 +5,7 @@ export const NumberSeries = defineModel('NumberSeries', 'number_series', {
   prefix: { type: String, required: true },
   padding: { type: Number, required: true },
   perFinancialYear: { type: Boolean, default: true },
+  separator: { type: String, default: '-' },
   /** "2026-27", or "" for series that never restart. */
   financialYear: { type: String, default: '' },
   counter: { type: Number, default: 0 },
