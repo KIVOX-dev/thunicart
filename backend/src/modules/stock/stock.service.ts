@@ -1,3 +1,4 @@
+import argon2 from 'argon2';
 import mongoose from 'mongoose';
 import type { ListQuery } from '@thunikart/shared';
 import { AppSettings, Grn, Item, StockBalance, StockLedger, Store, Variant, Vendor } from '../../models';
@@ -131,15 +132,17 @@ export async function poFromAlerts(user: AuthUser, input: { vendorId: string; st
 }
 
 // ---------- operations settings ----------
+const settingsDto = (s: Awaited<ReturnType<typeof getOperationsSettings>>) => {
+  const { managerPinHash, ...rest } = s;
+  return { ...rest, managerPinSet: !!managerPinHash, updatedAt: iso(s.updatedAt) ?? new Date(0).toISOString() };
+};
 export async function saveOperationsSettings(input: any, audit: Audit) {
-  const before = await getOperationsSettings();
-  await AppSettings.updateOne({ singleKey: 'main' }, { $set: input, $inc: { version: 1 }, $setOnInsert: { singleKey: 'main' } }, { upsert: true });
-  const after = await getOperationsSettings();
+  const before = settingsDto(await getOperationsSettings());
+  const { managerPin, ...set } = input;
+  if (managerPin) set.managerPinHash = await argon2.hash(managerPin, { type: argon2.argon2id });
+  await AppSettings.updateOne({ singleKey: 'main' }, { $set: set, $inc: { version: 1 }, $setOnInsert: { singleKey: 'main' } }, { upsert: true });
+  const after = settingsDto(await getOperationsSettings());
   audit({ entity: 'settings', entityId: 'operations', action: 'update', before, after });
-  return { ...after, updatedAt: iso(after.updatedAt) ?? new Date().toISOString() };
+  return after;
 }
-export async function readOperationsSettings() {
-  const s = await getOperationsSettings();
-  return { allowNegativeStock: s.allowNegativeStock, poApprovalLimit: s.poApprovalLimit, reorderTargetMultiplier: s.reorderTargetMultiplier, version: s.version, updatedAt: iso(s.updatedAt) ?? new Date(0).toISOString() };
-}
-
+export async function readOperationsSettings() { return settingsDto(await getOperationsSettings()); }

@@ -6,7 +6,14 @@ export const AppSettings = defineModel('AppSettings', 'app_settings', {
   allowNegativeStock: { type: Boolean, default: false },
   poApprovalLimit: { ...paise, default: 5_000_000 }, // Rs 50,000 including GST
   reorderTargetMultiplier: { type: Number, default: 2 },
-}, [[{ singleKey: 1 }, { unique: true }]]);
+  maxDiscountPct: { type: Object, default: { Admin: 100, Sales: 10, 'Buyer Purchase': 0, Accounts: 0 } },
+  managerPinHash: { type: String, default: null },
+  requireOpenShift: { type: Boolean, default: false },
+  returnWindowDays: { type: Number, default: 7 },
+  returnDiscountedItems: { type: Boolean, default: false },
+  defectReportHours: { type: Number, default: 48 },
+  loyalty: { type: Object, default: { enabled: false, pointsPer100: 0, pointValuePaise: 0, minRedeem: 0, expiryDays: 0 } },
+}, [[{ singleKey: 1 }, { unique: true }]], { minimize: false });
 
 export const StockAudit = defineModel('StockAudit', 'stock_audits', {
   auditNumber: { type: String, required: true },

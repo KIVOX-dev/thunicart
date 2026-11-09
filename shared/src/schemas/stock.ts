@@ -120,8 +120,17 @@ export const operationsSettingsBody = z.object({
   poApprovalLimit: z.number().int().min(0),
   /** Suggested order quantity = reorder level x this, minus what is available. */
   reorderTargetMultiplier: z.number().min(1).max(10),
+  /** Each role's maximum discount percent at the counter. Above it a manager PIN is needed. */
+  maxDiscountPct: z.record(z.string(), z.number().min(0).max(100)).optional(),
+  /** Set or change the manager approval PIN (stored hashed, never returned). */
+  managerPin: z.string().min(4).max(20).optional(),
+  requireOpenShift: z.boolean().optional(),
+  returnWindowDays: z.number().int().min(0).max(365).optional(),
+  returnDiscountedItems: z.boolean().optional(),
+  defectReportHours: z.number().int().min(1).max(720).optional(),
+  loyalty: z.object({ enabled: z.boolean(), pointsPer100: z.number().min(0), pointValuePaise: z.number().int().min(0), minRedeem: z.number().int().min(0), expiryDays: z.number().int().min(0) }).optional(),
 });
-export const operationsSettingsDto = operationsSettingsBody.extend({ version: z.number().int(), updatedAt: z.string() });
+export const operationsSettingsDto = operationsSettingsBody.omit({ managerPin: true }).extend({ managerPinSet: z.boolean(), version: z.number().int(), updatedAt: z.string() });
 
 export const auditScanResponse = z.object({ itemCode: z.string(), name: z.string(), size: z.string().nullable(), countedQty: z.number().int(), systemQty: z.number().int() });
 export const auditApproveResponse = auditDto.extend({ postedLines: z.number().int() });

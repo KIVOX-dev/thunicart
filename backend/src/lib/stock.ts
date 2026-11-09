@@ -15,7 +15,13 @@ export interface StockEntry {
 
 export async function getOperationsSettings(session?: ClientSession) {
   const s: any = await AppSettings.findOne({ singleKey: 'main' }).session(session ?? null).lean();
-  return { allowNegativeStock: !!s?.allowNegativeStock, poApprovalLimit: s?.poApprovalLimit ?? 5_000_000, reorderTargetMultiplier: s?.reorderTargetMultiplier ?? 2, version: s?.version ?? 0, updatedAt: s?.updatedAt ?? null };
+  return {
+    allowNegativeStock: !!s?.allowNegativeStock, poApprovalLimit: s?.poApprovalLimit ?? 5_000_000, reorderTargetMultiplier: s?.reorderTargetMultiplier ?? 2,
+    maxDiscountPct: (s?.maxDiscountPct ?? { Admin: 100, Sales: 10, 'Buyer Purchase': 0, Accounts: 0 }) as Record<string, number>, managerPinHash: (s?.managerPinHash ?? null) as string | null,
+    requireOpenShift: !!s?.requireOpenShift, returnWindowDays: s?.returnWindowDays ?? 7, returnDiscountedItems: !!s?.returnDiscountedItems, defectReportHours: s?.defectReportHours ?? 48,
+    loyalty: (s?.loyalty ?? { enabled: false, pointsPer100: 0, pointValuePaise: 0, minRedeem: 0, expiryDays: 0 }) as { enabled: boolean; pointsPer100: number; pointValuePaise: number; minRedeem: number; expiryDays: number },
+    version: s?.version ?? 0, updatedAt: s?.updatedAt ?? null,
+  };
 }
 
 /**

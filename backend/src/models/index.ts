@@ -6,4 +6,5 @@ export { Vendor, Customer, LoyaltyLedger, WalletLedger } from './parties';
 export { ImportBatch, ImportEffect, ReviewItem, ImportMapping, LabelTemplate } from './imports';
 export { PurchaseOrder, Grn, PurchaseBill, PurchaseReturn, VendorPayment } from './purchase';
 export { AppSettings, StockAudit, StockTransfer, TransferDiscrepancy } from './stockops';
+export { SalesBill, Shift, SalesReturn } from './sales';
 export { syncAllIndexes } from './indexes';
