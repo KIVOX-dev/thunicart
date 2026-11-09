@@ -25,7 +25,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
     logger: opts.logger === false ? false : { level: cfg.isProd ? 'info' : 'debug', redact: ['req.headers.authorization', 'req.headers.cookie'] },
     trustProxy: true, // AppSail sits behind a proxy: use the real client IP for rate limits and audit
     bodyLimit: 1024 * 1024,
-    maxParamLength: 600, // signed mock upload tokens are long
+    routerOptions: { maxParamLength: 600 }, // signed mock upload tokens are long
     genReqId: (req) => {
       const incoming = req.headers['x-request-id'];
       return typeof incoming === 'string' && /^[\w-]{8,64}$/.test(incoming) ? incoming : randomUUID();

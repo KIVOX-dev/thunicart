@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Customer, Hsn, GstRate, LoyaltyLedger, StockBalance, StockLedger, Store, Variant } from '../src/models';
-import { ADMIN, makeGstin, setupTest, validProfile, type TestCtx } from './helpers';
+import { makeGstin, setupTest, validProfile, type TestCtx } from './helpers';
 
 let t: TestCtx;
 const A = '/api/v1';

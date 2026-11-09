@@ -222,7 +222,8 @@ export async function applyStockUnits(units: Unit[], ctx: ApplyCtx): Promise<App
         effects.push({ batchId: ctx.batchId, coll: 'items', docId: String(item._id), action: 'updated', before: itemBefore });
       }
       if (!u.hasHistory) await postOpening(String(ex._id), r); // a variant that already has stock history never gets a second opening balance
-      queueReview(r, String(ex.itemId), String(ex._id));
+      // A variant that already has an open review row (from an earlier import) keeps that one: no duplicates on re-import.
+      if (!(await ReviewItem.exists({ variantId: ex._id, status: 'open' }).session(ctx.session))) queueReview(r, String(ex.itemId), String(ex._id));
       res.updated++;
       continue;
     }

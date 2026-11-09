@@ -35,7 +35,7 @@ export async function renderLabelsPdf(template: LabelTemplateData, labels: Label
     if (has('barcode')) {
       let png = cache.get(l.barcode);
       if (!png) { png = await barcodePng(l.barcode); cache.set(l.barcode, png); }
-      const bh = Math.max(h * 0.36, 14);
+      const bh = Math.max(h * 0.42, 14);
       doc.image(png, pad, y, { width: w - 2 * pad, height: bh });
       y += bh + 1;
     }

@@ -35,7 +35,7 @@ export const uploadRoutes = [
       const rule = RULES[body.purpose]!;
       if (!rule.any.some((p) => user.permissions.has(p))) throw forbidden(`You need one of: ${rule.any.join(', ')}`);
       const ct = body.contentType.toLowerCase();
-      if (!rule.types.includes(ct)) throw badRequest('This file type is not allowed', [{ path: 'contentType', message: `Allowed for ${body.purpose}: ${rule.types.filter((t) => t !== 'application/octet-stream').join(', ')}` }]);
+      if (!rule.types.map((x) => x.toLowerCase()).includes(ct)) throw badRequest('This file type is not allowed', [{ path: 'contentType', message: `Allowed for ${body.purpose}: ${rule.types.filter((t) => t !== 'application/octet-stream').join(', ')}` }]);
       if (body.size > rule.max) throw badRequest('This file is too large', [{ path: 'size', message: `Maximum for ${body.purpose} is ${rule.max / MB} MB` }]);
       if (rule.exts && !rule.exts.some((e) => body.filename.toLowerCase().endsWith(e))) throw badRequest('Unsupported file extension', [{ path: 'filename', message: `Use ${rule.exts.join(', ')}` }]);
       const d = new Date();
@@ -56,7 +56,7 @@ export const uploadRoutes = [
       const body = req.body as Buffer;
       if (!Buffer.isBuffer(body) || !body.length) throw badRequest('No file was sent');
       if (body.length > maxBytesForKey(t.key)) throw badRequest('This file is too large');
-      if ((req.headers['content-type'] ?? '').split(';')[0] !== t.contentType) throw badRequest('Content-Type does not match the presigned request');
+      if ((req.headers['content-type'] ?? '').split(';')[0]!.trim().toLowerCase() !== t.contentType.toLowerCase()) throw badRequest('Content-Type does not match the presigned request');
       await localStorageAdapter.putObject(t.bucket, t.key, body, t.contentType);
       return { ok: true as const };
     },

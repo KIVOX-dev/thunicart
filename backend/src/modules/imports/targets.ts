@@ -95,10 +95,10 @@ function autoMapHeaders(target: Target, headers: string[]) { return autoMap(targ
 export function suggestMapping(target: Target, sheetName: string, headers: string[], saved: { name: string; mapping: Record<string, string> }[]) {
   const norm = new Set(headers.map(normHeader));
   const candidates = [
-    ...BUILTIN_MAPPINGS.filter((b) => b.targets.includes(target)).map((b) => ({ name: b.name, mapping: b.mapping, sheetMatch: b.sheetPattern.test(sheetName) })),
-    ...saved.map((s) => ({ name: s.name, mapping: s.mapping, sheetMatch: false })),
+    ...BUILTIN_MAPPINGS.filter((b) => b.targets.includes(target)).map((b) => ({ name: b.name, mapping: b.mapping, options: b.options ?? {}, sheetMatch: b.sheetPattern.test(sheetName) })),
+    ...saved.map((s) => ({ name: s.name, mapping: s.mapping, options: {} as Record<string, unknown>, sheetMatch: false })),
   ];
-  let best: { name: string; mapping: Record<string, string>; score: number } | null = null;
+  let best: { name: string; mapping: Record<string, string>; options: Record<string, unknown>; score: number } | null = null;
   for (const c of candidates) {
     const cols = Object.values(c.mapping);
     if (!cols.length) continue;
@@ -106,5 +106,5 @@ export function suggestMapping(target: Target, sheetName: string, headers: strin
     const score = hit / cols.length + (c.sheetMatch ? 0.5 : 0);
     if (hit / cols.length >= 0.7 && (!best || score > best.score)) best = { ...c, score };
   }
-  return best ? { name: best.name, mapping: best.mapping } : null;
+  return best ? { name: best.name, mapping: best.mapping, options: best.options } : null;
 }

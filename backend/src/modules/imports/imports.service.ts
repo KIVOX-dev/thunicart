@@ -28,7 +28,7 @@ async function suggestedFor(target: Target, sheets: SheetMeta[]) {
   const sheet = pickSheet(sheets, target);
   if (!sheet) return null;
   const s = suggestMapping(target, sheet.name, sheet.headers, saved) ?? { name: 'Auto matched columns', mapping: autoMap(target, sheet.headers) };
-  return { name: s.name, sheet: sheet.name, headerRow: sheet.headerRow, mapping: s.mapping };
+  return { name: s.name, sheet: sheet.name, headerRow: sheet.headerRow, mapping: s.mapping, options: (s as any).options ?? {} };
 }
 function pickSheet(sheets: SheetMeta[], target: Target) {
   const hint = target === 'vendors' ? /vendor/i : target === 'customers' ? /customer/i : /stock/i;
@@ -86,7 +86,10 @@ export async function setMapping(id: string, input: any, audit: Audit) {
   for (const f of FIELDS[b.target as Target]) if (f.required && !input.mapping[f.key]) errs.push({ path: `mapping.${f.key}`, message: `${f.label} must be mapped` });
   if (errs.length) throw badRequest('Column mapping is not valid', errs);
   b.sheet = input.sheet; b.headerRow = input.headerRow; b.mapping = input.mapping; b.status = 'mapped'; b.preview = null;
-  b.options = { ...(b.options ?? {}), storeId: input.storeId, asOf: input.asOf };
+  // A saved mapping can carry options (the Krishnas Orchids stock sheet is dated 7 Nov 2026). Use them unless the caller gave their own.
+  const sug = b.options?.suggested;
+  const sameAsSuggested = sug && JSON.stringify(sug.mapping) === JSON.stringify(input.mapping);
+  b.options = { ...(b.options ?? {}), storeId: input.storeId, asOf: input.asOf ?? (sameAsSuggested ? sug.options?.asOf : undefined) };
   b.mappingName = input.saveMappingAs ?? b.options?.suggested?.name ?? null;
   b.markModified('options'); b.markModified('mapping');
   await b.save();
@@ -137,6 +140,9 @@ export async function previewImport(id: string, audit: Audit) {
     for (const [k, n] of [...tally.entries()].sort((a, c) => c[1] - a[1])) notes.push(`${n} ${REASON_TEXT[k] ?? k}`);
     const products = r.units.filter((u: Unit) => u.kind === 'new_item').length;
     notes.push(`${r.plan.newRows} new variants will form ${products} products (same brand, model and category become one product)`);
+    // Source totals often include negative quantities (oversold in the old system). They are not posted, so say how the totals reconcile.
+    const neg = r.stock!.rows.filter((x) => x.qty < 0);
+    for (const x of neg) notes.push(`Row ${x.row} (${x.code}) has quantity ${x.qty} at cost ${(x.baseCost / 100).toFixed(2)}. It is not posted (no negative stock). The source file's own total includes it, so imported pieces differ from that total by ${x.qty} and cost value by ${((x.qty * x.baseCost) / 100).toFixed(2)}.`);
     if (b.target === 'items') notes.push('Opening stock is not posted for target "items". Use "opening_stock" to also post quantities.');
   }
   const totals = { rows: counts.new + counts.updated, pieces: r.plan.pieces ?? 0, costValue: r.plan.costValue ?? 0, currency: 'INR' as const };
@@ -263,6 +269,12 @@ export async function rollbackImport(id: string, user: AuthUser, audit: Audit) {
     const later = await StockLedger.countDocuments({ variantId: { $in: touchedVariants }, docNumber: { $ne: id } });
     if (later) throw businessRule(`Rollback is blocked: ${later} stock movement(s) happened after this import. Reverse those first.`, 'ROLLBACK_BLOCKED');
   }
+  // Variants added later to an imported product (for example by splitting sizes) go with the product, unless they have stock history.
+  const createdItems = created('items');
+  const children: any[] = createdItems.length ? await Variant.find({ itemId: { $in: createdItems }, _id: { $nin: variantIds } }, { _id: 1 }).lean() : [];
+  if (children.length && (await StockLedger.countDocuments({ variantId: { $in: children.map((c) => c._id) } }))) {
+    throw businessRule('Rollback is blocked: variants added to the imported products later have stock movements', 'ROLLBACK_BLOCKED');
+  }
   const removed = { items: 0, variants: 0, ledgerRows: 0, others: 0 }; let reverted = 0;
   await withTransaction(async (session) => {
     const s = { session };
@@ -271,6 +283,7 @@ export async function rollbackImport(id: string, user: AuthUser, audit: Audit) {
       const M = MODELS[e.coll]; if (!M) continue;
       await M.updateOne({ _id: e.docId }, { $set: e.before ?? {} }, s); reverted++;
     }
+    if (children.length) removed.variants += (await Variant.deleteMany({ _id: { $in: children.map((c) => c._id) } }, s)).deletedCount;
     for (const c of ['stock_ledger', 'stock_balances', 'loyalty_ledger', 'variants', 'items', 'vendors', 'customers']) {
       const ids = created(c); if (!ids.length) continue;
       const r = await MODELS[c].deleteMany({ _id: { $in: ids } }, s);
