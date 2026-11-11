@@ -8,6 +8,7 @@ import './imports';
 import './purchase';
 import './stockops';
 import './sales';
+import './accounts';
 
 /** Create or update every index declared in code. Run from seed or the migrate script, never at request time. */
 export async function syncAllIndexes(): Promise<void> {

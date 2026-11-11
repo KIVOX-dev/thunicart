@@ -10,3 +10,4 @@ export * from './imports';
 export * from './purchase';
 export * from './stock';
 export * from './sales';
+export * from './accounts';

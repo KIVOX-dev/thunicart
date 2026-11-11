@@ -29,8 +29,8 @@ export const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 /** Called from onSend: stores every explicit entry, or one generic entry for a successful write. */
 export async function persistAudit(req: FastifyRequest, status: number): Promise<void> {
   const isWrite = WRITE_METHODS.has(req.method);
-  if (!isWrite) return;
   const entries = req.auditEntries ?? [];
+  if (!isWrite && !entries.length) return; // reads are not logged, unless the handler records something (for example an export download)
   if (!entries.length && !(status >= 200 && status < 300)) return;
   const base = {
     at: new Date(),

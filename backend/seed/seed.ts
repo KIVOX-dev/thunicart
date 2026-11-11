@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 import argon2 from 'argon2';
 import { ACTIONS, ALL_PERMISSION_KEYS, MODULES } from '@thunikart/shared';
 import hsnMaster from './hsn-master.json';
-import { BusinessProfile, GstRate, Hsn, ImportMapping, LabelTemplate, NumberSeries, Permission, Role, RolePermission, Store, User } from '../src/models';
+import { BusinessProfile, GstRate, Hsn, ImportMapping, ExpenseCategory, LabelTemplate, NumberSeries, Permission, Role, RolePermission, Store, User } from '../src/models';
 import { BUILTIN_MAPPINGS } from '../src/modules/imports/targets';
 import { syncAllIndexes } from '../src/models/indexes';
 import { DEFAULT_SERIES } from '../src/lib/numberSeries';
@@ -72,6 +72,10 @@ export async function runSeed(opts: SeedOptions): Promise<SeedResult> {
     await ImportMapping.updateOne({ target, name: m.name }, { $setOnInsert: { target, name: m.name, headers: Object.values(m.mapping), mapping: m.mapping, options: m.options ?? {}, builtin: true } }, { upsert: true });
   }
   await LabelTemplate.updateOne({ name: '50 x 25 mm' }, { $setOnInsert: { name: '50 x 25 mm', widthMm: 50, heightMm: 25, fields: ['barcode', 'name', 'size', 'color', 'mrp', 'itemCode'], isDefault: true } }, { upsert: true });
+
+  for (const name of ['Rent', 'Salary', 'Electricity', 'Transport', 'Packaging', 'Marketing', 'Other']) {
+    await ExpenseCategory.updateOne({ slug: name.toLowerCase() }, { $setOnInsert: { name, slug: name.toLowerCase(), active: true } }, { upsert: true });
+  }
 
   // First Admin, only when no Admin exists
   const adminRole: any = await Role.findOne({ isAdmin: true }).lean();

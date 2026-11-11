@@ -7,4 +7,5 @@ export { ImportBatch, ImportEffect, ReviewItem, ImportMapping, LabelTemplate } f
 export { PurchaseOrder, Grn, PurchaseBill, PurchaseReturn, VendorPayment } from './purchase';
 export { AppSettings, StockAudit, StockTransfer, TransferDiscrepancy } from './stockops';
 export { SalesBill, Shift, SalesReturn } from './sales';
+export { ExpenseCategory, Expense, Receipt, PaymentVoucher, ExportJob } from './accounts';
 export { syncAllIndexes } from './indexes';
