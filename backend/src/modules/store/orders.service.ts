@@ -11,7 +11,7 @@ import { shipping } from '../../adapters/shipping';
 import { paginate, parseSort, iso, escapeRegex } from '../../lib/list';
 import type { AuthUser } from '../../middleware/auth';
 import type { AuditEntry } from '../../middleware/audit';
-import { availability, clearCart, evaluateCoupon, notify, pincodeInfo, priceCart, sellableStores, setMobile, storeSettings, walletBalance } from './store.service';
+import { availability, clearCart, notify, pincodeInfo, priceCart, sellableStores, setMobile, storeSettings, walletBalance } from './store.service';
 import { cancelInvoice, createInbound, createReturn } from '../sales/sales.service';
 import { StockBalance } from '../../models';
 import { homeStateCodeOf } from './helpers';

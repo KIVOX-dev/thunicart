@@ -183,9 +183,10 @@ async function finalizeCore(user: AuthUser, plan: Plan, input: { tenders: any[];
 
   // stock: SALE rows at the average cost at this moment; a short piece fails the whole finalize with 409
   const lines = [] as any[];
+  const pendingToken = `pending-${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`; // unique per finalize
   for (const [i, l] of plan.lines.entries()) {
     const v: any = await Variant.findById(l.variantId, { baseCost: 1 }).session(session).lean();
-    await postStock({ variantId: l.variantId, storeId: plan.storeId, type: 'SALE', qty: -l.qty, unitCost: v?.baseCost ?? 0, docType: plan.channel, docNumber: 'pending', userId: user.id, at: date, allowNegative: settings.allowNegativeStock }, session);
+    await postStock({ variantId: l.variantId, storeId: plan.storeId, type: 'SALE', qty: -l.qty, unitCost: v?.baseCost ?? 0, docType: plan.channel, docNumber: pendingToken, userId: user.id, at: date, allowNegative: settings.allowNegativeStock }, session);
     lines.push({ ...l, ...calc.lines[i]!, unitCostAtSale: v?.baseCost ?? 0, discountInput: l.discountInput });
   }
   const invoiceNumber = await nextNumber(SERIES[plan.channel], { date, session });
@@ -208,7 +209,7 @@ async function finalizeCore(user: AuthUser, plan: Plan, input: { tenders: any[];
     if (!r) throw businessRule('This bill is already finalized', 'ALREADY_FINALIZED');
     id = String(r._id);
   } else { const [d] = await SalesBill.create([{ ...fields, createdBy: user.id }], { session }); id = String(d!._id); }
-  await (await import('../../models')).StockLedger.updateMany({ docNumber: 'pending', userId: user.id, at: date, docType: plan.channel }, { $set: { docNumber: invoiceNumber, docId: id } }, { session });
+  await (await import('../../models')).StockLedger.updateMany({ docNumber: pendingToken }, { $set: { docNumber: invoiceNumber, docId: id } }, { session });
   if (walletUse > 0 && !input.walletPrepaid) await WalletLedger.create([{ customerId: plan.customerId, amount: -walletUse, type: 'DEBIT', docType: 'INVOICE', docNumber: invoiceNumber }], { session });
   if (input.redeemPoints) await LoyaltyLedger.create([{ customerId: plan.customerId, points: -input.redeemPoints, type: 'REDEEM', docType: 'INVOICE', docNumber: invoiceNumber }], { session });
   if (earn > 0) await LoyaltyLedger.create([{ customerId: plan.customerId, points: earn, type: 'EARN', docType: 'INVOICE', docNumber: invoiceNumber }], { session });

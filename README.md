@@ -50,3 +50,16 @@ sh docs/demo-b0.sh                               # the Phase B0 demo (set ADMIN_
 Copy `backend/.env.example` to `backend/.env`. Any value left as `REPLACE_ME` turns that service into a mock.
 With `NODE_ENV=production` the API refuses to start while any required value is still `REPLACE_ME`.
 Secrets are never committed.
+
+## Documents
+
+| File | What |
+|---|---|
+| `docs/decisions-backend.md` | Every rule chosen, answers received, sample rows that disagreed, open questions |
+| `docs/runbook.md` | Deploy, jobs, backup and restore, key rotation, add a store or user |
+| `docs/cutover.md` | Cutover plan, rollback triggers, go-live checklist |
+| `docs/security-checklist.md` | Security checklist with evidence |
+| `docs/architecture.md` | How it fits together |
+| `docs/third-party-accounts.md` | Every outside account and its owner |
+| `docs/api/openapi.json` | The API (also at `/api/docs`) |
+| `docs/demo-b0.sh`, `demo-b1.sh`, `demo-b2.sh` | curl demos |

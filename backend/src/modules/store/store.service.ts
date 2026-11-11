@@ -2,7 +2,7 @@ import { createHash, randomInt } from 'node:crypto';
 import mongoose from 'mongoose';
 import { config } from '../../config/env';
 import { Address, Banner, BlogPost, Brand, Cart, Category, CmsPage, Coupon, CouponUse, Customer, CustomerOtp, Item, Order, StockBalance, StockLedger, Store, StoreSession, StoreSettings, Variant, Wishlist, WalletLedger } from '../../models';
-import { AppError, badRequest, businessRule, conflict, forbidden, notFound, unauthorized } from '../../lib/errors';
+import { AppError, businessRule, conflict, forbidden, notFound, unauthorized } from '../../lib/errors';
 import { rateLimitHit } from '../../middleware/rateLimit';
 import { email as mailer, brandedMail } from '../../adapters/email';
 import { verifyGoogleIdToken } from '../../adapters/auth/google';
@@ -198,9 +198,9 @@ export async function listProducts(q: any) {
   const items: any[] = await Item.find(f).lean();
   const vs: any[] = await Variant.find({ itemId: { $in: items.map((i) => i._id) }, active: true }).lean();
   const av = await availability(vs.map((v) => String(v._id))); const names = await nameMaps();
-  const sold = new Map<string, number>((await StockLedger.aggregate([{ $match: { type: 'SALE', at: { $gte: new Date(Date.now() - 90 * 86400000) } } }, { $group: { _id: '$variantId', q: { $sum: { $multiply: ['$qty', -1] } } } }])).map((r) => [String(r._id), r.q]));
+  const sold = new Map<string, number>(q.sort !== 'popularity' ? [] : (await StockLedger.aggregate([{ $match: { type: 'SALE', at: { $gte: new Date(Date.now() - 90 * 86400000) } } }, { $group: { _id: '$variantId', q: { $sum: { $multiply: ['$qty', -1] } } } }])).map((r) => [String(r._id), r.q]));
   const by = new Map<string, any[]>(); for (const v of vs) { const k = String(v.itemId); by.set(k, [...(by.get(k) ?? []), v]); }
-  let rows = [] as any[];
+  const rows = [] as any[];
   for (const item of items) {
     let list = by.get(String(item._id)) ?? []; if (!list.length) continue;
     const all = list;
@@ -266,7 +266,7 @@ async function findCart(customerId: string | undefined, cookieId: string | undef
 }
 async function mergeGuestCart(cookieId: string, customerId: string) {
   const g: any = await Cart.findOne({ cookieId }); if (!g) return;
-  let mine: any = await Cart.findOne({ customerId });
+  const mine: any = await Cart.findOne({ customerId });
   if (!mine) { g.customerId = customerId; g.cookieId = undefined; await g.save(); await Cart.updateOne({ _id: g._id }, { $unset: { cookieId: 1 } }); return; }
   for (const it of g.items) { const ex = mine.items.find((x: any) => String(x.variantId) === String(it.variantId)); if (ex) ex.qty = Math.min(20, ex.qty + it.qty); else mine.items.push(it); }
   mine.couponCode ??= g.couponCode; mine.touchedAt = new Date(); await mine.save(); await Cart.deleteOne({ _id: g._id });

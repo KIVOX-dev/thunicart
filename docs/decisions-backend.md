@@ -155,3 +155,63 @@ The brief names actions that are not among the six (view, create, edit, delete, 
 2. Should freight and other charges on the vendor's **bill** also be added to stock cost? (Today only freight on the GRN is.)
 3. Over-receipt tolerance: should small over-receipts (for example up to 2%) be allowed without approval? Today any excess needs approval.
 4. Should the PO approval limit default stay at Rs 50,000?
+
+---
+
+# Phases B3 to B6 (built together, then tested)
+
+## B3: POS, sales, invoices
+| # | Decision | Why |
+|---|---|---|
+| 68 | **The engine** (`lib/invoiceCalc.ts`): line net = qty x price - line discount - proportional share of the bill discount (leftover paisa to the largest line); with GST on, group by HSN + rate, taxable = round(group net x 100 / (100 + rate)), CGST = SGST = round(taxable x rate / 2), IGST = round(taxable x rate); round off = sum of nets - (taxable + tax). Grand total always equals the sum of line nets. | Brief. |
+| 69 | **Sample invoice POS-984322** reproduces exactly: HSN 6109 taxable 771.43, CGST/SGST 19.29; HSN 6204 taxable 1,204.46, CGST/SGST 72.27; tax **183.12** (the PDF printed 183.11), round off **-0.01**, grand 2,159.00. We follow the rules, not the PDF. | Brief. |
+| 70 | **Finalize is one transaction**: stock check, invoice number, invoice, payments, SALE rows, balances, wallet, loyalty. The last piece raced by two cashiers gives one 200 and one 409 and nothing half saved. A number is taken inside the transaction, so numbers have no gaps. | Brief. |
+| 71 | The invoice stores a **snapshot of everything printed**; print (`/sales/invoices/:id/print?size=a4|2in|3in|4x6`, PDF or `&format=html`) reads only the snapshot, so a reprint after the item or business name changes is identical. GST off: title Bill of Supply, no tax columns, no GST summary, no tax wording (tested). | Brief. |
+| 72 | **Discounts**: each role has a max percent (Settings, default Sales 10%). Above it a manager PIN (stored hashed, set by an Admin) is needed; approvals are logged. Online (ECM) orders skip the counter limit. | Brief. |
+| 73 | **Returns follow the client's PDF terms**: discounted items (line, bill, coupon or loyalty discount) are **not returnable**, 7 day window, defects go to a `Damaged Stock` store, refund to the original tender or the wallet, credit note from the CN series. Exchange = return + a new linked bill; the credit pays for it and the difference is collected or refunded. The 48 hour defect rule is applied to **online** orders; at the counter the 7 day window covers defects. | Client answered "true". **Open question 1.** |
+| 74 | **Cancelling an invoice** is a full credit note and restock (`sales.delete`, so Accounts and Admin, not Sales). The invoice stays on file as `cancelled`. | Rule 9. |
+| 75 | **Shifts**: open with opening cash, close with expected cash (opening + cash sales - cash refunds) against counted cash. Billing without an open shift is blocked when `requireOpenShift` is on. Cash expenses are not yet taken off the expected cash. | Brief. **Open question 2.** |
+| 76 | **Loyalty** is off by default (rules in Settings). When on: points earned per Rs 100, redeemed into the wallet or against a bill, never negative. The wallet is a ledger and cannot go negative. | Brief. |
+| 77 | **B2B counter** (`POST /sales/invoices`): customer with a GSTIN required, IGST for another state, credit tender up to the customer's credit limit with a due date. | Brief. |
+| 78 | **Zod `.partial()` keeps defaults**, so an edit that omitted a field reset it (showOnWebsite, active, reorderLevel...). Found in B5 testing. Every PATCH style body now uses `patchOf()` (no defaults). | Bug fix, affected B1 to B3 edits. |
+
+## B4: accounting, GST, reports, exports
+| # | Decision | Why |
+|---|---|---|
+| 79 | Accounts stay simple: expenses with editable categories, customer receipts, other payment vouchers, a daybook by mode (cash, UPI, card, bank; wallet and credit are not cash). B2B customer outstanding = credit invoices - credit-note refunds to credit - receipts. | Brief. |
+| 80 | **GST reports** cover only invoices and credit notes made while GST was on, from the go-live moment. GSTR-1 tables 4, 5 (inter state to unregistered above Rs 2.5 lakh), 7, 9B, 12, 13; JSON in the portal offline structure, version `GST3.0.4` (constant `GSTR1_FORMAT_VERSION`); Excel has a sheet per table. While GST is off every GST endpoint returns `{gstMode: "off"}`. | Brief. **Open question 3.** |
+| 81 | GSTR-3B is a **worksheet for the CA, not a filing**: outward supplies net of credit notes, inter state split, eligible ITC from purchase bills net of debit notes, net payable. Checks before export list invoices with no HSN, no state, or a B2B customer without a valid GSTIN. | Brief. |
+| 82 | The 11 reports each return JSON (paged, with totals) and the **same data** as xlsx, csv and pdf. Margin is net sales excluding tax less the cost recorded on the sale (weighted average at that moment); profit and loss says so. A report for a past month does not change after later sales (tested). | Brief. |
+| 83 | Exports run as **background jobs** (`export_jobs`), file kept 7 days in the private bucket, every create and download logged. **Download everything** is a zip of Excel files incl. the 27 column Sales register and the Purchase register layouts; tax columns appear only while GST is on and bills before go-live say Non GST. The optional monthly email of the full export is **not built**. | Brief. |
+| 84 | Reports load the period's documents and total them in memory. Fine for a shop; move to aggregation pipelines if volume grows 10 times. | Practical. |
+
+## B5: online store
+| # | Decision | Why |
+|---|---|---|
+| 85 | **Same stock**: the website sells from the available stock summed over every sellable store (all except Damaged), the same balances the POS reads. An order must be fillable from **one store**; it holds the stock there (ONLINE_ORDER_RESERVE, 15 minutes). If a single store cannot fill the whole cart, checkout says so; split shipments are not built. | Brief + scope. **Open question 4.** |
+| 86 | **Payment flow** as in the brief: server creates the order and the Razorpay order (paise); the browser's payment id and signature are recorded but never confirm; the **webhook** (HMAC over the raw body, constant time) confirms once. Raw events are stored and processed once; a tampered signature is 400. Amount mismatches are ignored. A payment after the hold expired is **refunded automatically** or flagged `needs_attention`. | Brief. |
+| 87 | Confirming a prepaid order makes the **ECM invoice** in the same transaction in which the hold turns into SALE rows. **COD** is accepted at once (stock stays held) and is invoiced **at delivery**, when the cash is settled. Wallet money is taken at checkout (wallet first); a wallet that covers everything confirms immediately. | Brief. |
+| 88 | **Shipping and COD fees are not on the invoice.** They are recorded on the order and the invoice snapshot; the invoice (and its tax) covers the goods. If the client wants shipping taxed and invoiced as a line, that is a small change in B3 logic. | Simplification. **Open question 5.** |
+| 89 | **Order states** with only legal moves, each logged with who and when. Customers cancel before packed (money back to the wallet; paid orders get a full credit note). Returns: request with reason and up to 4 photo keys, approve or reject with a note (reverse pickup via the shipping adapter), mark received, refund to the wallet (or original) with restock or damaged stock. Discounted, coupon and window rules are the same as the counter. | Brief. |
+| 90 | **Customer login**: email code (6 digits, 5 minutes, 3 attempts, resend after 30 seconds, hashed with a TTL index, rate limited per email and IP) or Google (mock: `mock:email`). One customer per verified email; a mobile number that matches a shop customer links the online account to that record. **Guest checkout is not built**: checkout needs the email login (the cart works as a guest and merges on login). | Brief. **Open question 6.** |
+| 91 | Coupons: flat, percent with a cap, buy X get Y, first order; dates, minimum cart, total and per customer limits, include and exclude categories and brands, validated on the server. **`stackable` is stored but one coupon per cart is applied.** | Brief. |
+| 92 | **Not built**: web push sending (VAPID keys are read), the optional AI add-on (no hook beyond the product search endpoint), image resizing to WebP, EMI, separate shipping weight rules. Emails use the Brevo adapter with a Thunikart branded template (console mock in development). | Brief says AI only if asked. |
+
+## B6: testing, hardening, go-live
+| # | Decision | Why |
+|---|---|---|
+| 93 | **Backups**: every collection as extended-JSON NDJSON, gzip, AES-256-GCM, SHA-256 per file, uploaded nightly to the private bucket; 30 daily + 8 weekly kept (older objects deleted); `POST /admin/backups/restore-test` restores the latest into a throw-away database, compares counts, drops it and returns the time. `pnpm restore -- <manifestKey>` restores from the bucket alone. Bucket versioning is a B2 setting you turn on. | Brief. |
+| 94 | **Jobs** are called by Catalyst cron at `POST /internal/jobs/:name` with `x-cron-secret`: backup, stockBalanceCheck, reconciliation, reorderDigest, failedJobsSummary, exportCleanup, releaseHolds, activityLogTrim. Results are kept in `job_runs`; Admins are emailed about problems. | Brief. |
+| 95 | **Transaction retries** use a random back-off. The invoice counter and hot stock rows are deliberate single points of ordering (no gaps, no negative stock). | Brief. |
+| 96 | **Load check** (`pnpm --filter @thunikart/backend load-check`, 20 cashiers + 200 shoppers, 5 rounds each, laptop with an in-memory MongoDB, no think time): zero errors, but **p95 does not meet the 500 ms target**: scan 1.1 s, save bill 1.3 s, store home 1.5 s, finalize p50 212 ms with a p95 tail of about 9 s from write conflicts on shared hot rows. Needs a re-run on real hardware (Atlas, AppSail) before go-live, and a decision on the target for the invoice counter under 20 simultaneous finalizes. | Honest result. **Open question 7.** |
+| 97 | `pnpm audit --prod`: 4 findings (2 high, 2 moderate), all in the storefront's `next` / `postcss` dependency (not the backend). | Report. |
+| 98 | Logs carry the path without the query string and redact authorization, cookie, signature and cron headers; the API sends `Cache-Control: no-store`. | Security checklist. |
+
+## Open questions (B3 to B6)
+1. Defects at the counter: should the 48 hour limit apply there too, or is 7 days fine?
+2. Should cash expenses be taken off the expected cash when a shift closes?
+3. GST portal JSON: confirm the format version your CA's offline tool expects (we use `GST3.0.4`).
+4. Online orders: is one store per order acceptable, or do you need split shipments?
+5. Should shipping and COD fees be invoiced (and taxed) as a line?
+6. Do you need guest checkout (no login), or is the email code login fine?
+7. The load target (p95 under 500 ms with 20 cashiers billing at the same moment): confirm after a real-hardware re-run, or tell us the realistic number of simultaneous cashiers.

@@ -298,7 +298,7 @@ describe('B2B counter, shifts, loyalty and inbound orders', () => {
     const { ledgerOnHand } = await import('../src/lib/stock'); const { StockBalance } = await import('../src/models');
     const led = await ledgerOnHand(); const bals: any[] = await StockBalance.find().lean(); const lm = new Map(led.map((l) => [`${l.variantId}:${l.storeId}`, l.qty]));
     for (const b of bals) expect(lm.get(`${b.variantId}:${b.storeId}`) ?? 0).toBe(b.onHand);
-    expect(await StockLedger.countDocuments({ docNumber: 'pending' })).toBe(0);
+    expect(await StockLedger.countDocuments({ docNumber: /^pending-/ })).toBe(0);
   });
   void key;
 });

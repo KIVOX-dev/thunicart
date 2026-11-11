@@ -5,7 +5,7 @@ import { signWebhook, checkoutSignature, setPaymentsForTests } from '../src/adap
 import { setupTest, type TestCtx } from './helpers';
 import { A, api, fixtures, key, setGst, stockOf, tokenFor, type Fx } from './b2.helpers';
 
-let t: TestCtx; let fx: Fx; let h: ReturnType<typeof api>; let custToken: string; let custId: string;
+let t: TestCtx; let fx: Fx; let h: ReturnType<typeof api>; let custToken: string;
 const S = '/api/v1';
 beforeAll(async () => {
   t = await setupTest(); fx = await fixtures(t); h = fx.h;
@@ -87,7 +87,7 @@ describe('catalog', () => {
 
 describe('customer login by email code', () => {
   it('sends a code through the email adapter, logs in, and creates one customer per verified email', async () => {
-    const r = await login('ananya@example.com'); custToken = r.body.accessToken; custId = r.body.customer.id;
+    const r = await login('ananya@example.com'); custToken = r.body.accessToken;
     expect(r.cookies.find((c: any) => c.name === 'tk_store_rt').httpOnly).toBe(true);
     expect(outbox.some((m) => m.to === 'ananya@example.com' && /Your login code/.test(m.html))).toBe(true);
     expect(await Customer.countDocuments({ email: 'ananya@example.com' })).toBe(1);

@@ -9,4 +9,5 @@ export { AppSettings, StockAudit, StockTransfer, TransferDiscrepancy } from './s
 export { SalesBill, Shift, SalesReturn } from './sales';
 export { ExpenseCategory, Expense, Receipt, PaymentVoucher, ExportJob } from './accounts';
 export { CustomerOtp, StoreSession, Address, Wishlist, Cart, Coupon, CouponUse, StoreSettings, Order, WebhookEvent, Banner, CmsPage, BlogPost } from './store';
+export { BackupRun, JobRun } from './ops';
 export { syncAllIndexes } from './indexes';

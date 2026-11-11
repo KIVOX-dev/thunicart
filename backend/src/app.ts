@@ -22,7 +22,7 @@ const DOCS_HTML = `<!doctype html><html><head><meta charset="utf-8"><title>Thuni
 export async function buildApp(opts: { logger?: boolean } = {}): Promise<FastifyInstance> {
   const cfg = config();
   const app = Fastify({
-    logger: opts.logger === false ? false : { level: cfg.isProd ? 'info' : 'debug', redact: ['req.headers.authorization', 'req.headers.cookie'] },
+    logger: opts.logger === false ? false : { level: cfg.isProd ? 'info' : 'debug', redact: ['req.headers.authorization', 'req.headers.cookie', 'req.headers["x-razorpay-signature"]', 'req.headers["x-cron-secret"]'], serializers: { req: (r: any) => ({ method: r.method, url: String(r.url).split('?')[0], id: r.id }) } }, // no query strings: they can hold mobile numbers or emails
     trustProxy: true, // AppSail sits behind a proxy: use the real client IP for rate limits and audit
     bodyLimit: 1024 * 1024,
     routerOptions: { maxParamLength: 600 }, // signed mock upload tokens are long
@@ -47,6 +47,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
   app.addHook('onRequest', async (req, reply) => {
     req.auditEntries = [];
     reply.header('x-request-id', String(req.id));
+    if (req.url.startsWith('/api/v1')) reply.header('cache-control', 'no-store');
   });
   app.addHook('onSend', async (req, reply, payload) => {
     try {

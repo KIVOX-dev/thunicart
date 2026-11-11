@@ -28,7 +28,6 @@ describe('GST off: every report works, GST endpoints return nothing', () => {
 });
 
 describe('GST on: GSTR-1, 3B and the sales register agree', () => {
-  let net = 0;
   beforeAll(async () => {
     await setGst(t, true);
     await sell([{ variantId: fx.tee.id, qty: 3 }], [{ mode: 'upi', amount: 135000 }]); // B2C, intra
@@ -36,7 +35,7 @@ describe('GST on: GSTR-1, 3B and the sales register agree', () => {
     const { makeGstin } = await import('./helpers');
     const b2b = (await h.post('/customers', { accountGroup: 'B2B Trade', name: 'Delhi Traders', mobile: '9811100001', stateCode: '07', gstin: makeGstin('07', 'AAAAA1111A'), creditLimit: 9000000 })).body;
     await h.post('/sales/invoices', { storeId: fx.shop.id, customerId: b2b.id, lines: [{ variantId: fx.dress.id, qty: 3, unitPrice: 112000 }], tenders: [{ mode: 'credit', amount: 336000 }], dueDate: '2026-01-01T00:00:00.000Z' });
-    const inv = (await h.get('/sales/invoices?pageSize=50')).body.items.filter((b: any) => b.gstMode === 'on'); net = inv.reduce((a: number, b: any) => a + b.grandTotal, 0);
+    const inv = (await h.get('/sales/invoices?pageSize=50')).body.items.filter((b: any) => b.gstMode === 'on');
     const ret = (await h.get(`/sales/invoices/${inv[0].id}`)).body; await h.post('/sales/returns', { invoiceId: ret.id, reason: 'size', lines: [{ variantId: ret.lines[0].variantId, qty: 1 }] });
   });
   it('GSTR-1 taxable plus tax equals the sales register total for the same dates (net of credit notes)', async () => {

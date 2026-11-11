@@ -45,6 +45,7 @@ const schema = z.object({
   VAPID_PUBLIC_KEY: z.string().default(PLACEHOLDER),
   VAPID_PRIVATE_KEY: z.string().default(PLACEHOLDER),
   CRON_SECRET: z.string().default(PLACEHOLDER),
+  BACKUP_ENCRYPTION_KEY: z.string().default(PLACEHOLDER),
   SENTRY_DSN: z.string().default(''),
 
   // Seed only: first Admin account. Never used at runtime by the API.
@@ -62,6 +63,8 @@ export interface MockFlags {
   email: boolean;
   shipping: boolean;
   googleAuth: boolean;
+  cron: boolean;
+  backupKey: boolean;
 }
 
 export interface Config extends Env {
@@ -76,7 +79,7 @@ const REQUIRED_IN_PRODUCTION = [
   'MONGODB_URI', 'JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET', 'B2_KEY_ID', 'B2_APPLICATION_KEY', 'B2_ENDPOINT', 'B2_REGION',
   'B2_BUCKET_MEDIA', 'B2_BUCKET_BACKUPS', 'B2_PUBLIC_BASE_URL', 'RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET',
   'RAZORPAY_WEBHOOK_SECRET', 'SHIPROCKET_EMAIL', 'SHIPROCKET_PASSWORD', 'BREVO_API_KEY', 'BREVO_SENDER_EMAIL',
-  'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'VAPID_PUBLIC_KEY', 'VAPID_PRIVATE_KEY', 'CRON_SECRET',
+  'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'VAPID_PUBLIC_KEY', 'VAPID_PRIVATE_KEY', 'CRON_SECRET', 'BACKUP_ENCRYPTION_KEY',
 ] as const;
 
 export function loadConfig(source: NodeJS.ProcessEnv = process.env): Config {
@@ -115,9 +118,11 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): Config {
     email: [env.BREVO_API_KEY, env.BREVO_SENDER_EMAIL].some(isPlaceholder),
     shipping: [env.SHIPROCKET_EMAIL, env.SHIPROCKET_PASSWORD].some(isPlaceholder),
     googleAuth: [env.GOOGLE_CLIENT_ID, env.GOOGLE_CLIENT_SECRET].some(isPlaceholder),
+    cron: isPlaceholder(env.CRON_SECRET),
+    backupKey: isPlaceholder(env.BACKUP_ENCRYPTION_KEY),
   };
   for (const [name, on] of Object.entries(mock)) {
-    if (on && name !== 'database') warnings.push(`${name} runs in MOCK mode (keys are REPLACE_ME).`);
+    if (on && name !== 'database' && name !== 'cron' && name !== 'backupKey') warnings.push(`${name} runs in MOCK mode (keys are REPLACE_ME).`);
   }
 
   return {

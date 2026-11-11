@@ -10,6 +10,7 @@ import './stockops';
 import './sales';
 import './accounts';
 import './store';
+import './ops';
 
 /** Create or update every index declared in code. Run from seed or the migrate script, never at request time. */
 export async function syncAllIndexes(): Promise<void> {
