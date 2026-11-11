@@ -9,6 +9,7 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { persistAudit } from './middleware/audit';
 import { registerRoutes } from './lib/route';
 import { allRoutes } from './routes';
+import { compatPlugin } from './modules/compat/compat';
 import { buildOpenApi } from './openapi/builder';
 
 const DOCS_HTML = `<!doctype html><html><head><meta charset="utf-8"><title>Thunikart API</title>
@@ -75,6 +76,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
   app.setNotFoundHandler(notFoundHandler);
 
   registerRoutes(app, allRoutes, API_PREFIX);
+  await app.register(compatPlugin);
 
   let spec: unknown;
   app.get('/api/docs/openapi.json', async () => (spec ??= buildOpenApi()));
