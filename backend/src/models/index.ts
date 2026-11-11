@@ -8,4 +8,5 @@ export { PurchaseOrder, Grn, PurchaseBill, PurchaseReturn, VendorPayment } from 
 export { AppSettings, StockAudit, StockTransfer, TransferDiscrepancy } from './stockops';
 export { SalesBill, Shift, SalesReturn } from './sales';
 export { ExpenseCategory, Expense, Receipt, PaymentVoucher, ExportJob } from './accounts';
+export { CustomerOtp, StoreSession, Address, Wishlist, Cart, Coupon, CouponUse, StoreSettings, Order, WebhookEvent, Banner, CmsPage, BlogPost } from './store';
 export { syncAllIndexes } from './indexes';

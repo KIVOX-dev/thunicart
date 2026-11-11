@@ -42,8 +42,8 @@ export function buildOpenApi() {
     const full = (def.root ? '' : API_PREFIX) + def.path.replace(/:([A-Za-z]+)/g, '{$1}');
     const status = String(def.status ?? 200);
     const errors = new Set<number>([...(def.errors ?? [])]);
-    if (def.permission !== 'public') { errors.add(401); }
-    if (def.permission !== 'public' && def.permission !== 'authenticated') errors.add(403);
+    if (def.permission !== 'public' && def.permission !== 'customer_optional') { errors.add(401); }
+    if (!['public', 'authenticated', 'customer', 'customer_optional'].includes(def.permission)) errors.add(403);
     if (def.body || def.query || def.params) errors.add(400);
     if (def.idempotency) { errors.add(409); errors.add(422); }
     if (def.rateLimit) errors.add(429);

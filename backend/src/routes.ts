@@ -14,6 +14,7 @@ import { purchaseRoutes } from './modules/purchase/purchase.routes';
 import { stockRoutes } from './modules/stock/stock.routes';
 import { salesRoutes } from './modules/sales/sales.routes';
 import { reportsRoutes } from './modules/reports/reports.routes';
+import { storeRoutes } from './modules/store/store.routes';
 
 /** Every route in the API. Later phases append their module routes here. */
 export const allRoutes = [
@@ -33,4 +34,5 @@ export const allRoutes = [
   ...stockRoutes,
   ...salesRoutes,
   ...reportsRoutes,
+  ...storeRoutes,
 ];

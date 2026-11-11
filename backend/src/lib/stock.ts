@@ -57,7 +57,10 @@ export async function postStock(e: StockEntry, session: ClientSession) {
 export async function reserveStock(e: { variantId: string; storeId: string; qty: number; docType: string; docNumber: string; userId?: string }, session: ClientSession) {
   const key = { variantId: new mongoose.Types.ObjectId(e.variantId), storeId: new mongoose.Types.ObjectId(e.storeId) };
   const r = await StockBalance.findOneAndUpdate({ ...key, $expr: { $gte: [{ $subtract: ['$onHand', '$reserved'] }, e.qty] } }, { $inc: { reserved: e.qty } }, { new: true, session }).lean();
-  if (!r) throw new AppError(409, 'INSUFFICIENT_STOCK', 'Not enough stock to reserve');
+  if (!r) {
+    const v: any = await Variant.findById(e.variantId, { itemCode: 1 }).session(session).lean();
+    throw new AppError(409, 'INSUFFICIENT_STOCK', `${v?.itemCode ?? 'An item'} is no longer available in the quantity you asked for`, [{ path: `variantId:${e.variantId}`, message: 'Not enough stock' }]);
+  }
   await StockLedger.create([{ ...key, type: 'ONLINE_ORDER_RESERVE', qty: e.qty, unitCost: 0, docType: e.docType, docNumber: e.docNumber, userId: e.userId, at: new Date() }], { session });
 }
 export async function releaseStock(e: { variantId: string; storeId: string; qty: number; docType: string; docNumber: string; userId?: string }, session: ClientSession) {

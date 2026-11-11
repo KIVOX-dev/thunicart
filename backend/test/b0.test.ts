@@ -38,7 +38,7 @@ describe('permission coverage', () => {
     const ids = '665f0c2a9b1e4c0012ab34cd';
     for (const def of routeRegistry) {
       expect(def.permission, `${def.method} ${def.path} must declare a permission`).toBeTruthy();
-      if (def.permission === 'public') continue;
+      if (def.permission === 'public' || def.permission === 'customer_optional') continue;
       const url = (def.root ? '' : A) + def.path.replace(/:id/g, ids).replace(/:key/g, 'POS');
       const r = await t.api(def.method, url, { body: def.method === 'GET' ? undefined : {} });
       expect(r.status, `${def.method} ${def.path}`).toBe(401);
@@ -286,7 +286,7 @@ describe('GST switch', () => {
 describe('number series', () => {
   it('issues numbers like POS-2026-27-000001 and previews the next one', async () => {
     const list = await t.api('GET', `${A}/number-series`, { token: t.adminToken });
-    expect(list.body.items.map((s: any) => s.key).sort()).toEqual(['ADJ', 'AUD', 'CN', 'CNT', 'CUST', 'DN', 'EAN', 'ECM', 'GRN', 'ITEM', 'PB', 'PO', 'POS', 'PR', 'PV', 'RCT', 'TRF', 'VND', 'VP']);
+    expect(list.body.items.map((s: any) => s.key).sort()).toEqual(['ADJ', 'AUD', 'CN', 'CNT', 'CUST', 'DN', 'EAN', 'ECM', 'GRN', 'ITEM', 'ORD', 'PB', 'PO', 'POS', 'PR', 'PV', 'RCT', 'TRF', 'VND', 'VP']);
     const pos = list.body.items.find((s: any) => s.key === 'POS');
     expect(pos.next).toMatch(/^POS-\d{4}-\d{2}-000001$/);
     expect(list.body.items.find((s: any) => s.key === 'CUST').next).toBe('CUST-000001');

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { objectId } from './common';
+import { objectId, patchOf } from './common';
 
 const stateCode = z.string().regex(/^\d{2}$/, 'State code is two digits');
 const mobile = z.string().trim().regex(/^[6-9]\d{9}$/, 'Enter a 10 digit Indian mobile number');
@@ -23,7 +23,7 @@ export const vendorBody = z.object({
   glAccount: z.string().trim().max(20).default(''),
   active: z.boolean().default(true),
 });
-export const vendorUpdateBody = vendorBody.partial();
+export const vendorUpdateBody = patchOf(vendorBody);
 export const vendorDto = vendorBody.extend({ id: objectId, vendorId: z.string(), country: z.string() });
 
 export const customerBody = z.object({
@@ -40,7 +40,7 @@ export const customerBody = z.object({
   creditLimit: z.number().int().min(0).default(0),
   active: z.boolean().default(true),
 });
-export const customerUpdateBody = customerBody.partial();
+export const customerUpdateBody = patchOf(customerBody);
 export const customerDto = customerBody.extend({
   id: objectId, customerId: z.string(), country: z.string(),
   /** Ledgers, not editable. */

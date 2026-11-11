@@ -1,8 +1,7 @@
 import { z } from 'zod';
 import {
   brandBody, brandDto, categoryBody, categoryDto, gstRateBody, gstRateDto, gstRateResolveQuery, gstRateResolveResponse, hsnBody, hsnDto,
-  idParam, labelTemplateBody, labelTemplateDto, listQuery, listResponse, okResponse, storeBody, storeDto, warehouseBody,
-} from '@thunikart/shared';
+  idParam, labelTemplateBody, labelTemplateDto, listQuery, listResponse, okResponse, storeBody, storeDto, warehouseBody, patchOf } from '@thunikart/shared';
 import { Brand, Category, GstRate, Hsn, Item, LabelTemplate, Store } from '../../models';
 import { crudRoutes, slugify } from '../../lib/crud';
 import { defineRoute } from '../../lib/route';
@@ -22,36 +21,36 @@ registerUsageCheck('hsn', async (id) => {
 });
 
 const categories = crudRoutes({
-  path: '/categories', tag: 'Masters', label: 'category', module: 'items', model: Category, body: categoryBody, updateBody: categoryBody.partial(), dto: categoryDto,
+  path: '/categories', tag: 'Masters', label: 'category', module: 'items', model: Category, body: categoryBody, updateBody: patchOf(categoryBody), dto: categoryDto,
   toDto: (d) => ({ id: String(d._id), name: d.name, slug: d.slug, parentId: oidOrNull(d.parentId), section: d.section ?? null, active: !!d.active }),
   searchFields: ['name'], sortable: ['name', 'createdAt'], defaultSort: { name: 1 }, usageEntity: 'category',
   prepare: (input, existing) => ({ ...input, ...(input.name ? { slug: slugify(input.name) } : existing ? {} : {}) }),
   example: { name: 'Kurtis', section: 'Women' },
 });
 const brands = crudRoutes({
-  path: '/brands', tag: 'Masters', label: 'brand', module: 'items', model: Brand, body: brandBody, updateBody: brandBody.partial(), dto: brandDto,
+  path: '/brands', tag: 'Masters', label: 'brand', module: 'items', model: Brand, body: brandBody, updateBody: patchOf(brandBody), dto: brandDto,
   toDto: (d) => ({ id: String(d._id), name: d.name, slug: d.slug, active: !!d.active }),
   searchFields: ['name'], sortable: ['name', 'createdAt'], defaultSort: { name: 1 }, usageEntity: 'brand',
   prepare: (input) => ({ ...input, ...(input.name ? { slug: slugify(input.name) } : {}) }),
 });
 const hsn = crudRoutes({
-  path: '/hsn', tag: 'Masters', label: 'hsn', module: 'items', model: Hsn, body: hsnBody, updateBody: hsnBody.partial(), dto: hsnDto,
+  path: '/hsn', tag: 'Masters', label: 'hsn', module: 'items', model: Hsn, body: hsnBody, updateBody: patchOf(hsnBody), dto: hsnDto,
   toDto: (d) => ({ id: String(d._id), code: d.code, description: d.description ?? '', chapter: d.chapter ?? '', active: !!d.active }),
   searchFields: ['code', 'description'], sortable: ['code'], defaultSort: { code: 1 }, usageEntity: 'hsn',
   example: { code: '6212', description: 'Brassieres, girdles, corsets', chapter: '62' },
 });
 const toStore = (d: any) => ({ id: String(d._id), code: d.code, name: d.name, type: d.type, address: d.address ?? '', active: !!d.active });
 const stores = crudRoutes({
-  path: '/stores', tag: 'Masters', label: 'store', module: 'settings', model: Store, body: storeBody, updateBody: storeBody.partial(), dto: storeDto, toDto: toStore,
+  path: '/stores', tag: 'Masters', label: 'store', module: 'settings', model: Store, body: storeBody, updateBody: patchOf(storeBody), dto: storeDto, toDto: toStore,
   searchFields: ['name', 'code'], sortable: ['name', 'code'], defaultSort: { name: 1 }, usageEntity: 'store',
 });
 // A warehouse is a store of type "warehouse".
 const warehouses = crudRoutes({
-  path: '/warehouses', tag: 'Masters', label: 'warehouse', module: 'settings', model: Store, body: warehouseBody, updateBody: warehouseBody.partial(), dto: storeDto, toDto: toStore,
+  path: '/warehouses', tag: 'Masters', label: 'warehouse', module: 'settings', model: Store, body: warehouseBody, updateBody: patchOf(warehouseBody), dto: storeDto, toDto: toStore,
   searchFields: ['name', 'code'], sortable: ['name', 'code'], defaultSort: { name: 1 }, baseFilter: { type: 'warehouse' }, prepare: (i) => ({ ...i, type: 'warehouse' }), usageEntity: 'store',
 });
 const labelTemplates = crudRoutes({
-  path: '/label-templates', tag: 'Labels', label: 'label template', module: 'items', model: LabelTemplate, body: labelTemplateBody, updateBody: labelTemplateBody.partial(), dto: labelTemplateDto,
+  path: '/label-templates', tag: 'Labels', label: 'label template', module: 'items', model: LabelTemplate, body: labelTemplateBody, updateBody: patchOf(labelTemplateBody), dto: labelTemplateDto,
   toDto: (d) => ({ id: String(d._id), name: d.name, widthMm: d.widthMm, heightMm: d.heightMm, fields: d.fields ?? [], isDefault: !!d.isDefault }),
   searchFields: ['name'], sortable: ['name'], defaultSort: { name: 1 },
   example: { name: '50 x 25 mm', widthMm: 50, heightMm: 25, fields: ['barcode', 'name', 'size', 'color', 'mrp', 'itemCode'], isDefault: true },

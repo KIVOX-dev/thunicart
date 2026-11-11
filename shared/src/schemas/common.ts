@@ -30,3 +30,17 @@ export const listResponse = <T extends z.ZodType>(item: T) =>
 
 export const idParam = z.object({ id: objectId });
 export const okResponse = z.object({ ok: z.literal(true) });
+
+/**
+ * A PATCH body: every field optional and NO defaults. Zod's .partial() keeps defaults, which would silently reset
+ * fields that were not sent (for example showOnWebsite, active, reorderLevel) to their default on every edit.
+ */
+export function patchOf<T extends z.ZodObject<any>>(schema: T): z.ZodObject<{ [K in keyof T['shape']]: z.ZodOptional<any> }> {
+  const out: Record<string, z.ZodType> = {};
+  for (const [k, f] of Object.entries(schema.shape)) {
+    let x: any = f;
+    while (x?._zod?.def?.type === 'default' || x?._zod?.def?.type === 'optional') x = x._zod.def.innerType;
+    out[k] = x.optional();
+  }
+  return z.object(out) as any;
+}

@@ -143,14 +143,14 @@ export async function listBills(q: ListQuery & { channel?: string; invoiceStatus
  * Finalize in ONE transaction: check stock, take the invoice number, write the invoice and payments, write SALE ledger rows and
  * balances, update loyalty and wallet. If anything fails (for example the last piece was sold a moment ago), nothing is saved.
  */
-async function finalizeCore(user: AuthUser, plan: Plan, input: { tenders: any[]; redeemPoints?: number; approval?: any; draftId?: string; creditNoteTender?: number }, audit: Audit, session: Session) {
+async function finalizeCore(user: AuthUser, plan: Plan, input: { tenders: any[]; redeemPoints?: number; approval?: any; draftId?: string; creditNoteTender?: number; walletPrepaid?: boolean; extraBillDiscount?: number }, audit: Audit, session: Session) {
   const settings = await getOperationsSettings(session);
   if (settings.requireOpenShift && plan.channel === 'POS' && !(await openShift(user, plan.storeId, session))) throw businessRule('Open a shift before billing', 'SHIFT_REQUIRED');
   const date = new Date(); const gstOn = await isGstEnabled(session); const biz = await business(session);
   const cust = plan.customerId ? await Customer.findById(plan.customerId).session(session).lean() as any : null;
   if (plan.channel === 'CNT') { if (!cust || cust.accountGroup !== 'B2B Trade' || !cust.gstin) throw badRequest('A B2B counter bill needs a B2B customer with a GSTIN', [{ path: 'customerId', message: 'GSTIN is required' }]); }
   const grossBase = plan.lines.reduce((a, l) => a + l.qty * l.unitPrice - l.lineDiscount, 0);
-  await checkDiscount(user, plan.lines.reduce((a, l) => a + l.qty * l.unitPrice, 0), plan.lines.reduce((a, l) => a + l.lineDiscount, 0) + plan.billDiscount, input.approval, audit);
+  if (plan.channel !== 'ECM') await checkDiscount(user, plan.lines.reduce((a, l) => a + l.qty * l.unitPrice, 0), plan.lines.reduce((a, l) => a + l.lineDiscount, 0) + plan.billDiscount, input.approval, audit);
 
   let redeem = 0;
   if (input.redeemPoints) {
@@ -162,7 +162,7 @@ async function finalizeCore(user: AuthUser, plan: Plan, input: { tenders: any[];
     redeem = Math.min(input.redeemPoints * L.pointValuePaise, grossBase - plan.billDiscount);
   }
   const supply = gstOn ? supplyFor(plan.customer.stateCode || biz.stateCode, biz.stateCode) : 'intra';
-  const calc = calcInvoice(plan.lines.map((l) => ({ qty: l.qty, unitPrice: l.unitPrice, lineDiscount: l.lineDiscount, rate: l.rate, hsn: l.hsn })), plan.billDiscount + redeem, { gstOn, supply });
+  const calc = calcInvoice(plan.lines.map((l) => ({ qty: l.qty, unitPrice: l.unitPrice, lineDiscount: l.lineDiscount, rate: l.rate, hsn: l.hsn })), plan.billDiscount + redeem + (input.extraBillDiscount ?? 0), { gstOn, supply });
   const grand = calc.totals.grandTotal;
 
   // payments: one or more tenders; the amount paid equals the grand total, unless credit is used (B2B only, within the credit limit)
@@ -176,7 +176,7 @@ async function finalizeCore(user: AuthUser, plan: Plan, input: { tenders: any[];
     if (credit + (used[0]?.c ?? 0) > (cust.creditLimit ?? 0)) throw businessRule('This is above the customer credit limit', 'CREDIT_LIMIT_EXCEEDED');
   }
   const walletUse = tenders.filter((t) => t.mode === 'wallet').reduce((a, t) => a + t.amount, 0);
-  if (walletUse > 0) {
+  if (walletUse > 0 && !input.walletPrepaid) {
     if (!plan.customerId) throw badRequest('Choose a customer to pay from the wallet', [{ path: 'tenders', message: 'Customer required' }]);
     if (walletUse > (await walletBalance(plan.customerId, session))) throw businessRule('The wallet does not have enough balance', 'INSUFFICIENT_WALLET');
   }
@@ -209,7 +209,7 @@ async function finalizeCore(user: AuthUser, plan: Plan, input: { tenders: any[];
     id = String(r._id);
   } else { const [d] = await SalesBill.create([{ ...fields, createdBy: user.id }], { session }); id = String(d!._id); }
   await (await import('../../models')).StockLedger.updateMany({ docNumber: 'pending', userId: user.id, at: date, docType: plan.channel }, { $set: { docNumber: invoiceNumber, docId: id } }, { session });
-  if (walletUse > 0) await WalletLedger.create([{ customerId: plan.customerId, amount: -walletUse, type: 'DEBIT', docType: 'INVOICE', docNumber: invoiceNumber }], { session });
+  if (walletUse > 0 && !input.walletPrepaid) await WalletLedger.create([{ customerId: plan.customerId, amount: -walletUse, type: 'DEBIT', docType: 'INVOICE', docNumber: invoiceNumber }], { session });
   if (input.redeemPoints) await LoyaltyLedger.create([{ customerId: plan.customerId, points: -input.redeemPoints, type: 'REDEEM', docType: 'INVOICE', docNumber: invoiceNumber }], { session });
   if (earn > 0) await LoyaltyLedger.create([{ customerId: plan.customerId, points: earn, type: 'EARN', docType: 'INVOICE', docNumber: invoiceNumber }], { session });
   return id;
@@ -246,6 +246,7 @@ export async function createB2bInvoice(user: AuthUser, input: any, audit: Audit)
 
 /** A paid online order comes in as an ECM invoice. The shipping charge is a priced line without stock. Safe to retry (order number is unique). */
 export async function createInbound(user: AuthUser, input: any, audit: Audit, session?: Session) {
+  const couponDiscount = input.couponDiscount ?? 0;
   const existing: any = await SalesBill.findOne({ orderNumber: input.orderNumber }).lean();
   if (existing) return billDto(existing);
   const gstOn = await isGstEnabled(); const biz = await business();
@@ -256,15 +257,18 @@ export async function createInbound(user: AuthUser, input: any, audit: Audit, se
   const plan: Plan = { channel: 'ECM', storeId: String(store._id), customerId: cust.id, customer: { ...cust.snap, address: input.shipTo || cust.snap.address }, lines, billDiscount: 0, billDiscountInput: null, notes: `Online order ${input.orderNumber}`, orderNumber: input.orderNumber };
   let shippingNote = '';
   if (input.shippingCharge > 0) shippingNote = `Shipping ${input.shippingCharge}`;
-  const run = (s: Session) => finalizeCore(user, { ...plan, notes: `${plan.notes}${shippingNote ? ` | ${shippingNote}` : ''}` }, { tenders: input.tenders }, audit, s);
+  const run = (s: Session) => finalizeCore(user, { ...plan, notes: `${plan.notes}${shippingNote ? ` | ${shippingNote}` : ''}` }, { tenders: input.tenders, walletPrepaid: input.walletPrepaid, extraBillDiscount: couponDiscount }, audit, s);
   // The shipping charge is part of what the customer paid, so the tenders must cover goods + shipping.
-  const goods = calcInvoice(lines.map((l) => ({ qty: l.qty, unitPrice: l.unitPrice, lineDiscount: l.lineDiscount, rate: l.rate, hsn: l.hsn })), 0, { gstOn, supply: 'intra' }).totals.grandTotal;
+  const goods = calcInvoice(lines.map((l) => ({ qty: l.qty, unitPrice: l.unitPrice, lineDiscount: l.lineDiscount, rate: l.rate, hsn: l.hsn })), couponDiscount, { gstOn, supply: 'intra' }).totals.grandTotal;
   const paid = input.tenders.reduce((a: number, t: any) => a + t.amount, 0);
   if (paid !== goods + input.shippingCharge) throw businessRule(`Payments (${paid}) must equal goods (${goods}) plus shipping (${input.shippingCharge})`, 'PAYMENT_MISMATCH');
-  const tenders = input.tenders; if (input.shippingCharge > 0) { const first = tenders[0]; tenders[0] = { ...first, amount: first.amount - input.shippingCharge }; if (tenders[0].amount < 1) throw businessRule('Shipping is larger than the first payment', 'PAYMENT_MISMATCH'); }
+  // Shipping was paid on top of the goods. Take it off the LAST tender (the wallet is used first, the gateway or cash last).
+  const tenders = input.tenders.map((t: any) => ({ ...t })); let ship = input.shippingCharge;
+  for (let i = tenders.length - 1; i >= 0 && ship > 0; i--) { const cut = Math.min(ship, tenders[i].amount); tenders[i].amount -= cut; ship -= cut; }
+  const kept = tenders.filter((t: any) => t.amount > 0); tenders.length = 0; tenders.push(...kept); input.tenders = tenders;
   const id = session ? await run(session) : await withTransaction(run);
   await SalesBill.updateOne({ _id: id }, { $set: { 'snapshot.shippingCharge': input.shippingCharge, 'snapshot.shipTo': input.shipTo } }, session ? { session } : {});
-  const dto = await getBill(id);
+  const dto = billDto((await SalesBill.findById(id).session(session ?? null).lean()) as any); // inside a transaction the new invoice is only visible to that session
   audit({ entity: 'invoice', entityId: id, action: 'inbound_order', after: { invoiceNumber: dto.invoiceNumber, orderNumber: input.orderNumber } });
   return { ...dto, shippingCharge: input.shippingCharge };
 }
@@ -279,7 +283,7 @@ const returnDtoOf = (r: any) => ({ id: String(r._id), creditNoteNumber: r.credit
 async function doReturn(user: AuthUser, b: any, input: any, opts: { cancel?: boolean }, audit: Audit, session: Session) {
   const settings = await getOperationsSettings(session);
   const ageH = (Date.now() - new Date(b.finalizedAt).getTime()) / 3600000;
-  if (!opts.cancel) {
+  if (!opts.cancel && !input.skipChecks) {
     if (ageH > settings.returnWindowDays * 24) throw businessRule(`The ${settings.returnWindowDays} day return window has passed`, 'RETURN_WINDOW_PASSED');
     if (input.reason === 'defect' && b.channel === 'ECM' && ageH > settings.defectReportHours) throw businessRule(`Defects on online orders must be reported within ${settings.defectReportHours} hours`, 'DEFECT_WINDOW_PASSED');
   }
@@ -291,7 +295,7 @@ async function doReturn(user: AuthUser, b: any, input: any, opts: { cancel?: boo
     if (!l) throw badRequest('This item is not on the invoice', [{ path: `lines.${i}.variantId`, message: 'Not on the invoice' }]);
     if (w.qty > l.qty - (l.returnedQty ?? 0)) throw businessRule(`Only ${l.qty - (l.returnedQty ?? 0)} of ${l.itemCode} can still be returned`, 'RETURN_EXCEEDS_SALE');
     // Items sold at a discount are not returnable unless the client allows it (invoice terms, point 3)
-    if (!opts.cancel && !settings.returnDiscountedItems && (l.lineDiscount > 0 || l.billDiscountShare > 0)) throw businessRule(`${l.itemCode} was sold at a discount and cannot be returned or refunded`, 'NOT_RETURNABLE', [{ path: `lines.${i}.variantId`, message: 'Discounted items cannot be returned' }]);
+    if (!opts.cancel && !input.skipChecks && !settings.returnDiscountedItems && (l.lineDiscount > 0 || l.billDiscountShare > 0)) throw businessRule(`${l.itemCode} was sold at a discount and cannot be returned or refunded`, 'NOT_RETURNABLE', [{ path: `lines.${i}.variantId`, message: 'Discounted items cannot be returned' }]);
     const net = w.qty === l.qty ? l.net : divRoundHalfUp(l.net * w.qty, l.qty);
     const rate = gstOn ? l.rate : null; const taxable = rate ? taxableOf(net, rate) : net;
     const half = rate ? divRoundHalfUp(taxable * Math.round(rate * 100), 20000) : 0; const ig = rate ? divRoundHalfUp(taxable * Math.round(rate * 100), 10000) : 0;
@@ -328,6 +332,9 @@ async function doReturn(user: AuthUser, b: any, input: any, opts: { cancel?: boo
       const paidTenders = (b.tenders as any[]).filter((t) => t.mode !== 'credit_note');
       const shares = allocateProportionally(refundNow, paidTenders.map((t) => t.amount));
       paidTenders.forEach((t, i) => { if (shares[i]! > 0) refunds.push({ mode: t.mode, amount: shares[i], reference: t.reference }); });
+      // money that was paid from the wallet goes back to the wallet
+      const toWallet = refunds.filter((r) => r.mode === 'wallet').reduce((a, r) => a + r.amount, 0);
+      if (toWallet > 0 && b.customerId) await WalletLedger.create([{ customerId: b.customerId, amount: toWallet, type: 'REFUND', docType: 'CREDIT_NOTE', docNumber: cnNumber }], { session });
       const toCredit = refunds.filter((r) => r.mode === 'credit').reduce((a, r) => a + r.amount, 0);
       if (toCredit) b.creditDue = Math.max(0, (b.creditDue ?? 0) - toCredit);
     }
@@ -349,12 +356,12 @@ export async function createReturn(user: AuthUser, input: any, audit: Audit) {
   audit({ entity: 'credit_note', entityId: id, action: r.exchangeInvoiceId ? 'exchange' : 'return', after: { creditNoteNumber: r.creditNoteNumber, refundTotal: r.refundTotal, refunds: r.refunds } });
   return returnDtoOf(r);
 }
-export async function cancelInvoice(user: AuthUser, id: string, note: string, audit: Audit) {
+export async function cancelInvoice(user: AuthUser, id: string, note: string, audit: Audit, refundTo: 'original' | 'wallet' = 'original') {
   const rid = await withTransaction(async (session) => {
     const b: any = await SalesBill.findById(id).session(session);
     if (!b) throw notFound('Invoice');
     if (b.status !== 'finalized') throw businessRule(`This invoice is ${b.status}`, 'BAD_STATUS');
-    return doReturn(user, b.toObject(), { reason: 'other', note, refundTo: 'original' }, { cancel: true }, audit, session);
+    return doReturn(user, b.toObject(), { reason: 'other', note, refundTo }, { cancel: true }, audit, session);
   });
   const r: any = await SalesReturn.findById(rid).lean();
   audit({ entity: 'invoice', entityId: id, action: 'cancel', after: { creditNoteNumber: r.creditNoteNumber } });

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { objectId } from './common';
+import { objectId, patchOf } from './common';
 
 export const paise = z.number().int();
 const qty = z.number().int().min(1).max(1_000_000);
@@ -37,7 +37,7 @@ export const poBody = z.object({
   terms: z.string().trim().max(1000).default(''),
   notes: z.string().trim().max(1000).default(''),
 });
-export const poUpdateBody = poBody.partial();
+export const poUpdateBody = patchOf(poBody);
 export const taxedLine = z.object({
   taxable: paise, cgst: paise, sgst: paise, igst: paise, total: paise, gross: paise, discount: paise,
 });

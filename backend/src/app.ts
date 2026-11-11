@@ -58,7 +58,8 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
   });
   // Action routes such as /approve or /send have no body. Clients that still send Content-Type: application/json get {} instead of an error.
   app.removeContentTypeParser('application/json');
-  app.addContentTypeParser('application/json', { parseAs: 'string', bodyLimit: 1024 * 1024 }, (_req, body, done) => {
+  app.addContentTypeParser('application/json', { parseAs: 'string', bodyLimit: 1024 * 1024 }, (req, body, done) => {
+    (req as any).rawBody = String(body); // webhooks are signed over the exact bytes received
     const text = String(body).trim();
     if (!text) return done(null, {});
     try { done(null, JSON.parse(text)); } catch {

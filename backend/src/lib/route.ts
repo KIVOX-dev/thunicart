@@ -14,6 +14,8 @@ export interface RouteContext<P, Q, B> {
   req: FastifyRequest;
   reply: FastifyReply;
   user: AuthUser;
+  /** The logged in storefront customer (permission 'customer', or optional with 'customer_optional'). */
+  customer: import('../middleware/customerAuth').StoreCustomer;
   params: P;
   query: Q;
   body: B;
@@ -29,7 +31,7 @@ export interface RouteDef<PS extends Schema | undefined, QS extends Schema | und
   summary: string;
   tags: string[];
   /** A permission key (module.action), 'authenticated' (any logged in staff), or 'public'. Required. */
-  permission: PermissionKey | 'authenticated' | 'public';
+  permission: PermissionKey | 'authenticated' | 'public' | 'customer' | 'customer_optional';
   params?: PS;
   query?: QS;
   body?: BS;
@@ -69,8 +71,12 @@ export function registerRoutes(app: FastifyInstance, defs: RouteDef<any, any, an
         if (def.rateLimit) {
           await rateLimitHit(def.rateLimit.name, def.rateLimit.by ? def.rateLimit.by(req) : req.ip, def.rateLimit.limit, def.rateLimit.windowSec);
         }
-        let user: AuthUser | undefined;
-        if (def.permission !== 'public') {
+        let user: AuthUser | undefined; let customer: any;
+        if (def.permission === 'customer' || def.permission === 'customer_optional') {
+          const { authenticateCustomer } = await import('../middleware/customerAuth');
+          customer = await authenticateCustomer(req, def.permission === 'customer');
+          if (customer) req.actor = { id: customer.id, name: customer.email };
+        } else if (def.permission !== 'public') {
           user = await authenticate(req);
           req.actor = { id: user.id, name: user.name };
           if (def.permission !== 'authenticated' && !user.permissions.has(def.permission)) {
@@ -88,7 +94,7 @@ export function registerRoutes(app: FastifyInstance, defs: RouteDef<any, any, an
           version = Number(h);
         }
         const idem = def.idempotency
-          ? await beginIdempotency(def.idempotency, req.headers['idempotency-key'], user?.id ?? 'anon', { m: def.method, p: req.url.split('?')[0], b: body })
+          ? await beginIdempotency(def.idempotency, req.headers['idempotency-key'], user?.id ?? customer?.id ?? 'anon', { m: def.method, p: req.url.split('?')[0], b: body })
           : null;
         if (idem?.replay) {
           reply.header('idempotent-replay', 'true');
@@ -100,7 +106,7 @@ export function registerRoutes(app: FastifyInstance, defs: RouteDef<any, any, an
         reply.send = ((...args: Parameters<typeof reply.send>) => { sentByHandler = true; return originalSend(...args); }) as typeof reply.send;
         try {
           const result = await def.handler({
-            req, reply, user: user as AuthUser, params, query, body,
+            req, reply, user: user as AuthUser, customer, params, query, body,
             audit: (e) => req.auditEntries.push(e), version,
           });
           // Handlers that stream a file (PDF, CSV) send the reply themselves.

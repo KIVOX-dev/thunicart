@@ -1,9 +1,9 @@
 import { z } from 'zod';
-import { objectId } from './common';
+import { objectId, patchOf } from './common';
 import { PRINT_SIZES } from '../constants';
 
 const money = z.number().int().min(0);
-export const TENDER_MODES = ['cash', 'upi', 'card', 'wallet', 'bank_transfer', 'credit', 'credit_note'] as const;
+export const TENDER_MODES = ['cash', 'upi', 'card', 'wallet', 'bank_transfer', 'credit', 'credit_note', 'razorpay'] as const;
 export const tenderBody = z.object({ mode: z.enum(TENDER_MODES), amount: z.number().int().min(1), reference: z.string().trim().max(60).optional() });
 export const discountInput = z.object({ type: z.enum(['amount', 'percent']), value: z.number().min(0) });
 export const saleLineBody = z.object({
@@ -20,7 +20,7 @@ export const posBillBody = z.object({
   lines: z.array(saleLineBody).min(1).max(200), billDiscount: discountInput.optional(), hold: z.boolean().default(false), notes: z.string().trim().max(300).default(''),
   dueDate: z.string().datetime().optional(),
 });
-export const posBillUpdateBody = posBillBody.partial();
+export const posBillUpdateBody = patchOf(posBillBody);
 export const approvalBody = z.object({ pin: z.string().min(4).max(20) });
 export const finalizeBody = z.object({
   tenders: z.array(tenderBody).min(1).max(6), approval: approvalBody.optional(),

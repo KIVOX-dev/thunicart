@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { objectId } from './common';
+import { objectId, patchOf } from './common';
 
 export const SECTIONS = ['Men', 'Women', 'Kids', 'Accessories', 'Unisex'] as const;
 export const paiseInt = z.number().int().min(0).max(100_000_000_00);
@@ -63,7 +63,7 @@ export const variantBody = z.object({
   batchRef: z.string().trim().max(40).optional(),
   active: z.boolean().default(true),
 });
-export const variantUpdateBody = variantBody.partial().omit({ itemCode: true });
+export const variantUpdateBody = patchOf(variantBody).omit({ itemCode: true });
 export const variantDto = z.object({
   id: objectId, itemId: objectId, itemCode: z.string(), sku: z.string(), barcode: z.string(), barcodeKind: z.enum(['ean13', 'code128']),
   size: z.string().nullable(), color: z.string().nullable(),
@@ -96,7 +96,7 @@ export const itemBody = z.object({
   active: z.boolean().default(true),
   variants: z.array(variantBody).max(60).default([]),
 });
-export const itemUpdateBody = itemBody.omit({ variants: true }).partial();
+export const itemUpdateBody = patchOf(itemBody.omit({ variants: true }));
 export const itemDto = z.object({
   id: objectId, name: z.string(), printName: z.string().nullable(), categoryId: objectId.nullable(), categoryName: z.string().nullable(),
   brandId: objectId.nullable(), brandName: z.string().nullable(), model: z.string().nullable(), type: z.string().nullable(), fabric: z.string().nullable(),
