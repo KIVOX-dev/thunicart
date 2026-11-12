@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { registerPosCompat } from './compat.pos';
+import { registerStoreCompat } from './compat.store';
 
 /**
  * Compatibility layer for the admin frontend (built against its own mock before the OpenAPI spec existed).
@@ -111,6 +112,7 @@ export async function compatPlugin(app: FastifyInstance) {
   }));
 
   registerPosCompat(app, P);
+  registerStoreCompat(app);
 
   // Everything else passes straight through to the real API (auth, items, vendors, customers...).
   app.route({
