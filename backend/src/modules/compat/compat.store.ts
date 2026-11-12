@@ -19,13 +19,13 @@ export function registerStoreCompat(app: FastifyInstance) {
   const img = (req: FastifyRequest, key?: string) => (key ? (/^https?:/.test(key) ? key : `${base(req)}/media/${key}`) : '/api/img/product/1');
 
   const product = (req: FastifyRequest, p: any) => {
-    const variants = (p.variants ?? []).map((v: any) => ({ id: v.id, size: v.size ?? 'Free Size', color: v.color ?? '', mrp: v.mrp ?? v.price, price: v.price, offer: v.price < (v.mrp ?? v.price) ? v.price : null, stock: v.available ?? 0, barcode: v.itemCode ?? '' }));
+    const variants = (p.variants ?? []).map((v: any) => ({ id: v.id, size: v.size ?? 'Free Size', color: v.color || 'Standard', mrp: v.mrp ?? v.price, price: v.price, offer: v.price < (v.mrp ?? v.price) ? v.price : null, stock: v.available ?? 0, barcode: v.itemCode ?? '' }));
     const inStock = variants.some((v: any) => v.stock > 0);
     return {
       id: p.id, slug: p.slug, code: p.variants?.[0]?.itemCode ?? '', name: title(p.name), category: title(p.category ?? ''), categorySlug: slugify(p.category ?? 'all'), subSlug: '', brand: p.brand ?? '', fabric: p.fabric ?? '', occasion: p.occasion ?? '',
       description: p.description ?? '', details: [p.brand && `Brand: ${p.brand}`, p.fabric && `Fabric: ${p.fabric}`, p.variants?.[0]?.itemCode && `Item code: ${p.variants[0].itemCode}`].filter(Boolean),
       images: (p.images?.length ? p.images : [undefined]).map((k: string) => img(req, k)), videoUrl: null, sizeChart: [], variants,
-      colors: (p.colors ?? []).map((c: any) => (typeof c === 'string' ? { name: c, hex: '#888888' } : c)), isNew: false, trending: false, popularity: 0, createdAt: p.createdAt ?? '',
+      colors: ((p.colors ?? []).length ? p.colors : ['Standard']).map((c: any) => (typeof c === 'string' ? { name: c, hex: '#0B1B54' } : c)), isNew: false, trending: false, popularity: 0, createdAt: p.createdAt ?? '',
       discountPct: Math.round(p.discountPercent ?? 0), lowStock: variants.some((v: any) => v.stock > 0 && v.stock <= 3), inStock, fromPrice: p.priceFrom ?? 0, fromMrp: p.mrpFrom ?? p.priceFrom ?? 0,
     };
   };
