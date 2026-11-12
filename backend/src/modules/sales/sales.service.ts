@@ -1,7 +1,7 @@
 import argon2 from 'argon2';
 import type { ClientSession } from 'mongoose';
 import type { ListQuery } from '@thunikart/shared';
-import { BusinessProfile, Customer, Item, LoyaltyLedger, SalesBill, SalesReturn, Shift, Store, User, Variant, WalletLedger } from '../../models';
+import { BusinessProfile, Customer, Item, LoyaltyLedger, SalesBill, SalesReturn, Shift, Store, StockBalance, User, Variant, WalletLedger } from '../../models';
 import { AppError, badRequest, businessRule, forbidden, notFound } from '../../lib/errors';
 import { withTransaction } from '../../lib/transaction';
 import { nextNumber } from '../../lib/numberSeries';
@@ -122,6 +122,19 @@ export async function saveBill(user: AuthUser, input: any, audit: Audit, existin
   } else doc = (await SalesBill.create({ ...fields, cashierId: user.id, createdBy: user.id })).toObject();
   audit({ entity: 'sales_bill', entityId: String(doc._id), action: existingId ? 'update' : 'create', after: { status: doc.status, grandTotal: doc.grandTotal } });
   return billDto(doc);
+}
+
+/** Totals for a cart exactly as finalize would compute them. Writes nothing and reserves nothing. Used by the POS screen while the cashier types. */
+export async function previewBill(user: AuthUser, input: any) {
+  const date = new Date(); const gstOn = await isGstEnabled(); const biz = await business();
+  const cust = await resolveCustomer(input, biz);
+  const lines = await prepareLines(input.lines, date, gstOn);
+  const base = lines.reduce((a, l) => a + l.qty * l.unitPrice - l.lineDiscount, 0);
+  const plan = planFromInput(input, user, lines, cust, discountToPaise(input.billDiscount, base));
+  const { calc, supply } = await previewTotals(plan);
+  const bal: any[] = await StockBalance.find({ storeId: input.storeId, variantId: { $in: lines.map((l) => l.variantId) } }).lean();
+  const avail = new Map(bal.map((b) => [String(b.variantId), b.onHand - b.reserved]));
+  return { gstMode: (gstOn ? 'on' : 'off') as 'on' | 'off', supply: gstOn ? supply : null, lines: linesDoc(plan, calc).map((l: any) => ({ ...l, available: avail.get(String(l.variantId)) ?? 0 })), groups: calc.groups, totals: calc.totals };
 }
 
 export async function getBill(id: string) {

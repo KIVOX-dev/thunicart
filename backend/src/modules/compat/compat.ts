@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { registerPosCompat } from './compat.pos';
 
 /**
  * Compatibility layer for the admin frontend (built against its own mock before the OpenAPI spec existed).
@@ -10,12 +11,13 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 export const COMPAT_PREFIX = '/compat';
 const REAL = '/api/v1';
 
-interface Res { status: number; headers: Record<string, any>; body: Buffer; json: any }
+export interface Res { status: number; headers: Record<string, any>; body: Buffer; json: any }
 
-async function real(app: FastifyInstance, req: FastifyRequest, method: string, path: string, body?: unknown): Promise<Res> {
+export async function real(app: FastifyInstance, req: FastifyRequest, method: string, path: string, body?: unknown, extra: Record<string, string> = {}): Promise<Res> {
   const h: Record<string, string> = {};
   for (const k of ['authorization', 'cookie', 'idempotency-key', 'if-match', 'accept', 'user-agent', 'x-forwarded-for']) if (req.headers[k]) h[k] = String(req.headers[k]);
   if (body !== undefined) h['content-type'] = 'application/json';
+  Object.assign(h, extra);
   const r = await app.inject({ method: method as any, url: REAL + path, headers: h, payload: body === undefined ? undefined : JSON.stringify(body), remoteAddress: req.ip });
   const buf = r.rawPayload;
   let json: any;
@@ -24,7 +26,7 @@ async function real(app: FastifyInstance, req: FastifyRequest, method: string, p
 }
 
 /** Send a real response back unchanged (errors, files, cookies). Refresh cookie paths are moved under the compat prefix. */
-function relay(reply: FastifyReply, r: Res) {
+export function relay(reply: FastifyReply, r: Res) {
   for (const [k, v] of Object.entries(r.headers)) {
     const key = k.toLowerCase();
     if (['content-length', 'transfer-encoding', 'connection', 'access-control-allow-origin', 'access-control-allow-credentials', 'vary'].includes(key)) continue;
@@ -35,7 +37,7 @@ function relay(reply: FastifyReply, r: Res) {
   }
   return reply.status(r.status).send(r.body);
 }
-const ok = (r: Res) => r.status >= 200 && r.status < 300;
+export const ok = (r: Res) => r.status >= 200 && r.status < 300;
 
 // ---- import wizard adapters ----
 const PURPOSE: Record<string, string> = { image: 'image', video: 'video', 'size-chart': 'size_chart', pdf: 'pdf', import: 'import' };
@@ -107,6 +109,8 @@ export async function compatPlugin(app: FastifyInstance) {
     const r = await getBatch(app, req, id);
     return ok(r) ? reply.send(batchOf(r.json)) : relay(reply, r);
   }));
+
+  registerPosCompat(app, P);
 
   // Everything else passes straight through to the real API (auth, items, vendors, customers...).
   app.route({

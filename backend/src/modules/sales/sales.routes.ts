@@ -13,6 +13,7 @@ const cancelBody = z.object({ note: z.string().trim().max(300).default('') });
 const listQ = listQuery.extend(invoiceQuery.shape);
 
 export const salesRoutes = [
+  defineRoute({ method: 'POST', path: '/pos/preview', summary: 'Totals for a cart while the cashier types. Writes nothing.', tags: ['POS'], permission: 'pos.create', body: posBillBody.omit({ hold: true }), response: z.looseObject({ gstMode: z.enum(['on', 'off']) }), handler: async ({ user, body }) => svc.previewBill(user, body) }),
   defineRoute({ method: 'POST', path: '/pos/shifts/open', summary: 'Open a cashier shift with opening cash', tags: ['POS'], permission: 'pos.create', body: shiftOpenBody, response: shiftDto, status: 201, errors: [422], handler: async ({ user, body, audit }) => svc.openShiftFor(user, body, audit) }),
   defineRoute({ method: 'POST', path: '/pos/shifts/:id/close', summary: 'Close a shift: expected cash (opening + cash sales - cash refunds) against counted cash', tags: ['POS'], permission: 'pos.create', params: idParam, body: shiftCloseBody, response: shiftDto, errors: [404], handler: async ({ user, params, body, audit }) => svc.closeShiftFor(user, params.id, body, audit) }),
   defineRoute({ method: 'GET', path: '/pos/shifts/current', summary: 'My open shift at a store', tags: ['POS'], permission: 'pos.view', query: z.object({ storeId: objectId }), response: z.object({ shift: shiftDto.nullable() }), handler: async ({ user, query }) => ({ shift: (await svc.currentShift(user, query.storeId)) as any }) }),
