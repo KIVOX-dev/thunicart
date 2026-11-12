@@ -1,6 +1,8 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { storage } from '../../adapters/storage';
 import { ok, real, relay } from './compat';
+import { artTypeFor, garmentSvg } from './compat.art';
+import { posterSvg } from './compat.poster';
 
 /**
  * Catalogue adapters for the storefront (it calls /catalog/* and /cms/*; the API serves /store/*). Mounted under /shop/api/v1.
@@ -21,6 +23,14 @@ const GROUPS: Array<{ slug: string; name: string; kids: string[] }> = [
   { slug: 'accessories', name: 'Shawls and More', kids: ['shawl', 'plain', 'falls', 'towels', 'hand-kerchiefs', 'socks'] },
 ];
 const NICE: Record<string, string> = { kurties: 'Kurtis', kurti: 'Kurtis', bra: 'Bras', slip: 'Slips', leggins: 'Leggings', dothi: 'Dhotis', 'petty-coat': 'Petticoats', 'night-suite': 'Night Suits', 'hand-kerchiefs': 'Handkerchiefs', falls: 'Saree Falls', vest: 'Vests', brief: 'Briefs', trunk: 'Trunks', drawer: 'Drawers', jetty: 'Jetty', shawl: 'Shawls', plain: 'Plain Shawls', anika: 'Kids Sets', nylah: 'Kids Frocks', pant: 'Pants', 't-shirt': 'T-Shirts', shimmer: 'Shimmer Leggings', capri: 'Capris' };
+/** "MLXL2XL" in the sheet means one stock line sold in several sizes: show it as "M / L / XL / 2XL". */
+const niceSize = (z?: string | null) => { const t = (z ?? '').trim(); if (!t) return 'Free Size'; const m = t.toUpperCase().match(/^(?:[2-6]XL|XXXL|XXL|XL|XS|S|M|L)+$/) ? t.toUpperCase().match(/[2-6]XL|XXXL|XXL|XL|XS|S|M|L/g) : null; return m && m.length > 1 ? m.join(' / ') : t; };
+/** "VC-Kurties-M-10675" reads better as "VC Kurti 10675". Other names are only tidied. */
+const niceName = (n: string, brand?: string | null) => {
+  const k = n.match(/^\s*([A-Za-z]+)\s*-\s*Kurties\s*-\s*[A-Za-z0-9]*\s*-\s*(\d+)/i);
+  if (k) return `${(brand || k[1]!).toUpperCase()} Kurti ${k[2]}`;
+  return n.replace(/\s*-\s*/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase().replace(/[a-z]/g, (c) => c.toUpperCase()).replace(/(Rl|Vd|Vc|Sh|Rd|Ss|Ccd|Adv|Arm|Kq|Mi|Xl|Xxl|[2-6]xl|Clr|Oe|Rn)/g, (c) => c.toUpperCase());
+};
 const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const title = (s: string) => s.toLowerCase().replace(/\b[a-z]/g, (c) => c.toUpperCase());
 
@@ -29,13 +39,20 @@ export function registerStoreCompat(app: FastifyInstance) {
   const base = (req: FastifyRequest) => `${req.protocol}://${req.headers.host}`;
   const img = (req: FastifyRequest, key?: string) => (key ? (/^https?:/.test(key) ? key : `${base(req)}/media/${key}`) : '/api/img/product/1');
 
+  /** An item's own photos when it has them. Otherwise (none, or only the old demo photos) drawn pictures of the garment, no people. */
+  const pics = (req: FastifyRequest, p: any) => {
+    const own = (p.images ?? []).filter((k: string) => !k.startsWith('images/demo/'));
+    if (own.length) return own.map((k: string) => img(req, k));
+    const type = artTypeFor(slugify(p.category ?? ''), p.name ?? ''); const seed = encodeURIComponent(p.variants?.[0]?.itemCode ?? p.id);
+    return [1, 2, 3].map((n) => `${base(req)}/media/art/${type}/${seed}/${n}.svg`);
+  };
   const product = (req: FastifyRequest, p: any) => {
-    const variants = (p.variants ?? []).map((v: any) => ({ id: v.id, size: v.size ?? 'Free Size', color: v.color || 'Standard', mrp: v.mrp ?? v.price, price: v.price, offer: v.price < (v.mrp ?? v.price) ? v.price : null, stock: v.available ?? 0, barcode: v.itemCode ?? '' }));
+    const variants = (p.variants ?? []).map((v: any) => ({ id: v.id, size: niceSize(v.size), color: v.color || 'Standard', mrp: v.mrp ?? v.price, price: v.price, offer: v.price < (v.mrp ?? v.price) ? v.price : null, stock: v.available ?? 0, barcode: v.itemCode ?? '' }));
     const inStock = variants.some((v: any) => v.stock > 0);
     return {
-      id: p.id, slug: p.slug, code: p.variants?.[0]?.itemCode ?? '', name: title(p.name), category: title(p.category ?? ''), categorySlug: slugify(p.category ?? 'all'), subSlug: '', brand: p.brand ?? '', fabric: p.fabric ?? '', occasion: p.occasion ?? '',
+      id: p.id, slug: p.slug, code: p.variants?.[0]?.itemCode ?? '', name: niceName(p.name, p.brand), category: NICE[slugify(p.category ?? '')] ?? title(p.category ?? ''), categorySlug: slugify(p.category ?? 'all'), subSlug: '', brand: p.brand ?? '', fabric: p.fabric ?? '', occasion: p.occasion ?? '',
       description: p.description ?? '', details: [p.brand && `Brand: ${p.brand}`, p.fabric && `Fabric: ${p.fabric}`, p.variants?.[0]?.itemCode && `Item code: ${p.variants[0].itemCode}`].filter(Boolean),
-      images: (p.images?.length ? p.images : [undefined]).map((k: string) => img(req, k)), videoUrl: null, sizeChart: [], variants,
+      images: pics(req, p), videoUrl: null, sizeChart: [], variants,
       colors: ((p.colors ?? []).length ? p.colors : ['Standard']).map((c: any) => (typeof c === 'string' ? { name: c, hex: '#0B1B54' } : c)), isNew: false, trending: false, popularity: 0, createdAt: p.createdAt ?? '',
       discountPct: Math.round(p.discountPercent ?? 0), lowStock: variants.some((v: any) => v.stock > 0 && v.stock <= 3), inStock, fromPrice: p.priceFrom ?? 0, fromMrp: p.mrpFrom ?? p.priceFrom ?? 0,
     };
@@ -82,7 +99,7 @@ export function registerStoreCompat(app: FastifyInstance) {
       const top = kids.slice().sort((a, b) => have.get(b).productCount - have.get(a).productCount)[0]!;
       const p = await real(app, req, 'GET', `/store/products?category=${top}&pageSize=1`);
       const seen = new Set<string>();
-      out.push({ slug: g.slug, name: g.name, image: img(req, p.json?.items?.[0]?.images?.[0]), children: kids.map((k) => ({ slug: k, name: NICE[k] ?? title(have.get(k).name) })).filter((k) => !seen.has(k.name) && seen.add(k.name)) });
+      out.push({ slug: g.slug, name: g.name, image: `${base(req)}/media/poster/${g.slug}.svg`, children: kids.map((k) => ({ slug: k, name: NICE[k] ?? title(have.get(k).name) })).filter((k) => !seen.has(k.name) && seen.add(k.name)) });
     }
     return out;
   }
@@ -120,6 +137,11 @@ export function registerStoreCompat(app: FastifyInstance) {
 
   // Product photos from the private bucket. Only the images folder is served.
   const cache = new Map<string, Buffer>();
+  app.get('/media/poster/:slug', async (req, reply) => reply.header('content-type', 'image/svg+xml; charset=utf-8').header('cache-control', 'public, max-age=3600').header('cross-origin-resource-policy', 'cross-origin').send(posterSvg(String((req.params as any).slug).replace(/\.svg$/, ''))));
+  app.get('/media/art/:type/:seed/:view', async (req, reply) => {
+    const { type, seed, view } = req.params as Record<string, string>;
+    return reply.header('content-type', 'image/svg+xml; charset=utf-8').header('cache-control', 'public, max-age=86400').header('cross-origin-resource-policy', 'cross-origin').send(garmentSvg(type!, seed!, Number.parseInt(view ?? '1', 10) || 1));
+  });
   app.get('/media/*', async (req, reply) => {
     const key = decodeURIComponent((req.params as any)['*'] ?? '');
     if (!/^images\/[\w./-]+\.(jpe?g|png|webp)$/i.test(key) || key.includes('..')) return reply.status(404).send({ code: 'NOT_FOUND', message: 'Not found', fields: [], requestId: req.id });
