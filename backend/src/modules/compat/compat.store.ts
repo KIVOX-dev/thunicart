@@ -10,6 +10,17 @@ import { ok, real, relay } from './compat';
 export const SHOP_PREFIX = '/shop';
 const PRICE_RANGES = [{ key: 'u500', label: 'Under Rs 500', min: 0, max: 49999 }, { key: '500-1000', label: 'Rs 500 to Rs 1,000', min: 50000, max: 100000 }, { key: '1000-1500', label: 'Rs 1,000 to Rs 1,500', min: 100001, max: 150000 }, { key: '1500+', label: 'Above Rs 1,500', min: 150001, max: undefined as number | undefined }];
 const SORT: Record<string, string> = { new: 'new', 'price-asc': 'price_asc', 'price-desc': 'price_desc', discount: 'discount', popular: 'popularity' };
+/** The imported sheet has about 30 raw categories. The store menu shows a few departments, each with its raw categories under it. */
+const GROUPS: Array<{ slug: string; name: string; kids: string[] }> = [
+  { slug: 'kurtis-and-sets', name: 'Kurtis and Sets', kids: ['kurties', 'kurti', '2-pieces-set'] },
+  { slug: 'innerwear', name: 'Innerwear', kids: ['bra', 'panties', 'slips', 'slip', 'petty-coat'] },
+  { slug: 'nightwear', name: 'Nightwear', kids: ['nighties', 'night-suite'] },
+  { slug: 'bottoms', name: 'Leggings and Bottoms', kids: ['leggings', 'leggins', 'capri', 'shimmer', 'shorts', 'pant', 't-shirt'] },
+  { slug: 'men', name: 'Men', kids: ['vest', 'brief', 'trunk', 'drawer', 'jetty', 'dothi'] },
+  { slug: 'kids', name: 'Kids', kids: ['anika', 'nylah'] },
+  { slug: 'accessories', name: 'Shawls and More', kids: ['shawl', 'plain', 'falls', 'towels', 'hand-kerchiefs', 'socks'] },
+];
+const NICE: Record<string, string> = { kurties: 'Kurtis', kurti: 'Kurtis', bra: 'Bras', slip: 'Slips', leggins: 'Leggings', dothi: 'Dhotis', 'petty-coat': 'Petticoats', 'night-suite': 'Night Suits', 'hand-kerchiefs': 'Handkerchiefs', falls: 'Saree Falls', vest: 'Vests', brief: 'Briefs', trunk: 'Trunks', drawer: 'Drawers', jetty: 'Jetty', shawl: 'Shawls', plain: 'Plain Shawls', anika: 'Kids Sets', nylah: 'Kids Frocks', pant: 'Pants', 't-shirt': 'T-Shirts', shimmer: 'Shimmer Leggings', capri: 'Capris' };
 const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const title = (s: string) => s.toLowerCase().replace(/\b[a-z]/g, (c) => c.toUpperCase());
 
@@ -44,9 +55,17 @@ export function registerStoreCompat(app: FastifyInstance) {
     // The storefront asks for pages 1..N at once so Load More survives the back button.
     const want = Math.min(60, pages > 1 ? pages * size : size);
     qs.set('pageSize', String(want)); qs.set('page', String(pages > 1 ? 1 : page));
+    const group = GROUPS.find((x) => x.slug === cat);
+    if (group) { qs.delete('category'); qs.set('pageSize', '60'); qs.set('page', '1'); }
     const r = await real(app, req, 'GET', `/store/products?${qs}`);
     if (!ok(r)) return r;
     let items = (r.json.items ?? []).map((p: any) => product(req, p));
+    if (group) {
+      for (let pg = 2; pg <= 10 && items.length < r.json.total; pg++) { qs.set('page', String(pg)); const m = await real(app, req, 'GET', `/store/products?${qs}`); if (!ok(m) || !m.json.items?.length) break; items.push(...m.json.items.map((p: any) => product(req, p))); }
+      items = items.filter((p: any) => group.kids.includes(p.categorySlug));
+      r.json.total = items.length;
+      items = pages > 1 ? items.slice(0, pages * size) : items.slice((page - 1) * size, page * size);
+    }
     if (q.ids) { const ids = q.ids.split(','); const all = await real(app, req, 'GET', '/store/products?pageSize=60'); items = (all.json?.items ?? []).filter((p: any) => ids.includes(p.id) || ids.includes(p.slug)).map((p: any) => product(req, p)); }
     const f = r.json.filters ?? {};
     const shown = pages > 1 ? pages : page;
@@ -56,11 +75,16 @@ export function registerStoreCompat(app: FastifyInstance) {
   }
   async function categories(req: FastifyRequest) {
     const r = await real(app, req, 'GET', '/store/categories');
-    const cats = (r.json?.items ?? []).filter((c: any) => c.productCount > 0).sort((a: any, b: any) => b.productCount - a.productCount);
-    return Promise.all(cats.map(async (c: any) => {
-      const p = await real(app, req, 'GET', `/store/products?category=${c.slug}&pageSize=1`);
-      return { slug: c.slug, name: title(c.name), image: img(req, p.json?.items?.[0]?.images?.[0]), children: [] };
-    }));
+    const have = new Map<string, any>((r.json?.items ?? []).filter((c: any) => c.productCount > 0).map((c: any) => [c.slug, c]));
+    const out: any[] = [];
+    for (const g of GROUPS) {
+      const kids = g.kids.filter((k) => have.has(k)); if (!kids.length) continue;
+      const top = kids.slice().sort((a, b) => have.get(b).productCount - have.get(a).productCount)[0]!;
+      const p = await real(app, req, 'GET', `/store/products?category=${top}&pageSize=1`);
+      const seen = new Set<string>();
+      out.push({ slug: g.slug, name: g.name, image: img(req, p.json?.items?.[0]?.images?.[0]), children: kids.map((k) => ({ slug: k, name: NICE[k] ?? title(have.get(k).name) })).filter((k) => !seen.has(k.name) && seen.add(k.name)) });
+    }
+    return out;
   }
   const send = (reply: FastifyReply, r: any) => (ok(r) ? reply.send(r.json) : relay(reply, r));
   const q = (req: FastifyRequest) => (req.query ?? {}) as Record<string, string>;
