@@ -4,7 +4,7 @@ import { cn } from '../cn';
 /** Desktop table: dense, mist zebra rows. Mobile views use cards instead. */
 export function Table({ children, caption, className }: { children: ReactNode; caption: string; className?: string }) {
   return (
-    <div className={cn('overflow-x-auto rounded border border-line', className)}>
+    <div className={cn('relative overflow-x-auto rounded border border-line', className)}>
       <table className="w-full border-collapse text-sm">
         <caption className="sr-only">{caption}</caption>
         {children}

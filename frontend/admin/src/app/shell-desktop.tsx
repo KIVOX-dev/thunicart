@@ -1,18 +1,17 @@
 import { Suspense, useState } from 'react';
-import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { ListSkeleton, Select } from '@thunikart/ui';
 import { Logo } from '../components/Logo';
 import { ProfileMenu } from '../components/ProfileMenu';
-import { useGstMode } from '../features/auth/permissions';
-import { MODULES_REGISTRY } from './modules';
-import { useMenuGroups, useVisibleModules } from './use-nav';
+import { useCan, useGstMode } from '../features/auth/permissions';
+import { useCurrentModule, useMenuGroups, useVisibleModules } from './use-nav';
 
 function GoTo() {
   const modules = useVisibleModules();
   const nav = useNavigate();
   const [q, setQ] = useState('');
-  const hits = q.trim() ? modules.filter((m) => m.label.toLowerCase().includes(q.trim().toLowerCase())).slice(0, 6) : [];
+  const hits = q.trim() ? modules.filter((m) => !m.hidden && m.label.toLowerCase().includes(q.trim().toLowerCase())).slice(0, 6) : [];
   return (
     <div className="relative w-64">
       <Search aria-hidden size={16} className="pointer-events-none absolute left-3 top-3 text-muted" />
@@ -31,8 +30,7 @@ function GoTo() {
 }
 
 function Breadcrumbs() {
-  const { pathname } = useLocation();
-  const mod = MODULES_REGISTRY.find((m) => m.path === pathname);
+  const mod = useCurrentModule();
   if (!mod || mod.key === 'home') return null;
   return (
     <nav aria-label="Breadcrumb" className="mb-3 text-xs text-muted">
@@ -48,12 +46,14 @@ function Breadcrumbs() {
 export function DesktopShell() {
   const groups = useMenuGroups();
   const gst = useGstMode();
+  const can = useCan();
   return (
     <div className="flex min-h-screen bg-white">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:bg-white focus:p-2">Skip to content</a>
       <aside aria-label="Main menu" className="sticky top-0 flex h-screen w-60 shrink-0 flex-col overflow-y-auto bg-navy text-white">
-        <Link to="/" className="px-4 py-4"><Logo light /></Link>
+        <Link to="/" className="block px-3 py-4" aria-label="Thunikart home"><Logo variant="sidebar" tile className="w-full" /></Link>
         <nav className="flex-1 px-2 pb-4">
+          {can('pos.view') && <Link to="/billing" className="mb-3 flex min-h-10 items-center gap-2 rounded bg-orange px-3 text-sm font-semibold text-navy hover:bg-white">Open billing counter</Link>}
           {groups.map((g) => (
             <div key={g.group} className="mb-3">
               <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-heading text-white/70">{g.group}</p>

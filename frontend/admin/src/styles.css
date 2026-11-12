@@ -4,3 +4,11 @@
 
 /* Tokens are imported from @thunikart/ui/tokens.css in main.tsx. */
 body { min-height: 100vh; }
+
+/* Printing: only .print-area is shown. Page size is set by the template. */
+@media screen { .print-area { display: none; } }
+@media print {
+  body * { visibility: hidden; }
+  .print-area, .print-area * { visibility: visible; }
+  .print-area { position: absolute; left: 0; top: 0; }
+}

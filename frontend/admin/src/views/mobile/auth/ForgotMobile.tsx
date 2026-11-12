@@ -7,7 +7,7 @@ export function ForgotMobile() {
   const { form, submit, busy, sent } = useForgotForm();
   return (
     <div className="flex min-h-screen flex-col gap-4 px-6 py-8">
-      <Logo />
+      <Logo variant="sidebar" className="w-48" />
       <h1 className="mt-4 text-lg">Reset password</h1>
       {sent ? (
         <p role="status" className="text-sm">If this email belongs to a Thunikart user, a reset link is on its way. Check your inbox.</p>

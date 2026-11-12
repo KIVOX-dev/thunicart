@@ -15,7 +15,7 @@ export function LoginDesktop() {
   return (
     <div className="grid min-h-screen grid-cols-2">
       <div className="flex flex-col justify-between bg-navy p-12 text-white">
-        <Logo light />
+        <Logo variant="primary" tile className="w-56 !p-3" />
         <div>
           <h1 className="text-2xl leading-snug">Billing, stock and the online store in one place</h1>
           <p className="mt-4 max-w-md text-sm text-white/80">Thunikart by Krishnas Orchids. Near KN Hall, Peedampalli Main Road, Pattanam, Coimbatore 641016.</p>

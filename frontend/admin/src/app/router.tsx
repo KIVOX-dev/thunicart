@@ -5,7 +5,8 @@ import { StyleGuide } from '@thunikart/ui';
 import { ComingSoon } from '../components/ComingSoon';
 import { ForbiddenPage, NotFoundPage, StatusPage } from '../components/StatusPage';
 import { setAuthFailureHandler } from '../features/api/http';
-import { useCan, useGstMode } from '../features/auth/permissions';
+import { useCan, useGstMode, useIsCounterOnly } from '../features/auth/permissions';
+import { BILLING_ROUTES, BillingGate, BillingLogin, BillingScreen } from './billing';
 import { useSession } from '../features/auth/use-session';
 import { LoginDesktop } from '../views/desktop/auth/LoginDesktop';
 import { LoginMobile } from '../views/mobile/auth/LoginMobile';
@@ -18,6 +19,7 @@ import { ResponsiveView, useView } from './view';
 
 function AuthGate() {
   const { data: me, isPending, error } = useSession();
+  const counterOnly = useIsCounterOnly();
   const nav = useNavigate();
   const loc = useLocation();
   useEffect(() => {
@@ -27,6 +29,8 @@ function AuthGate() {
   if (isPending) return <div className="p-6"><ListSkeleton label="Signing you in" /></div>;
   if (error) return <StatusPage code="Oops" title="Cannot load your account" body="We could not reach the server. Check your connection and reload." />;
   if (!me) return <Navigate to="/login" state={{ from: loc.pathname }} replace />;
+  // Counter staff only ever see the billing area.
+  if (counterOnly) return <Navigate to="/billing" replace />;
   return <Outlet />;
 }
 
@@ -50,9 +54,32 @@ function Public({ children }: { children: ReactNode }) {
   return <Suspense fallback={null}>{children}</Suspense>;
 }
 
-const moduleRoutes: RouteObject[] = MODULES_REGISTRY.map((m) => ({ path: m.path === '/' ? undefined : m.path, index: m.path === '/', element: <ModuleRoute mod={m} /> }));
+/** The start page is the Dashboard for anyone who may view reports, and the Home links for everyone else. */
+function StartPage() {
+  const can = useCan();
+  return can('reports.view') ? <Navigate to="/dashboard" replace /> : <ModuleRoute mod={MODULES_REGISTRY[0]!} />;
+}
+function Forward({ to }: { to: string }) {
+  const { search } = useLocation();
+  return <Navigate to={`${to}${search}`} replace />;
+}
+function Guard({ perm, children }: { perm: string; children: ReactNode }) {
+  return useCan()(perm) ? <>{children}</> : <ForbiddenPage />;
+}
+const billingPaths = ['/billing', '/billing/bills', '/billing/lookup', '/billing/b2b', '/billing/print'];
+const billingChildren: RouteObject[] = billingPaths.map((path) => {
+  const r = BILLING_ROUTES.find((x) => x.path === path && !x.tab)!;
+  return { path: path === '/billing' ? undefined : path.replace('/billing/', ''), index: path === '/billing', element: <Guard perm={r.perm}><BillingScreen route={r} /></Guard> };
+});
+const moduleRoutes: RouteObject[] = MODULES_REGISTRY.map((m) => ({ path: m.path === '/' ? undefined : m.path, index: m.path === '/', element: m.path === '/' ? <StartPage /> : <ModuleRoute mod={m} /> }));
 
 export const router = createBrowserRouter([
+  { path: '/billing/login', element: <Public><BillingLogin /></Public> },
+  { path: '/billing', element: <BillingGate />, children: billingChildren },
+  { path: '/pos', element: <Forward to="/billing" /> },
+  { path: '/sales', element: <Forward to="/billing/bills" /> },
+  { path: '/sales/b2b', element: <Forward to="/billing/b2b" /> },
+  { path: '/settings/print', element: <Forward to="/billing/print" /> },
   { path: '/login', element: <Public><ResponsiveView desktop={<LoginDesktop />} mobile={<LoginMobile />} /></Public> },
   { path: '/forgot-password', element: <Public><ResponsiveView desktop={<ForgotDesktop />} mobile={<ForgotMobile />} /></Public> },
   { path: '/style-guide', element: <Public><StyleGuide /></Public> },

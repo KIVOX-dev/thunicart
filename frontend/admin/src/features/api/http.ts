@@ -46,7 +46,7 @@ export function refreshSession(): Promise<boolean> {
   return refreshing;
 }
 
-export interface RequestOptions { body?: unknown; query?: Record<string, string | number | boolean | undefined | null>; idempotencyKey?: string; skipRefresh?: boolean }
+export interface RequestOptions { body?: unknown; query?: Record<string, string | number | boolean | undefined | null>; idempotencyKey?: string; skipRefresh?: boolean; text?: boolean; blob?: boolean }
 
 export async function request<T>(method: string, path: string, opts: RequestOptions = {}): Promise<T> {
   const url = new URL(`${BASE}${API_PREFIX}${path}`, window.location.origin);
@@ -68,7 +68,7 @@ export async function request<T>(method: string, path: string, opts: RequestOpti
   } catch {
     throw new ApiError(0, 'NETWORK', 'Cannot reach the server.');
   }
-  if (res.ok) return (res.status === 204 ? undefined : await res.json()) as T;
+  if (res.ok) return (opts.blob ? await res.blob() : opts.text ? await res.text() : res.status === 204 ? undefined : await res.json()) as T;
   let b: { code?: string; message?: string; fields?: FieldIssue[]; requestId?: string } = {};
   try { b = await res.json(); } catch { /* non JSON error */ }
   throw new ApiError(res.status, b.code ?? 'ERROR', b.message ?? `Request failed (${res.status})`, b.fields ?? [], b.requestId);
@@ -79,7 +79,17 @@ export const api = {
   post: <T>(path: string, body?: unknown, o?: RequestOptions) => request<T>('POST', path, { ...o, body: body ?? {} }),
   put: <T>(path: string, body: unknown) => request<T>('PUT', path, { body }),
   patch: <T>(path: string, body: unknown) => request<T>('PATCH', path, { body }),
+  delete: <T>(path: string) => request<T>('DELETE', path),
 };
 
 /** Fresh key per user action. Reuse the same value when retrying that action. */
 export const newIdempotencyKey = () => crypto.randomUUID();
+
+/** Downloads a file the API builds (Excel, CSV, PDF, JSON, zip) and hands it to the browser as a save. */
+export async function downloadFile(path: string, filename: string): Promise<void> {
+  const blob = await request<Blob>('GET', path, { blob: true });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}

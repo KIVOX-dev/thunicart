@@ -1,52 +1,23 @@
 import { http, HttpResponse, delay, type HttpHandler } from 'msw';
 import {
-  API_PREFIX, ACTIONS, MODULES, businessProfileBody, numberSeriesUpdateBody, resetPasswordBody,
+  ACTIONS, MODULES, businessProfileBody, numberSeriesUpdateBody, resetPasswordBody,
   roleCreateBody, rolePermissionsBody, userCreateBody, userUpdateBody, loginBody, isPermissionKey,
 } from '@thunikart/shared';
-import { getDb, nextId, saveDb, type MockRole, type MockUser } from './db';
+import { getDb, nextId, saveDb, type MockUser } from './db';
 
-const p = (path: string) => `*${API_PREFIX}${path}`;
-const SESSION_KEY = 'tk.mock.session';
-let rid = 0;
-const requestId = () => `req_mock_${(++rid).toString(36)}`;
+import { SESSION_KEY, fail, guarded, log, p, roleOf, zodFields } from './helpers';
+import { catalogHandlers } from './catalog-handlers';
+import { inventoryHandlers } from './inventory-handlers';
+import { posHandlers } from './pos-handlers';
+import { accountsHandlers } from './accounts-handlers';
+import type { MockRole } from './db';
 
-function fail(status: number, code: string, message: string, fields: Array<{ path: string; message: string }> = []) {
-  return HttpResponse.json({ code, message, fields, requestId: requestId() }, { status });
-}
-const zodFields = (e: { issues: Array<{ path: PropertyKey[]; message: string }> }) => e.issues.map((i) => ({ path: i.path.join('.'), message: i.message }));
-
-const roleOf = (id: string) => getDb().roles.find((r) => r.id === id);
 const userDto = (u: MockUser) => ({ id: u.id, name: u.name, email: u.email, mobile: u.mobile, roleId: u.roleId, roleName: roleOf(u.roleId)?.name ?? '', active: u.active, lockedUntil: null, lastLoginAt: u.lastLoginAt, createdAt: u.createdAt });
 const roleDto = (r: MockRole) => ({ ...r, userCount: getDb().users.filter((u) => u.roleId === r.id).length });
 const gstStatus = () => {
   const pr = getDb().profile;
   return { gstMode: pr.gstin ? ('on' as const) : ('off' as const), gstin: pr.gstin || null, goLiveAt: pr.gstGoLiveAt };
 };
-
-function authed(req: Request): MockUser | null {
-  const m = /^Bearer mock-token-(.+)$/.exec(req.headers.get('authorization') ?? '');
-  return (m && getDb().users.find((u) => u.id === m[1] && u.active)) || null;
-}
-function can(u: MockUser, key: string) {
-  const r = roleOf(u.roleId);
-  return !!r && (r.isAdmin || r.permissions.includes(key));
-}
-function log(u: MockUser | null, method: string, path: string, entity: string, action: string, entityId: string | null, before: unknown, after: unknown) {
-  const d = getDb();
-  d.activity.unshift({ id: nextId(), at: new Date().toISOString(), userId: u?.id ?? null, userName: u?.name ?? null, method, path, status: 200, entity, entityId, action, before, after, ip: '127.0.0.1', requestId: requestId() });
-  d.activity.length = Math.min(d.activity.length, 300);
-}
-
-/** Wraps a handler with auth and a permission check. 401 triggers the client's quiet refresh, 403 shows the no permission page. */
-function guarded(perm: string | null, fn: (ctx: { user: MockUser; request: Request; params: Record<string, string | readonly string[] | undefined> }) => Promise<Response> | Response) {
-  return async ({ request, params }: { request: Request; params: Record<string, string | readonly string[] | undefined> }) => {
-    await delay(120);
-    const user = authed(request);
-    if (!user) return fail(401, 'UNAUTHENTICATED', 'Please sign in again.');
-    if (perm && !can(user, perm)) return fail(403, 'FORBIDDEN', `You do not have permission (${perm}).`);
-    return fn({ user, request, params });
-  };
-}
 
 export const handlers: HttpHandler[] = [
   http.post(p('/auth/login'), async ({ request }) => {
@@ -220,6 +191,10 @@ export const handlers: HttpHandler[] = [
     const all = getDb().activity.filter((a) => (!entity || a.entity === entity) && (!userId || a.userId === userId));
     return HttpResponse.json({ items: all.slice((page - 1) * size, page * size), total: all.length, nextPage: page * size < all.length ? page + 1 : null });
   })),
+  ...catalogHandlers,
+  ...inventoryHandlers,
+  ...posHandlers,
+  ...accountsHandlers,
 ];
 
 function roleUpdateParse(body: unknown): { ok: true; data: { name?: string; description?: string } } | { ok: false; fields: Array<{ path: string; message: string }> } {

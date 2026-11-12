@@ -1,9 +1,12 @@
-/** Placeholder wordmark until the logo files arrive in docs/source. */
-export function Logo({ light = false, className = '' }: { light?: boolean; className?: string }) {
-  return (
-    <span className={`inline-flex items-center gap-2 font-semibold uppercase tracking-heading ${light ? 'text-white' : 'text-navy'} ${className}`}>
-      <svg aria-hidden width="24" height="24" viewBox="0 0 64 64"><rect width="64" height="64" rx="10" fill={light ? '#FFFFFF' : '#0B1B54'} /><path d="M18 20h28v7H35v21h-7V27H18z" fill="#F67025" /><path d="M40 44c4 0 7-2 8-5" stroke="#0BBBB4" strokeWidth="3" fill="none" strokeLinecap="round" /></svg>
-      Thunikart
-    </span>
-  );
+const SRC = { sidebar: ['/logo-sidebar.png', 720, 239], mark: ['/logo-mark.png', 256, 256], primary: ['/logo-primary.png', 640, 506] } as const;
+
+/**
+ * Thunikart logo files (source copies are in docs/source/logos).
+ * sidebar: wide logo for menus and headers. mark: icon only. primary: stacked logo for sign in pages.
+ * The artwork has a white background, so on the navy sidebar and headers it sits on a white tile (`tile`).
+ */
+export function Logo({ variant = 'sidebar', tile = false, className = '' }: { variant?: keyof typeof SRC; tile?: boolean; className?: string }) {
+  const [src, width, height] = SRC[variant];
+  const img = <img src={src} width={width} height={height} alt="Thunikart by Krishnas Orchids" className="block h-auto w-full object-contain" />;
+  return tile ? <span className={`inline-block rounded bg-white p-1.5 ${className}`}>{img}</span> : <span className={`inline-block ${className}`}>{img}</span>;
 }

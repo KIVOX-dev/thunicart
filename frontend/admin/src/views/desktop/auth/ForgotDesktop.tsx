@@ -8,7 +8,7 @@ export function ForgotDesktop() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-mist p-12">
       <div className="w-full max-w-md rounded border border-line bg-white p-8">
-        <Logo />
+        <Logo variant="sidebar" className="w-56" />
         <h1 className="mb-2 mt-6 text-lg">Reset password</h1>
         {sent ? (
           <p role="status" className="text-sm">If this email belongs to a Thunikart user, a reset link is on its way. Check your inbox.</p>

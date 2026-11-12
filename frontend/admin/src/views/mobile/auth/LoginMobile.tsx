@@ -15,7 +15,7 @@ export function LoginMobile() {
   return (
     <div className="flex min-h-screen flex-col">
       <div className="bg-navy px-6 pb-8 pt-10 text-white">
-        <Logo light />
+        <Logo variant="primary" tile className="w-36 !p-2" />
         <h1 className="mt-6 text-lg">Sign in</h1>
         <p className="mt-1 text-sm text-white/80">Thunikart billing and stock</p>
       </div>

@@ -7,3 +7,11 @@ dist
 backend/.local-storage
 *.log
 coverage
+
+# client data extracted for mock mode
+frontend/admin/src/mocks/data/stock.json
+frontend/admin/dist
+frontend/admin/dev-dist
+frontend/admin/test-results
+frontend/admin/playwright-report
+frontend/storefront/.next

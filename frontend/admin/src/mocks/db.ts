@@ -1,4 +1,9 @@
 import { ALL_PERMISSION_KEYS, NUMBER_SERIES_KEYS } from '@thunikart/shared';
+import type { Customer, HsnRule, ImportBatch, Item, Store, Vendor } from '../features/catalog/types';
+import { seedCatalog } from './catalog-seed';
+import { seedInventory, type InventoryState } from './inventory-state';
+import { seedPos, type PosState } from './pos-state';
+import { seedAccounts, type AccountsState } from './accounts-state';
 
 /** In-memory mock database for MSW mode. Persisted to localStorage so a demo survives reloads. */
 export interface MockRole { id: string; name: string; description: string; isSystem: boolean; isAdmin: boolean; permissions: string[]; createdAt: string; updatedAt: string }
@@ -11,9 +16,20 @@ export interface MockDb {
   activity: MockActivity[];
   profile: Record<string, unknown> & { gstin: string; gstGoLiveAt: string | null; version: number; updatedAt: string };
   series: Array<{ key: string; prefix: string; padding: number; perFinancialYear: boolean; financialYear: string; counter: number }>;
+  stores: Store[];
+  items: Item[];
+  vendors: Vendor[];
+  customers: Customer[];
+  hsnRules: HsnRule[];
+  batches: Array<ImportBatch & { target: string; mapping: Record<string, string> }>;
+  mappings: Record<string, Record<string, string>>;
+  inv: InventoryState;
+  pos: PosState;
+  acc: AccountsState;
+  labelTemplates: Array<{ id: string; name: string; widthMm: number; heightMm: number; fields: string[]; fontPx: number }>;
 }
 
-const KEY = 'tk.mock.db.v1';
+const KEY = 'tk.mock.db.v2';
 export const mockId = (n: number) => n.toString(16).padStart(24, '0');
 const now = () => new Date().toISOString();
 
@@ -48,8 +64,12 @@ function seed(): MockDb {
       defaultPrintSize: '4x6', termsText: 'Goods once sold will not be taken back without a bill.', invoiceFooter: 'Thank you. Visit again.',
       gstGoLiveAt: null, version: 1, updatedAt: t,
     },
+    ...seedCatalog(),
+    ...seedInventory(),
+    ...seedPos(),
+    ...seedAccounts(),
     series: NUMBER_SERIES_KEYS.map((key) => ({
-      key, prefix: key, padding: 6, perFinancialYear: ['POS', 'ECM', 'PO', 'GRN', 'PR', 'CN', 'DN'].includes(key), financialYear: '2026-27', counter: 0,
+      key, prefix: key, padding: 6, perFinancialYear: ['ECM', 'PO', 'GRN', 'PR', 'CN', 'DN'].includes(key), financialYear: '2026-27', counter: 0,
     })),
   };
 }
@@ -59,7 +79,7 @@ export function getDb(): MockDb {
   if (db) return db;
   try {
     const raw = localStorage.getItem(KEY);
-    db = raw ? (JSON.parse(raw) as MockDb) : seed();
+    db = raw ? ({ ...seed(), ...(JSON.parse(raw) as MockDb) }) : seed();
   } catch {
     db = seed();
   }

@@ -4,6 +4,7 @@ import { ToastProvider } from '@thunikart/ui';
 import { ApiError } from '../features/api/http';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { OfflineBanner } from '../components/OfflineBanner';
+import { PrintProvider } from '../features/pos/use-print';
 import { ViewProvider } from './view';
 
 export function Providers({ children }: { children: ReactNode }) {
@@ -21,7 +22,7 @@ export function Providers({ children }: { children: ReactNode }) {
         <ViewProvider>
           <ToastProvider>
             <OfflineBanner />
-            {children}
+            <PrintProvider>{children}</PrintProvider>
           </ToastProvider>
         </ViewProvider>
       </QueryClientProvider>
