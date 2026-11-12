@@ -15,11 +15,12 @@ export function WishProvider({ children }: { children: ReactNode }) {
   const [ids, setIds] = useState<string[]>([]);
   const [recent, setRecent] = useState<string[]>([]);
   const [compare, setCompare] = useState<string[]>([]);
-  useEffect(() => { setIds(read(KEY)); setRecent(read(RECENT)); setCompare(read('tk_compare')); }, []);
+  useEffect(() => { setIds(read(KEY)); setRecent((s) => [...s, ...read(RECENT).filter((x) => !s.includes(x))].slice(0, 12)); setCompare(read('tk_compare')); }, []);
   const value = useMemo<Ctx>(() => ({
     ids, recent, compare, has: (id) => ids.includes(id),
     toggle: (id) => setIds((s) => { const n = s.includes(id) ? s.filter((x) => x !== id) : [...s, id]; write(KEY, n); return n; }),
-    seen: (id) => setRecent((s) => { const n = [id, ...s.filter((x) => x !== id)].slice(0, 12); write(RECENT, n); return n; }),
+    // a product page calls this before the saved list has loaded, so the saved list is read here rather than trusted from state
+    seen: (id) => setRecent((s) => { const n = [id, ...[...s, ...read(RECENT)].filter((x, i, a) => x !== id && a.indexOf(x) === i)].slice(0, 12); write(RECENT, n); return n; }),
     toggleCompare: (id) => setCompare((s) => { const n = s.includes(id) ? s.filter((x) => x !== id) : [...s, id].slice(-4); write('tk_compare', n); return n; }),
   }), [ids, recent, compare]);
   return <WishCtx.Provider value={value}>{children}</WishCtx.Provider>;

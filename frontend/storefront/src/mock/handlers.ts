@@ -46,7 +46,7 @@ function facetsOf(list: Product[]): Facets {
 function catalog(q: URLSearchParams): ProductList {
   const all = PRODUCTS.map(live);
   const cat = q.get('category');
-  const base = all.filter((p) => !cat || cat === 'all' || p.categorySlug === cat || p.subSlug === cat || (cat === 'sale' && p.discountPct >= 10) || (cat === 'bestseller' && p.trending) || (cat === 'new-arrivals' && p.isNew));
+  const base = all.filter((p) => !cat || cat === 'all' || p.categorySlug === cat || p.subSlug === cat || p.typeSlug === cat || (cat === 'sale' && p.discountPct >= 10) || (cat === 'bestseller' && p.trending) || (cat === 'new-arrivals' && p.isNew));
   const sizes = csv(q.get('size')), colors = csv(q.get('color')), fabrics = csv(q.get('fabric')), brands = csv(q.get('brand')), occ = csv(q.get('occasion'));
   const text = (q.get('q') ?? '').toLowerCase();
   const ids = csv(q.get('ids'));

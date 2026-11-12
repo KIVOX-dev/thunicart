@@ -1,14 +1,13 @@
 import type { BlogPost, Category, CmsPage, Contact, Product, ProductVariant } from '../lib/types';
 
 /** Seed data for mock mode: a believable Thunikart catalog and CMS content. Images are drawn by /api/img. */
-export const CATEGORIES: Category[] = [
-  { slug: 'innerwear', name: 'Innerwear', image: '/api/img/cat-innerwear/1', children: [{ slug: 'bras', name: 'Bras' }, { slug: 'panties', name: 'Panties' }, { slug: 'vests', name: 'Vests and slips' }] },
-  { slug: 'kurtis', name: 'Kurtis', image: '/api/img/cat-kurtis/1', children: [{ slug: 'cotton-kurtis', name: 'Cotton kurtis' }, { slug: 'rayon-kurtis', name: 'Rayon kurtis' }] },
-  { slug: 'dothis', name: 'Dothis', image: '/api/img/cat-dothis/1', children: [{ slug: 'festive-dothis', name: 'Festive dothis' }, { slug: 'daily-dothis', name: 'Daily wear dothis' }] },
-  { slug: 'nightwear', name: 'Nightwear', image: '/api/img/cat-nightwear/1', children: [{ slug: 'nighties', name: 'Nighties' }, { slug: 'night-sets', name: 'Night sets' }] },
-  { slug: 'leggings', name: 'Leggings', image: '/api/img/cat-leggings/1', children: [{ slug: 'ankle-leggings', name: 'Ankle length' }, { slug: 'churidar-leggings', name: 'Churidar' }] },
-  { slug: 'accessories', name: 'Accessories', image: '/api/img/cat-accessories/1', children: [{ slug: 'scarves', name: 'Scarves' }, { slug: 'bags', name: 'Bags and purses' }] },
+/** The store sells for Men and Women only. Each has the same shop-by-type list underneath; the type slugs (kurtis, dothis...) still work as filters. */
+const TYPES: Record<string, string> = { innerwear: 'Innerwear', kurtis: 'Kurtis', dothis: 'Dothis', nightwear: 'Nightwear', leggings: 'Leggings', accessories: 'Accessories' };
+const MENU: Array<{ slug: 'women' | 'men'; name: string; types: string[] }> = [
+  { slug: 'women', name: 'Women', types: ['kurtis', 'innerwear', 'nightwear', 'leggings', 'accessories'] },
+  { slug: 'men', name: 'Men', types: ['dothis', 'innerwear', 'accessories'] },
 ];
+export const CATEGORIES: Category[] = MENU.map((g) => ({ slug: g.slug, name: g.name, image: `/api/img/cat-${g.slug}/1`, children: g.types.map((t) => ({ slug: `${g.slug}-${t}`, name: TYPES[t]! })) }));
 
 const COLORS = [
   { name: 'Navy', hex: '#0B1B54' }, { name: 'Maroon', hex: '#7A1F2B' }, { name: 'Teal', hex: '#0BBBB4' }, { name: 'Mustard', hex: '#D9A21B' }, { name: 'Rose', hex: '#E58AA3' },
@@ -22,26 +21,28 @@ export const SIZES_ALL = ['S', 'M', 'L', 'XL', 'XXL', 'Free Size'];
 const hash = (s: string) => { let h = 7; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
 const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
-interface Spec { name: string; cat: string; sub: string; base: number; sizes: string[]; trending?: boolean }
+interface Spec { g?: 'men'; name: string; cat: string; sub: string; base: number; sizes: string[]; trending?: boolean }
 const SPECS: Spec[] = [
   { name: 'Seamless Cotton Bra', cat: 'innerwear', sub: 'bras', base: 349, sizes: ['S', 'M', 'L', 'XL'], trending: true }, { name: 'Padded T-Shirt Bra', cat: 'innerwear', sub: 'bras', base: 499, sizes: ['S', 'M', 'L'] },
   { name: 'Everyday Hipster Panty', cat: 'innerwear', sub: 'panties', base: 149, sizes: ['S', 'M', 'L', 'XL'] }, { name: 'Modal Brief Pack', cat: 'innerwear', sub: 'panties', base: 299, sizes: ['M', 'L', 'XL'], trending: true },
-  { name: 'Cotton Camisole Slip', cat: 'innerwear', sub: 'vests', base: 249, sizes: ['S', 'M', 'L', 'XL'] }, { name: 'Ribbed Cotton Vest', cat: 'innerwear', sub: 'vests', base: 199, sizes: ['M', 'L', 'XL'] },
+  { name: 'Cotton Camisole Slip', cat: 'innerwear', sub: 'vests', base: 249, sizes: ['S', 'M', 'L', 'XL'] }, { name: 'Cotton Camisole Cami', cat: 'innerwear', sub: 'vests', base: 229, sizes: ['S', 'M', 'L'] },
+  { g: 'men', name: 'Ribbed Cotton Vest', cat: 'innerwear', sub: 'vests', base: 199, sizes: ['M', 'L', 'XL'] }, { g: 'men', name: 'Mens Cotton Brief', cat: 'innerwear', sub: 'briefs', base: 179, sizes: ['M', 'L', 'XL', 'XXL'] },
   { name: 'Block Print Cotton Kurti', cat: 'kurtis', sub: 'cotton-kurtis', base: 699, sizes: ['S', 'M', 'L', 'XL', 'XXL'], trending: true }, { name: 'Straight Cut Cotton Kurti', cat: 'kurtis', sub: 'cotton-kurtis', base: 799, sizes: ['M', 'L', 'XL'] },
   { name: 'Embroidered Rayon Kurti', cat: 'kurtis', sub: 'rayon-kurtis', base: 1099, sizes: ['S', 'M', 'L', 'XL'], trending: true }, { name: 'A-Line Rayon Kurti', cat: 'kurtis', sub: 'rayon-kurtis', base: 899, sizes: ['S', 'M', 'L', 'XL', 'XXL'] },
   { name: 'Anarkali Festive Kurti', cat: 'kurtis', sub: 'rayon-kurtis', base: 1499, sizes: ['M', 'L', 'XL'] }, { name: 'Pintuck Cotton Kurti', cat: 'kurtis', sub: 'cotton-kurtis', base: 749, sizes: ['S', 'M', 'L'] },
-  { name: 'Zari Border Dothi', cat: 'dothis', sub: 'festive-dothis', base: 899, sizes: ['Free Size'], trending: true }, { name: 'Pure Cotton Dothi', cat: 'dothis', sub: 'daily-dothis', base: 449, sizes: ['Free Size'] },
-  { name: 'Silk Blend Dothi Set', cat: 'dothis', sub: 'festive-dothis', base: 1599, sizes: ['Free Size'] }, { name: 'Kavi Border Dothi', cat: 'dothis', sub: 'daily-dothis', base: 399, sizes: ['Free Size'] },
+  { g: 'men', name: 'Zari Border Dothi', cat: 'dothis', sub: 'festive-dothis', base: 899, sizes: ['Free Size'], trending: true }, { g: 'men', name: 'Pure Cotton Dothi', cat: 'dothis', sub: 'daily-dothis', base: 449, sizes: ['Free Size'] },
+  { g: 'men', name: 'Silk Blend Dothi Set', cat: 'dothis', sub: 'festive-dothis', base: 1599, sizes: ['Free Size'] }, { g: 'men', name: 'Kavi Border Dothi', cat: 'dothis', sub: 'daily-dothis', base: 399, sizes: ['Free Size'] },
   { name: 'Printed Cotton Nightie', cat: 'nightwear', sub: 'nighties', base: 549, sizes: ['L', 'XL', 'XXL', 'Free Size'], trending: true }, { name: 'Front Open Maxi Nightie', cat: 'nightwear', sub: 'nighties', base: 699, sizes: ['L', 'XL', 'XXL'] },
   { name: 'Cotton Night Suit Set', cat: 'nightwear', sub: 'night-sets', base: 899, sizes: ['S', 'M', 'L', 'XL'] }, { name: 'Satin Pyjama Set', cat: 'nightwear', sub: 'night-sets', base: 1199, sizes: ['M', 'L', 'XL'] },
   { name: 'Ankle Length Legging', cat: 'leggings', sub: 'ankle-leggings', base: 349, sizes: ['S', 'M', 'L', 'XL', 'XXL'], trending: true }, { name: 'Churidar Cotton Legging', cat: 'leggings', sub: 'churidar-leggings', base: 399, sizes: ['M', 'L', 'XL', 'XXL'] },
   { name: 'Stretch Lycra Legging', cat: 'leggings', sub: 'ankle-leggings', base: 449, sizes: ['S', 'M', 'L', 'XL'] }, { name: 'Soft Modal Legging', cat: 'leggings', sub: 'churidar-leggings', base: 499, sizes: ['M', 'L', 'XL'] },
   { name: 'Printed Cotton Scarf', cat: 'accessories', sub: 'scarves', base: 249, sizes: ['Free Size'] }, { name: 'Silk Blend Stole', cat: 'accessories', sub: 'scarves', base: 599, sizes: ['Free Size'] },
-  { name: 'Everyday Tote Bag', cat: 'accessories', sub: 'bags', base: 799, sizes: ['Free Size'] }, { name: 'Coin Purse Pouch', cat: 'accessories', sub: 'bags', base: 199, sizes: ['Free Size'] },
+  { g: 'men', name: 'Mens Leather Wallet', cat: 'accessories', sub: 'bags', base: 349, sizes: ['Free Size'] }, { name: 'Everyday Tote Bag', cat: 'accessories', sub: 'bags', base: 799, sizes: ['Free Size'] }, { name: 'Coin Purse Pouch', cat: 'accessories', sub: 'bags', base: 199, sizes: ['Free Size'] },
 ];
 
 function make(spec: Spec, n: number): Product {
   const h = hash(spec.name);
+  const g = spec.g ?? 'women';
   const slug = slugify(spec.name);
   const code = `TK${String(1000 + n)}`;
   const nColors = 2 + (h % 3);
@@ -57,7 +58,7 @@ function make(spec: Spec, n: number): Product {
   const low = variants.some((v) => v.stock > 0 && v.stock <= 3);
   const best = Math.min(...variants.map((v) => v.offer ?? v.price));
   return {
-    id: code, slug, code, name: spec.name, category: CATEGORIES.find((c) => c.slug === spec.cat)!.name, categorySlug: spec.cat, subSlug: spec.sub, brand: BRANDS[h % BRANDS.length]!, fabric: FABRICS[(h >> 3) % FABRICS.length]!, occasion: OCCASIONS[(h >> 5) % OCCASIONS.length]!,
+    id: code, slug, code, name: spec.name, category: g === 'men' ? 'Men' : 'Women', categorySlug: g, subSlug: `${g}-${spec.cat}`, typeSlug: spec.cat, typeName: TYPES[spec.cat]!, brand: BRANDS[h % BRANDS.length]!, fabric: FABRICS[(h >> 3) % FABRICS.length]!, occasion: OCCASIONS[(h >> 5) % OCCASIONS.length]!,
     description: `${spec.name} from Thunikart. Soft on the skin, made to last through many washes, and cut for everyday comfort.`,
     details: ['Machine wash cold, dry in shade', 'Colour may differ slightly from the photo', `Fabric: ${FABRICS[(h >> 3) % FABRICS.length]}`, 'Easy returns within 7 days'],
     images: [`/api/img/${code}/1`, `/api/img/${code}/2`, `/api/img/${code}/3`], videoUrl: null,

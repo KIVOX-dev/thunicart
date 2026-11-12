@@ -10,7 +10,9 @@ async function nameOf(slug: string): Promise<string> {
   if (SPECIAL[slug]) return SPECIAL[slug]!;
   const cats = (await sget<Category[]>('/catalog/categories')) ?? [];
   const hit = cats.find((c) => c.slug === slug) ?? cats.flatMap((c) => c.children).find((c) => c.slug === slug);
-  return hit?.name ?? 'Products';
+  if (hit) return hit.name;
+  const type = ['kurtis', 'innerwear', 'dothis', 'nightwear', 'leggings', 'accessories'].includes(slug);
+  return type ? slug[0]!.toUpperCase() + slug.slice(1) : 'Products';
 }
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {

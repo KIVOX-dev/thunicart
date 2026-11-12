@@ -19,9 +19,9 @@ export default async function Home() {
       <HeroSlider banners={h.banners} />
       <section aria-label="Shop by category" className="mx-auto max-w-7xl px-4 pt-12 md:px-6">
         <h2 className="mb-4 text-sm md:text-base">Shop by category</h2>
-        <ul className="grid grid-cols-3 gap-3 md:grid-cols-6 md:gap-6">
+        <ul className="grid grid-cols-2 gap-3 md:gap-6">
           {h.categories.map((c) => (
-            <li key={c.slug}><Link href={`/c/${c.slug}`} className={tile}><img src={c.image} alt="" width={240} height={240} loading="lazy" className="aspect-square w-full rounded-sm object-cover" /><span className={label}>{c.name}</span></Link></li>
+            <li key={c.slug}><Link href={`/c/${c.slug}`} className={tile}><img src={c.image} alt="" width={480} height={480} loading="lazy" className="aspect-square w-full md:aspect-[2/1] rounded-sm object-cover" /><span className={label}>{c.name}</span></Link></li>
           ))}
         </ul>
       </section>

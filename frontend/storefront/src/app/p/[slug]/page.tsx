@@ -27,8 +27,8 @@ export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
   const p = await sget<Product>(`/catalog/products/${slug}`);
   if (!p) notFound();
-  const related = (await sget<ProductList>('/catalog/products', { category: p.categorySlug, pageSize: 5 }))?.items.filter((x) => x.id !== p.id).slice(0, 4) ?? [];
-  const look = (await sget<ProductList>('/catalog/products', { category: p.categorySlug === 'accessories' ? 'kurtis' : 'accessories', pageSize: 4 }))?.items ?? [];
+  const related = (await sget<ProductList>('/catalog/products', { category: p.subSlug, pageSize: 5 }))?.items.filter((x) => x.id !== p.id).slice(0, 4) ?? [];
+  const look = (await sget<ProductList>('/catalog/products', { category: p.typeSlug === 'accessories' ? 'kurtis' : 'accessories', pageSize: 4 }))?.items ?? [];
   const ld = {
     '@context': 'https://schema.org', '@type': 'Product', name: p.name, sku: p.code, brand: { '@type': 'Brand', name: p.brand }, description: p.description, image: p.images.map((i) => `${SITE_URL}${i}`),
     offers: { '@type': 'Offer', priceCurrency: 'INR', price: (p.fromPrice / 100).toFixed(2), availability: p.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock', url: `${SITE_URL}/p/${p.slug}` },
@@ -36,7 +36,7 @@ export default async function ProductPage({ params }: Props) {
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 pb-32 md:px-6 md:py-10 md:pb-10">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
-      <nav aria-label="Breadcrumb" className="mb-4 text-xs text-muted"><ol className="flex gap-1"><li><Link href="/" className="hover:underline">Home</Link></li><li aria-hidden>/</li><li><Link href={`/c/${p.categorySlug}`} className="hover:underline">{p.category}</Link></li><li aria-hidden>/</li><li aria-current="page" className="text-navy">{p.name}</li></ol></nav>
+      <nav aria-label="Breadcrumb" className="mb-4 text-xs text-muted"><ol className="flex gap-1"><li><Link href="/" className="hover:underline">Home</Link></li><li aria-hidden>/</li><li><Link href={`/c/${p.categorySlug}`} className="hover:underline">{p.category}</Link></li><li aria-hidden>/</li><li><Link href={`/c/${p.subSlug}`} className="hover:underline">{p.typeName}</Link></li><li aria-hidden>/</li><li aria-current="page" className="text-navy">{p.name}</li></ol></nav>
       <div className="grid gap-8 md:grid-cols-[1.2fr_1fr] md:gap-12">
         <Gallery images={p.images} name={p.name} />
         <ProductBuy p={p} />

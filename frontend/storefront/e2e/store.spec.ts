@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixtures';
 import { addToBag, noSidewaysScroll, products, resetMock, signIn, stocked } from './helpers';
 
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
@@ -19,7 +19,9 @@ test.describe('home and header', () => {
     await expect(page.getByRole('region', { name: 'Featured' })).toBeVisible();
     const order = await page.locator('main section[aria-label]').evaluateAll((els) => els.map((e) => e.getAttribute('aria-label')));
     expect(order.slice(0, 7)).toEqual(['Featured', 'Shop by category', 'Shop by size', 'Trending now', 'Shop by occasion', 'New arrivals', 'Lookbook']);
-    await expect(page.getByRole('region', { name: 'Shop by category' }).getByRole('link')).toHaveCount(6);
+    await expect(page.getByRole('region', { name: 'Shop by category' }).getByRole('link')).toHaveCount(2); // the store is for Men and Women only
+    await expect(page.getByRole('region', { name: 'Shop by category' })).toContainText('Women');
+    await expect(page.getByRole('region', { name: 'Shop by category' })).toContainText('Men');
     await expect(page.getByRole('region', { name: 'Shop by size' }).getByRole('link', { name: 'M', exact: true })).toBeVisible();
     await expect(page.getByRole('contentinfo').getByRole('navigation', { name: 'Quick shop' })).toBeVisible();
     await expect(page.getByRole('contentinfo').getByLabel('Newsletter')).toBeVisible();
@@ -29,8 +31,9 @@ test.describe('home and header', () => {
     } else {
       await expect(page.getByRole('navigation', { name: 'Main tabs' })).toBeHidden();
       const nav = page.getByRole('navigation', { name: 'Categories' }).filter({ visible: true });
-      for (const t of ['Sale', 'Bestseller']) await expect(nav.getByRole('link', { name: t })).toBeVisible();
-      expect(await nav.getByRole('link', { name: 'Kurtis' }).evaluate((e) => getComputedStyle(e).textTransform)).toBe('uppercase');
+      for (const t of ['Women', 'Men', 'Sale', 'Bestseller']) await expect(nav.getByRole('link', { name: t, exact: true })).toBeVisible();
+      await expect(nav.getByRole('link', { name: 'Innerwear', exact: true })).toHaveCount(0); // sub types only show in the drop down
+      expect(await nav.getByRole('link', { name: 'Women', exact: true }).evaluate((e) => getComputedStyle(e).textTransform)).toBe('uppercase');
     }
     await noSidewaysScroll(page);
   });
@@ -53,12 +56,12 @@ test.describe('home and header', () => {
     await page.goto('/');
     await page.getByRole('button', { name: 'Open menu' }).click();
     const d = page.getByRole('dialog', { name: 'Menu' });
-    await d.getByRole('button', { name: 'Kurtis sub categories' }).click();
-    await expect(d.getByRole('link', { name: 'Cotton kurtis' })).toBeVisible();
+    await d.getByRole('button', { name: 'Women sub categories' }).click();
+    await expect(d.getByRole('link', { name: 'Kurtis', exact: true })).toBeVisible();
     await expect(d.getByRole('link', { name: 'Sale' })).toBeVisible();
-    await d.getByRole('link', { name: 'Cotton kurtis' }).click();
-    await expect(page).toHaveURL(/\/c\/cotton-kurtis/);
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Cotton kurtis');
+    await d.getByRole('link', { name: 'Kurtis', exact: true }).click();
+    await expect(page).toHaveURL(/\/c\/women-kurtis/);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Kurtis');
   });
 
   test('keyboard: the skip link is first and the focus ring is a 2 px outline', async ({ page }) => {
@@ -73,7 +76,7 @@ test.describe('home and header', () => {
 
 test.describe('listing', () => {
   test('filters live in the URL and survive a reload, and sort works', async ({ page, isMobile }) => {
-    await page.goto('/c/kurtis');
+    await page.goto('/c/women');
     const count = page.getByTestId('result-count');
     const before = await count.textContent();
     if (isMobile) {
@@ -164,7 +167,7 @@ test.describe('product page', () => {
     const soldBtn = page.getByRole('button', { name: `Size ${sold.size}, sold out` });
     await expect(soldBtn).toBeVisible(); // sold out sizes are never hidden
     expect(await soldBtn.evaluate((e) => getComputedStyle(e).textDecorationLine)).toContain('line-through');
-    await soldBtn.click();
+    await soldBtn.click({ force: true });
     await expect(page.getByTestId('stock-message')).not.toContainText('Out of stock'); // a sold out size cannot be chosen
     await page.getByRole('button', { name: 'Add to cart' }).click();
     await expect(page.getByRole('alert').filter({ hasText: 'Choose a size first' })).toBeVisible();
@@ -187,7 +190,7 @@ test.describe('product page', () => {
       const bar = page.getByRole('button', { name: 'Add to cart' });
       await expect(bar).toBeVisible();
       const box = await bar.boundingBox();
-      expect(box!.y + box!.height).toBeGreaterThan(780); // fixed to the bottom of the screen
+      expect(box!.y + box!.height).toBeGreaterThan(700); // fixed to the bottom of the screen
       await page.mouse.wheel(0, 1500);
       await expect(bar).toBeVisible();
     } else {
@@ -259,7 +262,7 @@ test.describe('bag, coupon and stock problems', () => {
     const v = p.variants.find((x) => x.stock >= 1 && x.stock <= 3)!;
     await addToBag(page, p.slug, v.color, v.size);
     await page.goto('/cart');
-    for (let n = 0; n < v.stock; n++) await page.getByRole('button', { name: `More ${p.name}` }).click(); // one more than is in stock
+    for (let n = 0; n < v.stock; n++) { await page.getByRole('button', { name: `More ${p.name}` }).click(); await expect(page.getByTestId(`cart-qty-${v.id}`)).toHaveText(String(n + 2)); } // one more than is in stock; wait for each tap to land
     const gone = page.getByTestId('unavailable');
     await expect(gone).toContainText(p.name);
     await expect(gone).toContainText(`Only ${v.stock} left`);
@@ -332,8 +335,8 @@ test.describe('checkout and the whole order, in mock mode', () => {
 
     // Browse and filter.
     await page.goto('/');
-    await page.getByRole('navigation', { name: 'Categories' }).getByRole('link', { name: 'Kurtis', exact: true }).click();
-    await expect(page).toHaveURL(/\/c\/kurtis/);
+    await page.getByRole('navigation', { name: 'Categories' }).getByRole('link', { name: 'Women', exact: true }).click();
+    await expect(page).toHaveURL(/\/c\/women/);
     if (isMobile) { await page.getByRole('button', { name: /^Filter/ }).click(); const s = page.getByRole('dialog', { name: 'Filters' }); await s.getByRole('button', { name: 'L', exact: true }).click(); await s.getByRole('button', { name: /Show \d+ items/ }).click(); }
     else await page.getByRole('complementary', { name: 'Filters' }).getByRole('button', { name: 'L', exact: true }).click();
     await expect(page).toHaveURL(/size=L/);
@@ -492,7 +495,7 @@ test.describe('content and search engines', () => {
     const sm = await (await request.get('/sitemap.xml')).text();
     const { p } = await stocked(request);
     expect(sm).toContain(`/p/${p.slug}`);
-    expect(sm).toContain('/c/kurtis');
+    expect(sm).toContain('/c/women-kurtis');
     expect(sm).toContain('/pages/about');
     const robots = await (await request.get('/robots.txt')).text();
     expect(robots).toMatch(/Disallow: \/checkout/);

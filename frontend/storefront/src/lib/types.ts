@@ -1,7 +1,7 @@
 /** Storefront contracts. Proposals until B5 publishes its spec. Money is integer paise and is only ever formatted here, never calculated. */
 export interface ProductVariant { id: string; size: string; color: string; mrp: number; price: number; offer: number | null; stock: number; barcode: string }
 export interface Product {
-  id: string; slug: string; code: string; name: string; category: string; categorySlug: string; subSlug: string; brand: string; fabric: string; occasion: string; description: string; details: string[];
+  id: string; slug: string; code: string; name: string; category: string; categorySlug: string; subSlug: string; typeSlug: string; typeName: string; brand: string; fabric: string; occasion: string; description: string; details: string[];
   images: string[]; videoUrl: string | null; sizeChart: Array<{ size: string; chest: string; length: string }>; variants: ProductVariant[]; colors: Array<{ name: string; hex: string }>;
   isNew: boolean; trending: boolean; popularity: number; createdAt: string; discountPct: number; lowStock: boolean; inStock: boolean; fromPrice: number; fromMrp: number;
 }
