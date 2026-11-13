@@ -42,7 +42,7 @@ async function openverse(query: string, limit: number) {
   Object.entries({ q: query, license_type: 'commercial', source: 'flickr,stocksnap,nappy,rawpixel,justtakeitfree', extension: 'jpg', page_size: '30', mature: 'false' }).forEach(([k, v]) => u.searchParams.set(k, v));
   try {
     let r = await fetch(u, { headers: { 'user-agent': UA } });
-    for (let tries = 0; r.status === 429 && tries < 6; tries++) { console.log('  rate limited, waiting 70 s'); await new Promise((ok) => setTimeout(ok, 70_000)); r = await fetch(u, { headers: { 'user-agent': UA } }); }
+    for (let tries = 0; [429, 502, 503, 504].includes(r.status) && tries < 8; tries++) { console.log(`  Openverse busy (${r.status}), waiting 70 s`); await new Promise((ok) => setTimeout(ok, 70_000)); r = await fetch(u, { headers: { 'user-agent': UA } }); }
     await new Promise((ok) => setTimeout(ok, 3000)); // stay under the anonymous rate limit
     if (!r.ok) return [];
     const j: any = await r.json(); const out: any[] = [];
