@@ -1,13 +1,29 @@
 import { useEffect, useState } from 'react';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api, ApiError, downloadFile, newIdempotencyKey } from '../api/http';
+import { api, ApiError, downloadFile, MOCK_MODE, newIdempotencyKey } from '../api/http';
 import { applyFieldIssues } from '../api/field-issues';
 import { rupeesToPaise } from '../api/money';
 import { uploadFile } from '../catalog/use-uploads';
 import { customerDto, listEnvelope } from '../catalog/types';
 import { dashboardDto, exportRecord, expenseList, jobDto, receiptList, receivableRow, reportData, reportMeta, type Job } from './types';
 
-export function useDashboard() { return useQuery({ queryKey: ['dashboard'], queryFn: async () => dashboardDto.parse(await api.get('/dashboard')) }); }
+/** The real backend publishes the dashboard as /dashboard/summary with its own field names. This maps it onto the shape the screens use. */
+const CHANNEL_NAMES: Record<string, string> = { POS: 'POS', ECM: 'Online', CNT: 'Counter' };
+function fromBackend(r: any) {
+  const period = (p: any) => ({
+    total: p?.total ?? 0, bills: p?.bills ?? 0, average: p?.averageBill ?? 0,
+    channels: Object.fromEntries(Object.entries<number>(p?.byChannel ?? {}).filter(([, v]) => v > 0).map(([k, v]) => [CHANNEL_NAMES[k] ?? k, v])),
+  });
+  return {
+    today: period(r.today), month: period(r.monthToDate), margin: { today: 0, month: r.grossMargin?.amount ?? 0 },
+    lowStock: r.lowStockCount ?? 0, nonMovingValue: r.nonMovingStockValue ?? 0, payablesDue: r.payablesDueThisWeek ?? 0, receivablesOverdue: r.receivablesOverdue ?? 0,
+    salesLine: (r.last30Days ?? []).map((d: any) => ({ date: d.date, total: d.sales ?? 0 })),
+    topItems: (r.topItems ?? []).map((t: any) => ({ name: t.name, qty: t.qty, amount: t.netSales ?? 0 })),
+  };
+}
+export function useDashboard() {
+  return useQuery({ queryKey: ['dashboard'], queryFn: async () => dashboardDto.parse(MOCK_MODE ? await api.get('/dashboard') : fromBackend(await api.get('/dashboard/summary'))) });
+}
 export function useReportList() { return useQuery({ queryKey: ['report-list'], queryFn: async () => (await api.get<unknown[]>('/reports')).map((r) => reportMeta.parse(r)) }); }
 
 export interface ReportFilters { from: string; to: string; category: string; brand: string; vendor: string; q: string }
