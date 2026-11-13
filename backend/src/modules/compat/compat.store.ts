@@ -29,7 +29,7 @@ const niceSize = (z?: string | null) => { const t = (z ?? '').trim(); if (!t) re
 const niceName = (n: string, brand?: string | null) => {
   const k = n.match(/^\s*([A-Za-z]+)\s*-\s*Kurties\s*-\s*[A-Za-z0-9]*\s*-\s*(\d+)/i);
   if (k) return `${(brand || k[1]!).toUpperCase()} Kurti ${k[2]}`;
-  return n.replace(/\s*-\s*/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase().replace(/[a-z]/g, (c) => c.toUpperCase()).replace(/(Rl|Vd|Vc|Sh|Rd|Ss|Ccd|Adv|Arm|Kq|Mi|Xl|Xxl|[2-6]xl|Clr|Oe|Rn)/g, (c) => c.toUpperCase());
+  return n.replace(/\s*-\s*/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase().replace(/\b[a-z]/g, (c) => c.toUpperCase()).replace(/\b(Rl|Vd|Vc|Sh|Rd|Ss|Ccd|Adv|Arm|Kq|Mi|Xl|Xxl|[2-6]xl|Clr|Oe|Rn)\b/g, (c) => c.toUpperCase());
 };
 const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const title = (s: string) => s.toLowerCase().replace(/\b[a-z]/g, (c) => c.toUpperCase());
@@ -39,9 +39,10 @@ export function registerStoreCompat(app: FastifyInstance) {
   const base = (req: FastifyRequest) => `${req.protocol}://${req.headers.host}`;
   const img = (req: FastifyRequest, key?: string) => (key ? (/^https?:/.test(key) ? key : `${base(req)}/media/${key}`) : '/api/img/product/1');
 
-  /** An item's own photos when it has them. Otherwise (none, or only the old demo photos) drawn pictures of the garment, no people. */
+  /** An item's own photos when it has them. Otherwise (none) drawn pictures of the garment, no people. */
   const pics = (req: FastifyRequest, p: any) => {
-    const own = (p.images ?? []).filter((k: string) => !k.startsWith('images/demo/'));
+    // The open-licence photos in images/demo are used (credits in docs/image-credits.md). A few are left out because they do not suit a shop page: they show a person undressing, a football match, or a snapshot taken inside a garment.
+    const own = (p.images ?? []).filter((k: string) => !/^images\/demo\/(panty-2|panty-4|bra-5|mens-1|mens-2)\./.test(k));
     if (own.length) return own.map((k: string) => img(req, k));
     const type = artTypeFor(slugify(p.category ?? ''), p.name ?? ''); const seed = encodeURIComponent(p.variants?.[0]?.itemCode ?? p.id);
     return [1, 2, 3].map((n) => `${base(req)}/media/art/${type}/${seed}/${n}.svg`);
