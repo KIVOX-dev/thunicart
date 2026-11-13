@@ -31,7 +31,7 @@ export async function addToBag(page: Page, slug: string, color: string, size: st
 
 export async function signIn(page: Page, email = 'shopper@example.com', next = '/account') {
   await page.goto(`/login?next=${encodeURIComponent(next)}`);
-  await page.getByLabel('Email').fill(email);
+  await page.getByLabel('Email', { exact: true }).fill(email);
   await page.getByRole('button', { name: 'Send me a code' }).click();
   await page.getByLabel('6 digit code').fill('123456');
   await page.getByRole('button', { name: 'Sign in' }).click();

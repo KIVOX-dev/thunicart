@@ -23,7 +23,7 @@ export function HsnMobile() {
       )}
       <ul className="flex flex-col gap-2">
         {q.data.map((r) => (
-          <li key={r.hsn} className="rounded border border-line p-3">
+          <li key={r.hsn} className="rounded border-2 border-navy-100 p-3">
             <div className="flex items-center justify-between"><strong className="font-mono">{r.hsn}</strong><Badge tone={r.confirmed ? 'success' : 'warning'}>{r.confirmed ? 'Confirmed' : 'Not confirmed'}</Badge></div>
             <p className="mt-1 text-sm">{r.description}</p>
             <p className="mt-1 text-xs text-muted">{r.rule} · from {formatDate(r.effectiveFrom)}</p>

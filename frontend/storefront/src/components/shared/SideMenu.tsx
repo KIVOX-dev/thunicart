@@ -5,6 +5,7 @@ import { Drawer } from '@thunikart/ui';
 import type { Category } from '@/lib/types';
 import { Icon } from './Icon';
 import { useUi } from './ui-context';
+import { Photo } from '@/components/shared/Photo';
 
 const QUICK = [
   { href: '/c/new-arrivals', label: 'New arrivals' }, { href: '/c/sale', label: 'Sale' }, { href: '/c/bestseller', label: 'Bestseller' }, { href: '/blog', label: 'Blog and lookbook' },
@@ -21,11 +22,11 @@ export function SideMenu({ categories }: { categories: Category[] }) {
       <nav aria-label="Shop by category">
         <ul>
           {categories.map((c) => (
-            <li key={c.slug} className="border-b border-line">
+            <li key={c.slug} className="border-b-2 border-navy-100">
               <div className="flex items-center">
                 <Link href={`/c/${c.slug}`} onClick={close} className="flex min-h-14 flex-1 items-center gap-3 text-sm font-medium uppercase tracking-wider">
                   
-                  <img src={c.image} alt="" width={40} height={40} className="h-10 w-10 rounded-sm object-cover" />{c.name}
+                  <Photo src={c.image} alt="" width={40} height={40} className="h-10 w-10 rounded-lg object-cover" />{c.name}
                 </Link>
                 <button type="button" onClick={() => setOpen(open === c.slug ? null : c.slug)} aria-expanded={open === c.slug} aria-label={`${c.name} sub categories`} className="flex h-11 w-11 items-center justify-center"><Icon name="down" size={18} className={open === c.slug ? 'rotate-180' : ''} /></button>
               </div>

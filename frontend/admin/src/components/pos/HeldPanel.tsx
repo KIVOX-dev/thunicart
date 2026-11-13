@@ -21,7 +21,7 @@ export function HeldPanel({ big }: { big?: boolean }) {
   return (
     <ul className="flex max-w-2xl flex-col gap-2" aria-label="Held bills">
       {q.data.map((h) => (
-        <li key={h.id} className="flex items-center justify-between gap-3 rounded border border-line p-3 text-sm">
+        <li key={h.id} className="flex items-center justify-between gap-3 rounded border-2 border-navy-100 p-3 text-sm">
           <span className="min-w-0"><strong>{h.name}</strong> <Badge>{h.kind === 'draft' ? 'Draft' : 'Held'}</Badge><span className="block text-xs text-muted">{h.customerName} · {h.pieces} pieces · {formatPaise(h.total)} · {formatDate(h.createdAt)}</span></span>
           <span className="flex gap-2"><Button size="sm" variant="primary" className={big ? 'min-h-11' : ''} onClick={() => resume(h.id, h.cart)} aria-label={`Resume ${h.name}`}>Resume</Button><Button size="sm" variant="ghost" className={big ? 'min-h-11' : ''} onClick={() => del.mutate(h.id)} aria-label={`Delete ${h.name}`}>Delete</Button></span>
         </li>

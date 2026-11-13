@@ -45,7 +45,7 @@ export function B2bDesktop() {
             </div>
           )}
         </section>
-        <aside className="flex flex-col gap-4 rounded border border-line p-4" aria-label="Customer and totals">
+        <aside className="flex flex-col gap-4 rounded border-2 border-navy-100 p-4" aria-label="Customer and totals">
           <div>
             <div className="flex items-center justify-between"><h2 className="text-xs">Customer</h2><Button size="sm" onClick={() => setCustOpen(true)}>{c ? 'Change' : 'Choose'}</Button></div>
             {c ? <p className="mt-1 text-sm"><strong>{c.name}</strong><span className="block text-xs text-muted">{c.mobile}</span><span className="block text-xs" data-testid="b2b-gstin">{c.gstin ? `GSTIN ${c.gstin}` : <Badge tone="warning">No GSTIN</Badge>}</span></p> : <p className="mt-1 text-sm text-muted">Choose a trade customer.</p>}

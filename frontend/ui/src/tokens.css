@@ -12,13 +12,24 @@
   --color-warning-bg: #fff4d6;
   --color-success-bg: #dcf6f4;
   --color-danger-bg: #fdeaea;
+  /* Tints of the three brand colours, for soft colour blocks. Navy text on all of them passes 4.5:1. */
+  --color-navy-50: #eef1fa; --color-navy-100: #dde3f5; --color-navy-200: #c4cdea;
+  --color-orange-50: #fff1e8; --color-orange-100: #ffdfc8; --color-orange-600: #d9550f;
+  --color-teal-50: #e3f8f7; --color-teal-100: #bfefec; --color-teal-700: #077a76;
 
-  --radius-sm: 2px;
-  --radius-md: 4px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
   --space-6: 24px; --space-8: 32px; --space-12: 48px; --space-16: 64px;
   --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --shadow-overlay: 0 8px 24px rgba(11, 27, 84, 0.18);
+  --shadow-overlay: 0 16px 48px rgba(11, 27, 84, 0.22);
+  --shadow-soft: 0 1px 2px rgba(11, 27, 84, 0.06), 0 6px 18px rgba(11, 27, 84, 0.08);
+  --shadow-lift: 0 2px 4px rgba(11, 27, 84, 0.08), 0 14px 32px rgba(11, 27, 84, 0.16);
+  --shadow-pop-orange: 4px 4px 0 var(--color-orange);
+  --shadow-pop-teal: 4px 4px 0 var(--color-teal);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --motion-fast: 160ms;
   --motion-base: 220ms;
   --focus-ring: 2px solid var(--color-teal);
@@ -26,19 +37,31 @@
 
 html { font-family: var(--font-sans); color: var(--color-navy); background: var(--color-white); font-size: 16px; -webkit-text-size-adjust: 100%; }
 body { margin: 0; }
-h1, h2, h3 { text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin: 0; }
+html h1, html h2, html h3 { letter-spacing: -0.02em; font-weight: 800; line-height: 1.1; margin: 0; }
+/* Small labels keep the uppercase look; headings are big, heavy and sentence case. */
+.tk-eyebrow { text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.7rem; font-weight: 700; }
+.tk-display { font-size: clamp(2.25rem, 6vw, 4.5rem); font-weight: 800; letter-spacing: -0.035em; line-height: 1.02; }
+.tk-marquee { display: flex; width: max-content; animation: tk-marquee 28s linear infinite; }
+.tk-marquee:hover { animation-play-state: paused; }
+.tk-lift { transition: transform var(--motion-base) var(--ease-spring), box-shadow var(--motion-base) ease; }
+.tk-lift:hover { transform: translateY(-4px); box-shadow: var(--shadow-lift); }
+.tk-press { transition: transform var(--motion-fast) var(--ease-spring), background-color var(--motion-fast), color var(--motion-fast), box-shadow var(--motion-fast); }
+.tk-press:active { transform: scale(0.96); }
 :focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
-::selection { background: var(--color-teal); color: var(--color-navy); }
+::selection { background: var(--color-orange); color: var(--color-navy); }
 
 @keyframes tk-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes tk-slide-up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes tk-slide-right { from { transform: translateX(-24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes tk-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes tk-pop { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: none; opacity: 1; } }
 @keyframes tk-pulse { 50% { opacity: 0.5; } }
 .tk-fade { animation: tk-fade var(--motion-fast) ease-out; }
 .tk-slide-up { animation: tk-slide-up var(--motion-base) ease-out; }
 .tk-slide-right { animation: tk-slide-right var(--motion-base) ease-out; }
+.tk-pop { animation: tk-pop var(--motion-base) var(--ease-spring); }
 .tk-skeleton { animation: tk-pulse 1.4s ease-in-out infinite; }
-dialog.tk-dialog::backdrop { background: rgba(11, 27, 84, 0.45); }
+dialog.tk-dialog::backdrop { background: rgba(11, 27, 84, 0.55); backdrop-filter: blur(3px); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }

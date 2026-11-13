@@ -22,7 +22,7 @@ export function CustomersMobile() {
       {list.isPending ? <ListSkeleton label="Loading customers" /> : list.isError ? <QueryError error={list.error} onRetry={() => list.refetch()} /> : rows.length === 0 ? <EmptyState title="No customers found" /> : (
         <ul className="flex flex-col gap-3">
           {rows.map((c) => (
-            <li key={c.id} className="rounded border border-line p-3">
+            <li key={c.id} className="rounded border-2 border-navy-100 p-3">
               <button type="button" onClick={() => setView(c)} className="block min-h-11 w-full text-left" aria-label={`Ledgers for ${c.name}`}>
                 <strong className="text-sm">{c.name}</strong>
                 <span className="block text-xs text-muted">{c.accountGroup} · {c.mobile}</span>
@@ -34,7 +34,7 @@ export function CustomersMobile() {
         </ul>
       )}
       {list.hasNextPage && <Button size="lg" className="min-h-12" onClick={() => list.fetchNextPage()} loading={list.isFetchingNextPage}>Load more</Button>}
-      {can('customers.create') && <div className="fixed inset-x-0 bottom-14 z-30 border-t border-line bg-white p-3"><Button variant="primary" size="lg" block className="min-h-12" onClick={() => setEdit({})}>Add customer</Button></div>}
+      {can('customers.create') && <div className="fixed inset-x-0 bottom-14 z-30 border-t-2 border-navy-100 bg-white p-3"><Button variant="primary" size="lg" block className="min-h-12" onClick={() => setEdit({})}>Add customer</Button></div>}
       <BottomSheet open={!!edit} onClose={() => setEdit(null)} title={edit?.customer ? 'Edit customer' : 'Add customer'}>
         {edit && <CustomerForm key={edit.customer?.id ?? 'new'} customer={edit.customer} onDone={() => { setEdit(null); toast('Customer saved', 'success'); }} />}
       </BottomSheet>

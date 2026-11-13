@@ -52,7 +52,7 @@ function Form({ item }: { item?: Item }) {
           {variants.fields.map((f, n) => {
             const ve = e.variants?.[n];
             return (
-              <div key={f.id} className="rounded border border-line p-3">
+              <div key={f.id} className="rounded border-2 border-navy-100 p-3">
                 <div className="mb-2 flex items-center justify-between"><strong className="text-sm">Size {n + 1}</strong>{variants.fields.length > 1 && <Button size="sm" variant="danger" onClick={() => variants.remove(n)}>Remove</Button>}</div>
                 <div className="grid grid-cols-2 gap-3">
                   <Field label="Size" required error={ve?.size?.message}>{(p) => <Input {...p} className={big} {...register(`variants.${n}.size`)} />}</Field>
@@ -74,7 +74,7 @@ function Form({ item }: { item?: Item }) {
 
       {step === 2 && <MediaManager media={media} />}
 
-      <div className="fixed inset-x-0 bottom-14 z-30 flex gap-2 border-t border-line bg-white p-3">
+      <div className="fixed inset-x-0 bottom-14 z-30 flex gap-2 border-t-2 border-navy-100 bg-white p-3">
         {step > 0 && <Button size="lg" className="min-h-12" onClick={() => setStep((s) => s - 1)}>Back</Button>}
         {step < 2 ? <Button key="next" type="button" variant="primary" size="lg" block className="min-h-12" onClick={next}>Next</Button>
           : canSave && <Button key="save" type="submit" variant="primary" size="lg" block className="min-h-12" loading={saving} disabled={media.busy}>{item ? 'Save item' : 'Add item'}</Button>}

@@ -53,26 +53,26 @@ function BillingShell() {
   const all = BILLING_ROUTES.filter((r) => can(r.perm) && (v === 'desktop' || !r.deskOnly));
   const title = BILLING_ROUTES.find((r) => isOn(r, loc.pathname, loc.search))?.label ?? 'Billing';
   const signOut = async () => { await logout.mutateAsync(); nav('/billing/login'); };
-  const tab = 'flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium';
+  const tab = 'tk-press flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 rounded-full text-[11px] font-semibold';
   return (
-    <div className="flex min-h-screen flex-col bg-white">
+    <div className="flex min-h-screen flex-col bg-navy-50">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:bg-white focus:p-2">Skip to content</a>
-      <header className="sticky top-0 z-40 flex items-center gap-4 bg-navy px-4 py-2 text-white">
+      <header className="sticky top-0 z-40 flex items-center gap-4 rounded-b-3xl bg-navy px-5 py-3 text-white shadow-lift">
         <Link to="/billing" aria-label="Billing home"><Logo variant="mark" tile className="h-9 w-9 !p-0.5" /></Link>
-        <div className="min-w-0"><p className="text-xs uppercase tracking-heading">Store billing</p><h1 className="truncate text-sm md:hidden">{title}</h1></div>
+        <div className="min-w-0"><p className="tk-eyebrow text-teal">Store billing</p><h1 className="truncate text-sm md:hidden">{title}</h1></div>
         {v === 'desktop' && (
           <nav aria-label="Billing" className="ml-4 flex flex-1 gap-1">
-            {all.map((r) => <Link key={r.label} to={r.tab ? `${r.path}?tab=${r.tab}` : r.path} aria-current={isOn(r, loc.pathname, loc.search) ? 'page' : undefined} className={`flex min-h-10 items-center gap-2 rounded px-3 text-sm ${isOn(r, loc.pathname, loc.search) ? 'bg-white font-semibold text-navy' : 'text-white hover:bg-white/10'}`}><r.icon aria-hidden size={16} />{r.label}</Link>)}
+            {all.map((r) => <Link key={r.label} to={r.tab ? `${r.path}?tab=${r.tab}` : r.path} aria-current={isOn(r, loc.pathname, loc.search) ? 'page' : undefined} className={`tk-press flex min-h-10 items-center gap-2 rounded-full px-4 text-sm ${isOn(r, loc.pathname, loc.search) ? 'bg-orange font-bold text-navy shadow-soft' : 'font-medium text-white hover:bg-white/15'}`}><r.icon aria-hidden size={16} />{r.label}</Link>)}
           </nav>
         )}
         <div className="ml-auto flex items-center gap-3"><span className="hidden text-xs md:block">{me?.name}<span className="block text-white/70">{me?.role.name}</span></span>
-          <button type="button" onClick={signOut} className="flex min-h-11 items-center gap-1 rounded border border-white/40 px-3 text-xs uppercase tracking-wider hover:bg-white/10"><LogOut aria-hidden size={14} />Sign out</button></div>
+          <button type="button" onClick={signOut} className="tk-press flex min-h-11 items-center gap-1 rounded-full border-2 border-white/60 px-4 text-sm font-semibold hover:bg-white hover:text-navy"><LogOut aria-hidden size={14} />Sign out</button></div>
       </header>
-      <main id="main" className="flex-1 px-4 py-4 pb-24 md:px-6 md:pb-6"><Suspense fallback={<ListSkeleton label="Loading screen" />}><Outlet /></Suspense></main>
+      <main id="main" className="flex-1 px-3 py-4 pb-28 md:px-6 md:pb-6"><div className="min-h-full rounded-2xl bg-white p-4 shadow-soft md:p-6"><Suspense fallback={<ListSkeleton label="Loading screen" />}><Outlet /></Suspense></div></main>
       {v === 'mobile' && (
-        <nav aria-label="Billing tabs" className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line bg-white pb-[env(safe-area-inset-bottom)]">
-          {all.filter((r) => r.mobileNav).map((r) => <NavLink key={r.label} to={r.tab ? `${r.path}?tab=${r.tab}` : r.path} className={() => `${tab} ${isOn(r, loc.pathname, loc.search) ? 'border-t-2 border-teal text-navy' : 'border-t-2 border-transparent text-muted'}`}><r.icon aria-hidden size={20} />{r.label.replace(' and returns', '').replace(' bills', '')}</NavLink>)}
-          <NavLink to="/billing/lookup" className={() => `${tab} ${loc.pathname === '/billing/lookup' ? 'border-t-2 border-teal text-navy' : 'border-t-2 border-transparent text-muted'}`}><Barcode aria-hidden size={20} />Lookup</NavLink>
+        <nav aria-label="Billing tabs" className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 flex gap-1 rounded-full bg-white p-1.5 shadow-lift ring-2 ring-navy-100">
+          {all.filter((r) => r.mobileNav).map((r) => <NavLink key={r.label} to={r.tab ? `${r.path}?tab=${r.tab}` : r.path} className={() => `${tab} ${isOn(r, loc.pathname, loc.search) ? 'bg-navy text-white' : 'text-navy'}`}><r.icon aria-hidden size={20} />{r.label.replace(' and returns', '').replace(' bills', '')}</NavLink>)}
+          <NavLink to="/billing/lookup" className={() => `${tab} ${loc.pathname === '/billing/lookup' ? 'bg-navy text-white' : 'text-navy'}`}><Barcode aria-hidden size={20} />Lookup</NavLink>
         </nav>
       )}
     </div>
@@ -97,16 +97,16 @@ export function BillingLogin() {
   const { register, formState: { errors } } = form;
   if (me) return <Navigate to={counterOnly || from.startsWith('/billing') ? from : '/billing'} replace />;
   return (
-    <div className="flex min-h-screen items-center justify-center bg-mist p-4">
-      <form onSubmit={submit} noValidate aria-label="Billing sign in" className="flex w-full max-w-sm flex-col gap-4 rounded border border-line bg-white p-6">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-navy p-4"><span aria-hidden className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-orange" /><span aria-hidden className="absolute -bottom-24 -right-16 h-72 w-72 rounded-full bg-teal" />
+      <form onSubmit={submit} noValidate aria-label="Billing sign in" className="relative flex w-full max-w-sm flex-col gap-4 rounded-2xl bg-white p-7 shadow-overlay">
         <Logo variant="primary" className="mx-auto w-40" />
-        <h1 className="text-center text-sm">Store billing sign in</h1>
+        <h1 className="text-center text-2xl">Store billing sign in</h1>
         <p className="text-center text-xs text-muted">For shop employees. Billing only.</p>
         {banner && <ErrorBanner {...banner} />}
         <Field label="Employee email" required error={errors.email?.message}>{(p) => <Input {...p} type="email" autoComplete="username" autoFocus className="min-h-12" {...register('email')} />}</Field>
         <Field label="Password" required error={errors.password?.message}>{(p) => <Input {...p} type="password" autoComplete="current-password" className="min-h-12" {...register('password')} />}</Field>
         <Button type="submit" variant="primary" size="lg" className="min-h-12" loading={busy}>Sign in to billing</Button>
-        {demoHint && <p className="rounded border border-line bg-mist p-2 text-xs text-muted">Demo mode. Employee: <strong>sales@thunikart.test</strong> with password <strong>Thunikart@123</strong>.</p>}
+        {demoHint && <p className="rounded border-2 border-navy-100 bg-mist p-2 text-xs text-muted">Demo mode. Employee: <strong>sales@thunikart.test</strong> with password <strong>Thunikart@123</strong>.</p>}
       </form>
     </div>
   );

@@ -30,16 +30,16 @@ export function AuditCountMobile() {
           <div className="flex items-center justify-between rounded bg-mist p-3"><span className="text-sm" role="status">Counted <strong className="ml-1 text-xl" data-testid="audit-count">{piecesCounted}</strong><span className="block text-xs text-muted">{a.notCounted} items not counted yet</span></span>
             <Button size="lg" className="min-h-12" disabled={a.scans === 0} loading={c.undo.isPending} onClick={() => c.undo.mutate()}>Undo</Button></div>
           {counted.length === 0 ? <EmptyState title="Nothing counted yet" body="Scan an item to start." /> : <ScanLinesCards lines={counted.map((l) => ({ id: l.variantId, code: l.code, name: l.name, size: l.size, expected: l.expected, qty: l.counted }))} qtyLabel="Counted" expectedLabel="Expected" flashId={c.feedback.flash ?? a.lastVariantId} onSetQty={(variantId, qty) => c.setCounted.mutate({ variantId, counted: qty })} />}
-          <div className="fixed inset-x-0 bottom-14 z-30 border-t border-line bg-white p-3"><Button variant="primary" size="lg" block className="min-h-12" disabled={a.scans === 0} loading={c.submit.isPending} onClick={() => c.submit.mutate()}>Finish counting</Button></div>
+          <div className="fixed inset-x-0 bottom-14 z-30 border-t-2 border-navy-100 bg-white p-3"><Button variant="primary" size="lg" block className="min-h-12" disabled={a.scans === 0} loading={c.submit.isPending} onClick={() => c.submit.mutate()}>Finish counting</Button></div>
         </>
       )}
       {a.status !== 'counting' && (
         <section aria-label="Variance sheet" className="flex flex-col gap-2">
           {a.notCounted > 0 && <Badge tone="warning" className="self-start">{a.notCounted} items not counted will be set to 0</Badge>}
           {a.lines.filter((l) => l.variance !== 0).length === 0 ? <EmptyState title="No differences" /> : a.lines.filter((l) => l.variance !== 0).map((l) => (
-            <div key={l.variantId} className="rounded border border-line p-3 text-sm"><div className="flex justify-between"><strong>{l.name}</strong><span className={`font-semibold ${l.variance < 0 ? 'text-danger' : ''}`}>{l.variance > 0 ? `+${l.variance}` : l.variance}</span></div><p className="text-xs text-muted">Size {l.size} · expected {l.expected} · counted {l.counted}</p></div>
+            <div key={l.variantId} className="rounded border-2 border-navy-100 p-3 text-sm"><div className="flex justify-between"><strong>{l.name}</strong><span className={`font-semibold ${l.variance < 0 ? 'text-danger' : ''}`}>{l.variance > 0 ? `+${l.variance}` : l.variance}</span></div><p className="text-xs text-muted">Size {l.size} · expected {l.expected} · counted {l.counted}</p></div>
           ))}
-          <div className="fixed inset-x-0 bottom-14 z-30 border-t border-line bg-white p-3">
+          <div className="fixed inset-x-0 bottom-14 z-30 border-t-2 border-navy-100 bg-white p-3">
             {a.status === 'review' && can('stock.approve') ? <Button variant="primary" size="lg" block className="min-h-12" loading={c.approve.isPending} onClick={async () => { await c.approve.mutateAsync(); toast('Count approved. Stock updated.', 'success'); }}>Approve and update stock</Button> : <Link to="/stock/audits"><Button size="lg" block className="min-h-12">Back to counts</Button></Link>}
           </div>
         </section>

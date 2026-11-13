@@ -36,7 +36,7 @@ export function TransferDetailDesktop() {
           <TBody>{t.lines.map((l) => <Tr key={l.id}><Td className="font-mono text-xs">{l.code}</Td><Td className="font-medium">{l.name}</Td><Td>{l.size}</Td><Td className="text-right">{l.qty}</Td>{t.status === 'received' && <Td className="text-right">{l.receivedQty}</Td>}</Tr>)}</TBody>
         </Table>
       )}
-      <div className="sticky bottom-0 mt-4 flex gap-3 border-t border-line bg-white py-3">
+      <div className="sticky bottom-0 mt-4 flex gap-3 border-t-2 border-navy-100 bg-white py-3">
         {t.status === 'requested' && can('stock.edit') && <><Button variant="primary" size="lg" loading={d.dispatch.isPending} onClick={async () => { await d.dispatch.mutateAsync(); toast('Dispatched. Stock is now in transit.', 'success'); }}>Dispatch</Button><Button variant="danger" onClick={() => d.cancel.mutate()}>Cancel request</Button></>}
         {t.status === 'in-transit' && can('stock.edit') && <Button variant="primary" size="lg" loading={d.receive.isPending} disabled={received === 0} onClick={async () => { await d.receive.mutateAsync(); toast('Transfer received. Stock updated.', 'success'); }}>Finish receiving</Button>}
         <Link to="/stock/transfers"><Button>Back to transfers</Button></Link>

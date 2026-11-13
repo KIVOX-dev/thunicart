@@ -21,7 +21,7 @@ export function VendorsMobile() {
         <ul className="flex flex-col gap-3">
           {rows.map((v) => (
             <li key={v.id}>
-              <button type="button" disabled={!can('vendors.edit')} onClick={() => setDlg({ vendor: v })} className="block min-h-14 w-full rounded border border-line p-3 text-left" aria-label={`Edit ${v.name}`}>
+              <button type="button" disabled={!can('vendors.edit')} onClick={() => setDlg({ vendor: v })} className="block min-h-14 w-full rounded border-2 border-navy-100 p-3 text-left" aria-label={`Edit ${v.name}`}>
                 <strong className="text-sm">{v.name}</strong>
                 <span className="block text-xs text-muted">{v.code} · {v.city} · {v.mobile}</span>
                 <span className="mt-1 flex items-center gap-2 text-sm">Outstanding {v.outstanding ? <Badge tone="warning">{formatPaise(v.outstanding)}</Badge> : formatPaise(0)}</span>
@@ -31,7 +31,7 @@ export function VendorsMobile() {
         </ul>
       )}
       {list.hasNextPage && <Button size="lg" className="min-h-12" onClick={() => list.fetchNextPage()} loading={list.isFetchingNextPage}>Load more</Button>}
-      {can('vendors.create') && <div className="fixed inset-x-0 bottom-14 z-30 border-t border-line bg-white p-3"><Button variant="primary" size="lg" block className="min-h-12" onClick={() => setDlg({})}>Add vendor</Button></div>}
+      {can('vendors.create') && <div className="fixed inset-x-0 bottom-14 z-30 border-t-2 border-navy-100 bg-white p-3"><Button variant="primary" size="lg" block className="min-h-12" onClick={() => setDlg({})}>Add vendor</Button></div>}
       <BottomSheet open={!!dlg} onClose={() => setDlg(null)} title={dlg?.vendor ? 'Edit vendor' : 'Add vendor'}>
         {dlg && <VendorForm key={dlg.vendor?.id ?? 'new'} vendor={dlg.vendor} onDone={() => { setDlg(null); toast('Vendor saved', 'success'); }} />}
       </BottomSheet>

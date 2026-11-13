@@ -21,7 +21,7 @@ export function ExpenseForm({ onDone, big }: { onDone: () => void; big?: boolean
           <input type="file" accept="image/*" capture="environment" aria-label="Add receipt photo" className="sr-only" onChange={(e) => { const file = e.target.files?.[0]; if (file) void f.attach(file); e.target.value = ''; }} />
         </label>
         {f.receipt && (
-          <div className="mt-2 flex items-center gap-3 rounded border border-line p-2 text-sm" aria-live="polite">
+          <div className="mt-2 flex items-center gap-3 rounded border-2 border-navy-100 p-2 text-sm" aria-live="polite">
             {f.receipt.preview && <img src={f.receipt.preview} alt="Receipt preview" className="h-12 w-12 rounded object-cover" />}
             <span className="min-w-0 flex-1 truncate">{f.receipt.name}</span>
             {f.receipt.error ? <span role="alert" className="text-xs text-danger">{f.receipt.error}</span> : f.receipt.key ? <span className="text-xs" data-testid="receipt-uploaded">Uploaded</span> : <span role="progressbar" aria-valuenow={f.receipt.progress} aria-valuemin={0} aria-valuemax={100} className="text-xs text-muted">Uploading {f.receipt.progress}%</span>}

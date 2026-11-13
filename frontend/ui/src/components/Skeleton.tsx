@@ -1,7 +1,7 @@
 import { cn } from '../cn';
 
 export function Skeleton({ className }: { className?: string }) {
-  return <div aria-hidden className={cn('tk-skeleton rounded bg-line', className)} />;
+  return <div aria-hidden className={cn('tk-skeleton rounded-md bg-navy-100', className)} />;
 }
 
 /** Placeholder rows shown while a list loads. */

@@ -21,7 +21,7 @@ export function PosTotals({ cart }: { cart: Cart }) {
           <div className={row}><dt>Round off</dt><dd>{t.roundOff < 0 ? '-' : ''}{formatPaise(Math.abs(t.roundOff))}</dd></div>
         </>
       )}
-      <div className={`${row} border-t border-line pt-1 text-lg font-semibold`}><dt>Total</dt><dd data-testid="grand-total">{t ? formatPaise(t.grandTotal) : formatPaise(0)}</dd></div>
+      <div className={`${row} border-t-2 border-navy-100 pt-1 text-lg font-semibold`}><dt>Total</dt><dd data-testid="grand-total">{t ? formatPaise(t.grandTotal) : formatPaise(0)}</dd></div>
     </dl>
   );
 }

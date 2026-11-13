@@ -21,7 +21,7 @@ export function UsersMobile() {
       {users.isPending ? <ListSkeleton label="Loading users" /> : users.isError ? <QueryError error={users.error} onRetry={() => users.refetch()} /> : rows.length === 0 ? <EmptyState title="No users found" /> : (
         <ul className="flex flex-col gap-3">
           {rows.map((u) => (
-            <li key={u.id} className="rounded border border-line p-4">
+            <li key={u.id} className="rounded border-2 border-navy-100 p-4">
               <div className="flex items-start justify-between gap-2">
                 <div><strong className="block text-sm">{u.name}</strong><span className="text-xs text-muted">{u.email}</span></div>
                 <Badge tone={u.active ? 'success' : 'neutral'}>{u.active ? 'Active' : 'Switched off'}</Badge>
@@ -39,7 +39,7 @@ export function UsersMobile() {
       )}
       {users.hasNextPage && <Button size="lg" onClick={() => users.fetchNextPage()} loading={users.isFetchingNextPage}>Load more</Button>}
       {can('users.create') && (
-        <div className="fixed inset-x-0 bottom-14 z-30 border-t border-line bg-white p-3"><Button variant="primary" size="lg" block className="min-h-12" onClick={() => setDialog({ kind: 'create' })}>Add user</Button></div>
+        <div className="fixed inset-x-0 bottom-14 z-30 border-t-2 border-navy-100 bg-white p-3"><Button variant="primary" size="lg" block className="min-h-12" onClick={() => setDialog({ kind: 'create' })}>Add user</Button></div>
       )}
       <BottomSheet open={dialog?.kind === 'create'} onClose={() => setDialog(null)} title="Add user"><CreateUserForm onDone={() => close('User added')} /></BottomSheet>
       <BottomSheet open={dialog?.kind === 'edit'} onClose={() => setDialog(null)} title="Edit user">{dialog?.kind === 'edit' && <EditUserForm user={dialog.user} onDone={() => close('User saved')} />}</BottomSheet>

@@ -14,9 +14,9 @@ export function LoginMobile() {
   if (me) return <Navigate to={from} replace />;
   return (
     <div className="flex min-h-screen flex-col">
-      <div className="bg-navy px-6 pb-8 pt-10 text-white">
+      <div className="relative overflow-hidden rounded-b-[2.5rem] bg-navy px-6 pb-10 pt-10 text-white"><span aria-hidden className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-orange" /><span aria-hidden className="absolute -bottom-10 right-16 h-24 w-24 rounded-full bg-teal" />
         <Logo variant="primary" tile className="w-36 !p-2" />
-        <h1 className="mt-6 text-lg">Sign in</h1>
+        <h1 className="relative mt-6 text-4xl">Sign in</h1>
         <p className="mt-1 text-sm text-white/80">Thunikart billing and stock</p>
       </div>
       <form onSubmit={submit} noValidate className="flex flex-1 flex-col gap-4 px-6 py-6" aria-label="Sign in">
@@ -25,7 +25,7 @@ export function LoginMobile() {
         <Field label="Password" required error={errors.password?.message}>{(p) => <Input {...p} type="password" autoComplete="current-password" {...register('password')} className="min-h-12" />}</Field>
         <Button type="submit" variant="primary" size="lg" loading={busy} className="min-h-12">Sign in</Button>
         <Link to="/forgot-password" className="flex min-h-11 items-center justify-center text-sm underline underline-offset-2">Forgot password?</Link>
-        {demoHint && <p className="rounded border border-line bg-mist p-3 text-xs text-muted">Demo mode. Try <strong>admin@thunikart.test</strong> with password <strong>Thunikart@123</strong>. Also sales@, buyer@ and accounts@thunikart.test.</p>}
+        {demoHint && <p className="rounded border-2 border-navy-100 bg-mist p-3 text-xs text-muted">Demo mode. Try <strong>admin@thunikart.test</strong> with password <strong>Thunikart@123</strong>. Also sales@, buyer@ and accounts@thunikart.test.</p>}
       </form>
     </div>
   );

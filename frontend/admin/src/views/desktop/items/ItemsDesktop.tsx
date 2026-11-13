@@ -62,7 +62,7 @@ export function ItemsDesktop() {
         {activeCount > 0 && <Button variant="ghost" onClick={reset}>Clear filters</Button>}
         <div className="relative ml-auto">
           <Button onClick={() => setShowCols((s) => !s)} aria-expanded={showCols}>Columns</Button>
-          {showCols && <div role="group" aria-label="Choose columns" className="absolute right-0 z-30 mt-1 w-48 rounded border border-line bg-white p-3 shadow-overlay">{COLUMNS.map((c) => <div key={c.key} className="py-1"><Checkbox label={c.label} checked={has(c.key)} onChange={() => toggleCol(c.key)} /></div>)}</div>}
+          {showCols && <div role="group" aria-label="Choose columns" className="absolute right-0 z-30 mt-1 w-48 rounded border-2 border-navy-100 bg-white p-3 shadow-overlay">{COLUMNS.map((c) => <div key={c.key} className="py-1"><Checkbox label={c.label} checked={has(c.key)} onChange={() => toggleCol(c.key)} /></div>)}</div>}
         </div>
       </div>
       {picked.size > 0 && (

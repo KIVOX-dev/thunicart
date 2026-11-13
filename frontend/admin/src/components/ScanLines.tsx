@@ -12,7 +12,7 @@ const warnText = (w?: string | null) => (w ? WARNING_TEXT[w as keyof typeof WARN
 /** Quantity box that commits on Enter or when it loses focus. The key makes it follow server changes. */
 function QtyInput({ id, qty, label, onSet, big }: { id: string; qty: number; label: string; onSet: (id: string, q: number) => void; big?: boolean }) {
   const commit = (el: HTMLInputElement) => { const n = Math.round(Number(el.value)); if (Number.isFinite(n) && n >= 0 && n !== qty) onSet(id, n); else el.value = String(qty); };
-  return <input key={qty} type="number" inputMode="numeric" min={0} aria-label={label} defaultValue={qty} onBlur={(e) => commit(e.currentTarget)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commit(e.currentTarget); } }} className={`rounded border border-line text-center ${big ? 'h-12 w-20 text-lg' : 'h-9 w-16 text-sm'}`} />;
+  return <input key={qty} type="number" inputMode="numeric" min={0} aria-label={label} defaultValue={qty} onBlur={(e) => commit(e.currentTarget)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commit(e.currentTarget); } }} className={`rounded border-2 border-navy-100 text-center ${big ? 'h-12 w-20 text-lg' : 'h-9 w-16 text-sm'}`} />;
 }
 
 /** Desktop: a dense table with a stepper per row. */
@@ -28,9 +28,9 @@ export function ScanLinesTable({ lines, qtyLabel, expectedLabel, onSetQty, flash
             <Td className="text-center">
               {readOnly ? l.qty : (
                 <span className="inline-flex items-center gap-1">
-                  <button type="button" aria-label={`Fewer ${l.name} ${l.size}`} onClick={() => onSetQty(l.id, Math.max(0, l.qty - 1))} className="flex h-9 w-9 items-center justify-center rounded border border-line hover:bg-mist"><Minus size={14} /></button>
+                  <button type="button" aria-label={`Fewer ${l.name} ${l.size}`} onClick={() => onSetQty(l.id, Math.max(0, l.qty - 1))} className="flex h-9 w-9 items-center justify-center rounded border-2 border-navy-100 hover:bg-mist"><Minus size={14} /></button>
                   <QtyInput id={l.id} qty={l.qty} label={`${qtyLabel} for ${l.name} size ${l.size}`} onSet={onSetQty} />
-                  <button type="button" aria-label={`More ${l.name} ${l.size}`} onClick={() => onSetQty(l.id, l.qty + 1)} className="flex h-9 w-9 items-center justify-center rounded border border-line hover:bg-mist"><Plus size={14} /></button>
+                  <button type="button" aria-label={`More ${l.name} ${l.size}`} onClick={() => onSetQty(l.id, l.qty + 1)} className="flex h-9 w-9 items-center justify-center rounded border-2 border-navy-100 hover:bg-mist"><Plus size={14} /></button>
                 </span>
               )}
             </Td>

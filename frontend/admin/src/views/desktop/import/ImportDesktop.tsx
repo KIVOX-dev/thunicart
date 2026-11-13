@@ -36,7 +36,7 @@ function Counts({ b }: { b: ImportBatch }) {
   return (
     <dl className="grid grid-cols-5 gap-3">
       {cards.map(([label, value, tone]) => (
-        <div key={label} className="rounded border border-line p-3"><dt className="text-xs text-muted">{label}</dt><dd className="mt-1 text-lg font-semibold" data-testid={`count-${label}`}>{n(value)}</dd>{tone !== 'neutral' && value > 0 && <Badge tone={tone} className="mt-1">{tone === 'danger' ? 'Fix or skip' : tone === 'warning' ? 'See review queue' : 'Ready'}</Badge>}</div>
+        <div key={label} className="rounded border-2 border-navy-100 p-3"><dt className="text-xs text-muted">{label}</dt><dd className="mt-1 text-lg font-semibold" data-testid={`count-${label}`}>{n(value)}</dd>{tone !== 'neutral' && value > 0 && <Badge tone={tone} className="mt-1">{tone === 'danger' ? 'Fix or skip' : tone === 'warning' ? 'See review queue' : 'Ready'}</Badge>}</div>
       ))}
     </dl>
   );
@@ -103,7 +103,7 @@ export function ImportDesktop() {
           <fieldset className="flex flex-col gap-2">
             <legend className="sr-only">Sheet</legend>
             {b.sheets.map((s) => (
-              <label key={s.name} className={`flex min-h-11 cursor-pointer items-center gap-3 rounded border p-3 text-sm ${w.sheet === s.name ? 'border-navy bg-mist' : 'border-line'}`}>
+              <label key={s.name} className={`flex min-h-11 cursor-pointer items-center gap-3 rounded border p-3 text-sm ${w.sheet === s.name ? 'border-teal bg-teal-50' : 'border-navy-100'}`}>
                 <input type="radio" name="sheet" checked={w.sheet === s.name} onChange={() => w.setSheet(s.name)} className="h-4 w-4 accent-[var(--color-navy)]" />
                 <span className="flex-1">{s.name}</span><span className="text-muted">{n(s.rows)} rows</span>
               </label>
@@ -159,13 +159,13 @@ export function ImportDesktop() {
           )}
           {b.status === 'committed' && b.counts && (
             <div role="status" className="rounded border border-teal bg-success-bg p-5">
-              <h2 className="text-sm">Import finished</h2>
+              <h2 className="text-lg">Import finished</h2>
               <p className="mt-2 text-lg font-semibold" data-testid="import-result">{n(b.counts.items)} items and {n(b.counts.pieces)} pieces imported</p>
               {b.counts.warnings > 0 && <p className="mt-1 text-sm">{n(b.counts.warnings)} items need a quick fix (missing HSN, size or price).</p>}
               <div className="mt-4 flex gap-2"><Link to="/items"><Button>View items</Button></Link><Link to="/import/review"><Button variant="primary">Open review queue</Button></Link><Button variant="danger" onClick={() => setRb(true)}>Roll back this import</Button><Button variant="ghost" onClick={w.reset}>Import another file</Button></div>
             </div>
           )}
-          {b.status === 'rolled-back' && <div role="status" className="rounded border border-line bg-mist p-5"><h2 className="text-sm">Import rolled back</h2><p className="mt-2 text-sm">The items from this file were removed.</p><Button className="mt-4" onClick={w.reset}>Import another file</Button></div>}
+          {b.status === 'rolled-back' && <div role="status" className="rounded border-2 border-navy-100 bg-mist p-5"><h2 className="text-lg">Import rolled back</h2><p className="mt-2 text-sm">The items from this file were removed.</p><Button className="mt-4" onClick={w.reset}>Import another file</Button></div>}
         </section>
       )}
 

@@ -22,7 +22,7 @@ export function LookupMobile() {
         {lookup.found && <StockCard item={lookup.found.item} variantId={lookup.found.variantId} flash />}
       </div>
       <Input aria-label="Search by name" placeholder="Or search by name" value={q} onChange={(e) => setQ(e.target.value)} className="min-h-12" />
-      {list.length > 0 && <ul className="divide-y divide-line rounded border border-line">{list.slice(0, 8).map((i) => <li key={i.id}><Button variant="ghost" className="min-h-14 w-full justify-start text-left normal-case tracking-normal" onClick={() => { lookup.choose(i); setQ(''); }} aria-label={`Show ${i.name}`}>{i.name}</Button></li>)}</ul>}
+      {list.length > 0 && <ul className="divide-y divide-line rounded border-2 border-navy-100">{list.slice(0, 8).map((i) => <li key={i.id}><Button variant="ghost" className="min-h-14 w-full justify-start text-left normal-case tracking-normal" onClick={() => { lookup.choose(i); setQ(''); }} aria-label={`Show ${i.name}`}>{i.name}</Button></li>)}</ul>}
     </div>
   );
 }

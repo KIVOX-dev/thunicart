@@ -11,8 +11,8 @@ import { useGrns, useStartGrn } from '../../../features/inventory/use-grn';
 import { usePos, useReceivablePos } from '../../../features/inventory/use-purchase-orders';
 
 const rows = <T,>(d?: { pages: Array<{ items: T[] }> }) => d?.pages.flatMap((p) => p.items) ?? [];
-const Card = ({ children, to }: { children: React.ReactNode; to?: string }) => (to ? <Link to={to} className="block rounded border border-line p-3">{children}</Link> : <div className="rounded border border-line p-3">{children}</div>);
-const Sticky = ({ children }: { children: React.ReactNode }) => <div className="fixed inset-x-0 bottom-14 z-30 border-t border-line bg-white p-3">{children}</div>;
+const Card = ({ children, to }: { children: React.ReactNode; to?: string }) => (to ? <Link to={to} className="block rounded border-2 border-navy-100 p-3">{children}</Link> : <div className="rounded border-2 border-navy-100 p-3">{children}</div>);
+const Sticky = ({ children }: { children: React.ReactNode }) => <div className="fixed inset-x-0 bottom-14 z-30 border-t-2 border-navy-100 bg-white p-3">{children}</div>;
 const More = ({ q }: { q: { hasNextPage: boolean; fetchNextPage: () => unknown; isFetchingNextPage: boolean } }) => (q.hasNextPage ? <Button size="lg" className="mt-3 min-h-12" block onClick={() => q.fetchNextPage()} loading={q.isFetchingNextPage}>Load more</Button> : null);
 
 function OrdersTab() {

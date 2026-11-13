@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { formatPaise } from '@/lib/format';
 import type { Order } from '@/lib/types';
+import { Photo } from '@/components/shared/Photo';
 
 export const STATUS_LABEL: Record<Order['status'], string> = { 'pending-payment': 'Waiting for payment', paid: 'Confirmed', packed: 'Packed', shipped: 'Shipped', delivered: 'Delivered', cancelled: 'Cancelled', 'return-requested': 'Return requested', returned: 'Returned' };
 
@@ -18,7 +19,7 @@ export function OrderSummary({ o }: { o: Order }) {
   return (
     <section aria-label="Order summary" className="flex flex-col gap-4">
       <ul className="divide-y divide-line">{o.lines.map((l) => (
-        <li key={l.variantId} className="flex gap-3 py-2 text-sm"><img src={l.image} alt="" width={48} height={64} className="h-16 w-12 rounded-sm object-cover" /><div className="min-w-0 flex-1"><p className="font-medium">{l.name}</p><p className="text-xs text-muted">Size {l.size} · {l.color} · Qty {l.qty}</p></div><strong>{formatPaise(l.lineTotal)}</strong></li>
+        <li key={l.variantId} className="flex gap-3 py-2 text-sm"><Photo src={l.image} alt="" width={48} height={64} className="h-16 w-12 rounded-lg object-cover" /><div className="min-w-0 flex-1"><p className="font-medium">{l.name}</p><p className="text-xs text-muted">Size {l.size} · {l.color} · Qty {l.qty}</p></div><strong>{formatPaise(l.lineTotal)}</strong></li>
       ))}</ul>
       <dl className="flex flex-col gap-1 text-sm">
         <div className={row}><dt>Subtotal</dt><dd>{formatPaise(o.totals.subtotal)}</dd></div>
@@ -26,7 +27,7 @@ export function OrderSummary({ o }: { o: Order }) {
         <div className={row}><dt>Shipping</dt><dd>{o.totals.shipping ? formatPaise(o.totals.shipping) : 'Free'}</dd></div>
         {o.totals.tax !== null && <div className={row}><dt>Includes GST</dt><dd>{formatPaise(o.totals.tax)}</dd></div>}
         {o.totals.walletUsed > 0 && <div className={row}><dt>Wallet</dt><dd>-{formatPaise(o.totals.walletUsed)}</dd></div>}
-        <div className={`${row} border-t border-line pt-2 text-base font-semibold`}><dt>Total</dt><dd data-testid="order-total">{formatPaise(o.totals.total)}</dd></div>
+        <div className={`${row} border-t-2 border-navy-100 pt-2 text-base font-semibold`}><dt>Total</dt><dd data-testid="order-total">{formatPaise(o.totals.total)}</dd></div>
       </dl>
       <address className="text-sm not-italic"><strong>Delivering to</strong><br />{o.address.name}, {o.address.mobile}<br />{o.address.line1}{o.address.line2 && `, ${o.address.line2}`}<br />{o.address.city} {o.address.pincode}</address>
     </section>

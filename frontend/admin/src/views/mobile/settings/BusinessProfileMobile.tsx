@@ -6,7 +6,7 @@ import { useCan } from '../../../features/auth/permissions';
 import { PRINT_SIZE_LABELS, useBusinessProfile, useBusinessProfileForm, type BusinessProfile } from '../../../features/settings/use-business-profile';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return <fieldset className="flex flex-col gap-4 border-b border-line pb-5"><legend className="mb-3 text-xs">{title}</legend>{children}</fieldset>;
+  return <fieldset className="flex flex-col gap-4 border-b-2 border-navy-100 pb-5"><legend className="mb-3 text-xs">{title}</legend>{children}</fieldset>;
 }
 
 function ProfileForm({ profile }: { profile: BusinessProfile }) {
@@ -30,7 +30,7 @@ function ProfileForm({ profile }: { profile: BusinessProfile }) {
         <Section title="Business">
           <Field label="Legal name" required error={errors.legalName?.message}>{(p) => <Input {...p} {...register('legalName')} className={big} />}</Field>
           <Field label="Brand name" required error={errors.brandName?.message}>{(p) => <Input {...p} {...register('brandName')} className={big} />}</Field>
-          <Field label="Address (one line per row)" error={errors.addressText?.message}>{(p) => <textarea {...p} rows={3} {...register('addressText')} className="w-full rounded border border-line px-3 py-2 text-base" />}</Field>
+          <Field label="Address (one line per row)" error={errors.addressText?.message}>{(p) => <textarea {...p} rows={3} {...register('addressText')} className="w-full rounded border-2 border-navy-100 px-3 py-2 text-base" />}</Field>
           <Field label="City" error={errors.city?.message}>{(p) => <Input {...p} {...register('city')} className={big} />}</Field>
           <Field label="State" error={errors.state?.message}>{(p) => <Input {...p} {...register('state')} className={big} />}</Field>
           <Field label="State code" required error={errors.stateCode?.message}>{(p) => <Input {...p} inputMode="numeric" {...register('stateCode')} className={big} />}</Field>
@@ -42,11 +42,11 @@ function ProfileForm({ profile }: { profile: BusinessProfile }) {
         <Section title="Invoices">
           <Field label="Default print size" required error={errors.defaultPrintSize?.message}>{(p) => <Select {...p} {...register('defaultPrintSize')} className={big}>{PRINT_SIZES.map((s) => <option key={s} value={s}>{PRINT_SIZE_LABELS[s]}</option>)}</Select>}</Field>
           <Field label="Invoice footer line" error={errors.invoiceFooter?.message}>{(p) => <Input {...p} {...register('invoiceFooter')} className={big} />}</Field>
-          <Field label="Terms" error={errors.termsText?.message}>{(p) => <textarea {...p} rows={3} {...register('termsText')} className="w-full rounded border border-line px-3 py-2 text-base" />}</Field>
+          <Field label="Terms" error={errors.termsText?.message}>{(p) => <textarea {...p} rows={3} {...register('termsText')} className="w-full rounded border-2 border-navy-100 px-3 py-2 text-base" />}</Field>
         </Section>
       </fieldset>
       {canEdit ? (
-        <div className="fixed inset-x-0 bottom-14 z-30 border-t border-line bg-white p-3">
+        <div className="fixed inset-x-0 bottom-14 z-30 border-t-2 border-navy-100 bg-white p-3">
           <Button type="submit" variant="primary" size="lg" block loading={f.saving} className="min-h-12">Save profile</Button>
         </div>
       ) : <p className="text-sm text-muted">You can view this page but not change it.</p>}

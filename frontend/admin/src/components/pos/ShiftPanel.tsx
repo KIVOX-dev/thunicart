@@ -22,8 +22,8 @@ export function ShiftPanel({ big }: { big?: boolean }) {
   return (
     <div className="flex max-w-xl flex-col gap-4">
       {!open ? (can('pos.create') ? <DayOpen big={big} /> : <p className="text-sm text-muted">The day is not open.</p>) : (
-        <section aria-label="Open day" className="rounded border border-line p-4">
-          <div className="flex items-center justify-between"><h2 className="text-sm">Day is open</h2><Badge tone="success">Open</Badge></div>
+        <section aria-label="Open day" className="rounded border-2 border-navy-100 p-4">
+          <div className="flex items-center justify-between"><h2 className="text-lg">Day is open</h2><Badge tone="success">Open</Badge></div>
           <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
             <dt className="text-muted">Opening cash</dt><dd className="text-right">{formatPaise(open.openingCash)}</dd>
             <dt className="text-muted">Bills today</dt><dd className="text-right">{open.bills}</dd>
@@ -40,7 +40,7 @@ export function ShiftPanel({ big }: { big?: boolean }) {
       {closed.length > 0 && (
         <section aria-label="Closed days"><h2 className="mb-2 text-xs">Closed days</h2>
           <ul className="flex flex-col gap-2">{closed.map((s) => (
-            <li key={s.id} className="rounded border border-line p-3 text-sm" data-testid="closed-shift">
+            <li key={s.id} className="rounded border-2 border-navy-100 p-3 text-sm" data-testid="closed-shift">
               <div className="flex justify-between"><strong>{formatDate(s.openedAt)}</strong><span className="text-muted">{s.bills} bills</span></div>
               <dl className="mt-1 grid grid-cols-2 gap-1"><dt className="text-muted">Expected cash</dt><dd className="text-right" data-testid="shift-expected">{formatPaise(s.expectedCash ?? 0)}</dd><dt className="text-muted">Counted cash</dt><dd className="text-right" data-testid="shift-counted">{formatPaise(s.countedCash ?? 0)}</dd><dt className="font-semibold">Difference</dt><dd className={`text-right font-semibold ${(s.difference ?? 0) < 0 ? 'text-danger' : ''}`} data-testid="shift-diff">{(s.difference ?? 0) < 0 ? '-' : ''}{formatPaise(Math.abs(s.difference ?? 0))}</dd></dl>
             </li>

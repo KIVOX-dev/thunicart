@@ -12,7 +12,7 @@ export function PoPreview({ poId, open, onClose, sheet }: { poId: string; open: 
     <Shell open={open} onClose={onClose} title="Purchase order preview" className={sheet ? '' : '!w-[min(92vw,56rem)]'}
       footer={<><Button onClick={onClose}>Close</Button><Button variant="primary" disabled={!q.data} onClick={() => frame.current?.contentWindow?.print()}>Print</Button></>}>
       {q.isPending ? <ListSkeleton rows={4} label="Loading preview" /> : q.isError ? <QueryError error={q.error} onRetry={() => q.refetch()} /> : (
-        <iframe ref={frame} title="Purchase order" srcDoc={q.data} className="h-[60vh] w-full rounded border border-line bg-white" />
+        <iframe ref={frame} title="Purchase order" srcDoc={q.data} className="h-[60vh] w-full rounded border-2 border-navy-100 bg-white" />
       )}
     </Shell>
   );

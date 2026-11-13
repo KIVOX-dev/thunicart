@@ -17,8 +17,8 @@ const swatches = Object.entries(BRAND);
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="flex flex-col gap-3 border-t border-line py-6">
-      <h2 className="text-sm">{title}</h2>
+    <section className="flex flex-col gap-3 border-t-2 border-navy-100 py-6">
+      <h2 className="text-2xl">{title}</h2>
       {children}
     </section>
   );
@@ -31,13 +31,13 @@ export function StyleGuide() {
   const { toast } = useToast();
   return (
     <div className="mx-auto max-w-5xl px-4 pb-24 pt-6 md:px-8">
-      <h1 className="text-lg">Style guide</h1>
+      <h1 className="tk-display">Style guide</h1>
       <p className="mt-2 text-sm text-muted">Thunikart tokens and base components. Shared by the admin app and the storefront.</p>
 
       <Section title="Colors and contrast">
         <ul className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {swatches.map(([name, hex]) => (
-            <li key={name} className="rounded border border-line">
+            <li key={name} className="rounded-lg border-2 border-navy-100">
               <div className="h-12 rounded-t" style={{ background: hex }} />
               <div className="p-2 text-xs"><strong className="capitalize">{name}</strong><br />{hex}</div>
             </li>
@@ -47,7 +47,7 @@ export function StyleGuide() {
           {APPROVED_PAIRS.map(([name, fg, bg]) => {
             const r = contrastRatio(fg, bg);
             return (
-              <li key={name} className="flex items-center justify-between rounded border border-line px-3 py-2 text-sm" style={{ background: bg, color: fg }}>
+              <li key={name} className="flex items-center justify-between rounded-lg border-2 border-navy-100 px-3 py-2 text-sm" style={{ background: bg, color: fg }}>
                 <span>{name}</span>
                 <span className="font-semibold">{r.toFixed(1)}:1 {r >= 4.5 ? 'AA pass' : 'AA fail'}</span>
               </li>

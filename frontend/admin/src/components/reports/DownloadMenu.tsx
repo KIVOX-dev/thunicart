@@ -18,12 +18,12 @@ export function DownloadMenu({ reportKey, title, big, gst, query, sheet, disable
   return (
     <div className="relative inline-block">
       <Button onClick={() => setOpen((o) => !o)} aria-haspopup="menu" aria-expanded={open} disabled={disabled} className={sheet ? 'min-h-12' : ''}><Download aria-hidden size={16} />Download</Button>
-      {open && !sheet && <div role="menu" aria-label="Download as" className="absolute right-0 z-40 mt-1 w-60 overflow-hidden rounded border border-line bg-white py-1 shadow-overlay">{list}</div>}
+      {open && !sheet && <div role="menu" aria-label="Download as" className="absolute right-0 z-40 mt-1 w-60 overflow-hidden rounded border-2 border-navy-100 bg-white py-1 shadow-overlay">{list}</div>}
       {sheet && <BottomSheet open={open} onClose={() => setOpen(false)} title="Download as"><div role="menu" className="flex flex-col divide-y divide-line">{list}</div></BottomSheet>}
       <div className="mt-2 space-y-2" aria-live="polite">
         {d.error && <ErrorBanner message={d.error.friendly} requestId={d.error.requestId} />}
         {d.job && (
-          <div className="rounded border border-line p-2 text-sm" data-testid="download-job">
+          <div className="rounded border-2 border-navy-100 p-2 text-sm" data-testid="download-job">
             {d.job.status === 'running' ? (<><p>Preparing {d.job.title}… {d.job.progress}%</p><div className="mt-1 h-2 overflow-hidden rounded bg-mist" role="progressbar" aria-valuenow={d.job.progress} aria-valuemin={0} aria-valuemax={100} aria-label="Report progress"><div className="h-full bg-teal transition-all" style={{ width: `${d.job.progress}%` }} /></div></>) : (
               <p>Ready. <button type="button" className="font-semibold underline" onClick={d.fetchJob}>Download {d.job.title} ({d.job.format.toUpperCase()})</button></p>
             )}

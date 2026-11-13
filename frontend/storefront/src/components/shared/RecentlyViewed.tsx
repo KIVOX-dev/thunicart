@@ -18,7 +18,7 @@ export function RecentlyViewed({ excludeId }: { excludeId?: string }) {
   if (!items.length) return null;
   return (
     <section aria-label="Recently viewed" className="mt-12">
-      <h2 className="mb-4 text-sm md:text-base">Recently viewed</h2>
+      <h2 className="mb-4 text-xl md:text-2xl">Recently viewed</h2>
       <ul className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-6">{items.map((p) => <li key={p.id}><ProductCard p={p} /></li>)}</ul>
     </section>
   );

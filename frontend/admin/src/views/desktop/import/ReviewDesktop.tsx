@@ -107,8 +107,8 @@ function QualityTab() {
   return (
     <div className="flex flex-col gap-6">
       <dl className="grid grid-cols-5 gap-3">
-        <div className="rounded border border-line p-3"><dt className="text-xs text-muted">Items</dt><dd className="mt-1 text-lg font-semibold">{d.total.toLocaleString('en-IN')}</dd></div>
-        <div className="rounded border border-line p-3"><dt className="text-xs text-muted">Clean items</dt><dd className="mt-1 text-lg font-semibold">{clean.toLocaleString('en-IN')}</dd></div>
+        <div className="rounded border-2 border-navy-100 p-3"><dt className="text-xs text-muted">Items</dt><dd className="mt-1 text-lg font-semibold">{d.total.toLocaleString('en-IN')}</dd></div>
+        <div className="rounded border-2 border-navy-100 p-3"><dt className="text-xs text-muted">Clean items</dt><dd className="mt-1 text-lg font-semibold">{clean.toLocaleString('en-IN')}</dd></div>
         {Object.entries(d.byIssue).map(([k, v]) => <div key={k} className="rounded border border-warning bg-warning-bg p-3"><dt className="text-xs">{label(k)}</dt><dd className="mt-1 text-lg font-semibold">{v.toLocaleString('en-IN')}</dd></div>)}
       </dl>
       <Table caption="Data quality by category">

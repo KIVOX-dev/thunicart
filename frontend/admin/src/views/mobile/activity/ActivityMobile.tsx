@@ -13,7 +13,7 @@ export function ActivityMobile() {
       {q.isPending ? <ListSkeleton label="Loading activity" /> : q.isError ? <QueryError error={q.error} onRetry={() => q.refetch()} /> : rows.length === 0 ? <EmptyState title="No activity yet" /> : (
         <ul className="flex flex-col gap-2">
           {rows.map((a) => (
-            <li key={a.id} className="rounded border border-line p-3">
+            <li key={a.id} className="rounded border-2 border-navy-100 p-3">
               <p className="text-sm">{describe(a)}</p>
               <p className="mt-1 flex items-center gap-2 text-xs text-muted">{a.entity && <Badge>{a.entity}</Badge>}{new Date(a.at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
             </li>

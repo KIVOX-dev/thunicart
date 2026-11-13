@@ -39,7 +39,7 @@ export function PosDesktop() {
   return (
     <div className="grid grid-cols-[1fr_24rem] gap-6" aria-label="Point of sale">
       <section aria-label="Cart" className="min-w-0">
-        <div className="mb-3 flex items-center justify-between"><h1 className="text-base">POS billing</h1><span className="text-xs text-muted">F2 new · F4 hold · F8 pay · Esc clear</span></div>
+        <div className="mb-3 flex items-center justify-between"><h1 className="text-2xl md:text-3xl">POS billing</h1><span className="text-xs text-muted">F2 new · F4 hold · F8 pay · Esc clear</span></div>
         <ItemPicker large autoFocus onPick={(i, v) => cart.addItem(i, v)} hint="Scan an item, or type a name or code. Scanning an item already in the bill adds one." />
         {s.notice && <p role="status" className="mt-2 rounded border border-teal bg-success-bg p-2 text-sm">{s.notice}</p>}
         <div className="mt-4">
@@ -55,12 +55,12 @@ export function PosDesktop() {
                       <Td><strong>{l.name}</strong><span className="block font-mono text-xs text-muted">{l.code}</span>{conflict && <span role="alert" className="block text-xs text-danger">{conflict}</span>}</Td>
                       <Td>{l.size}</Td><Td>{l.color}</Td>
                       <Td className="text-center"><span className="inline-flex items-center gap-1">
-                        <button type="button" aria-label={`Fewer ${l.name}`} onClick={() => cart.setQty(l.variantId, l.qty - 1)} className="flex h-9 w-9 items-center justify-center rounded border border-line hover:bg-mist"><Minus size={14} /></button>
+                        <button type="button" aria-label={`Fewer ${l.name}`} onClick={() => cart.setQty(l.variantId, l.qty - 1)} className="flex h-9 w-9 items-center justify-center rounded border-2 border-navy-100 hover:bg-mist"><Minus size={14} /></button>
                         <span className="w-8 text-center" data-testid={`qty-${l.code}`}>{l.qty}</span>
-                        <button type="button" aria-label={`More ${l.name}`} onClick={() => cart.setQty(l.variantId, l.qty + 1)} className="flex h-9 w-9 items-center justify-center rounded border border-line hover:bg-mist"><Plus size={14} /></button></span></Td>
+                        <button type="button" aria-label={`More ${l.name}`} onClick={() => cart.setQty(l.variantId, l.qty + 1)} className="flex h-9 w-9 items-center justify-center rounded border-2 border-navy-100 hover:bg-mist"><Plus size={14} /></button></span></Td>
                       <Td className="text-right">{pl ? formatPaise(pl.rate) : '…'}</Td>
                       <Td><span className="flex items-center gap-1"><Select aria-label={`Discount type for ${l.name}`} className="w-16" value={l.discType} onChange={(e) => cart.setLineDiscount(l.variantId, e.target.value as 'amount' | 'percent', l.discValue)}><option value="amount">₹</option><option value="percent">%</option></Select>
-                        <input aria-label={`Discount for ${l.name}`} inputMode="decimal" className="h-10 w-20 rounded border border-line px-2 text-right text-sm" value={l.discValue} onChange={(e) => cart.setLineDiscount(l.variantId, l.discType, e.target.value)} placeholder="0" /></span></Td>
+                        <input aria-label={`Discount for ${l.name}`} inputMode="decimal" className="h-10 w-20 rounded border-2 border-navy-100 px-2 text-right text-sm" value={l.discValue} onChange={(e) => cart.setLineDiscount(l.variantId, l.discType, e.target.value)} placeholder="0" /></span></Td>
                       <Td className="text-right font-semibold">{pl ? formatPaise(pl.net) : '…'}</Td>
                       <Td><button type="button" aria-label={`Remove ${l.name}`} onClick={() => cart.remove(l.variantId)} className="flex h-9 w-9 items-center justify-center text-danger"><Trash2 size={16} /></button></Td>
                     </Tr>
@@ -72,7 +72,7 @@ export function PosDesktop() {
         </div>
       </section>
 
-      <aside aria-label="Customer and payment" className="flex flex-col gap-4 rounded border border-line p-4">
+      <aside aria-label="Customer and payment" className="flex flex-col gap-4 rounded border-2 border-navy-100 p-4">
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0 text-sm">{cart.cart.customer ? <><strong className="block truncate">{cart.cart.customer.name}</strong><span className="text-xs text-muted">{cart.cart.customer.mobile} · wallet {formatPaise(cart.cart.customer.walletBalance)}</span></> : <span className="text-muted">Walk-in customer</span>}</div>
           <span className="flex gap-1"><Button size="sm" onClick={() => setCustOpen(true)}>{cart.cart.customer ? 'Change' : 'Add customer'}</Button>{cart.cart.customer && <Button size="sm" variant="ghost" onClick={() => cart.setCustomer(null)}>Remove</Button>}</span>

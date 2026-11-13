@@ -11,7 +11,7 @@ export function ProfileMobile() {
   if (!me) return null;
   return (
     <div className="flex flex-col gap-5">
-      <div className="rounded border border-line bg-mist p-4">
+      <div className="rounded border-2 border-navy-100 bg-mist p-4">
         <strong className="block">{me.name}</strong>
         <span className="text-sm text-muted">{me.email}</span>
         <p className="mt-2 flex items-center gap-2 text-sm">{me.role.name} {me.role.isAdmin && <Badge tone="accent">Admin</Badge>}</p>

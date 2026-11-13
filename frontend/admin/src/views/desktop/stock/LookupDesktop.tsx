@@ -24,10 +24,10 @@ export function LookupDesktop() {
         {lookup.error && <ErrorBanner message={lookup.error.friendly} requestId={lookup.error.requestId} />}
         {lookup.found && <StockCard item={lookup.found.item} variantId={lookup.found.variantId} flash />}
       </div>
-      <section aria-label="Search by name" className="mt-8 border-t border-line pt-4">
+      <section aria-label="Search by name" className="mt-8 border-t-2 border-navy-100 pt-4">
         <h2 className="mb-2 text-xs">Search by name</h2>
         <div className="w-80"><Input aria-label="Search by name" placeholder="Type at least two letters" value={q} onChange={(e) => setQ(e.target.value)} /></div>
-        {list.length > 0 && <ul className="mt-2 max-w-xl divide-y divide-line rounded border border-line">{list.slice(0, 8).map((i) => <li key={i.id} className="flex items-center justify-between gap-2 p-2 text-sm"><span><strong>{i.name}</strong><span className="block font-mono text-xs text-muted">{i.code}</span></span><Button size="sm" onClick={() => lookup.choose(i)} aria-label={`Show ${i.name}`}>Show</Button></li>)}</ul>}
+        {list.length > 0 && <ul className="mt-2 max-w-xl divide-y divide-line rounded border-2 border-navy-100">{list.slice(0, 8).map((i) => <li key={i.id} className="flex items-center justify-between gap-2 p-2 text-sm"><span><strong>{i.name}</strong><span className="block font-mono text-xs text-muted">{i.code}</span></span><Button size="sm" onClick={() => lookup.choose(i)} aria-label={`Show ${i.name}`}>Show</Button></li>)}</ul>}
       </section>
     </div>
   );

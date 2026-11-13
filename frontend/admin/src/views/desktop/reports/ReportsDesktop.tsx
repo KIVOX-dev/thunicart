@@ -16,7 +16,7 @@ export function ReportsDesktop() {
       {q.data.length === 0 ? <EmptyState title="No reports" /> : (
         <div className="grid grid-cols-2 gap-6">
           {groups.map((g) => (
-            <section key={g} aria-label={g} className="rounded border border-line p-4">
+            <section key={g} aria-label={g} className="rounded border-2 border-navy-100 p-4">
               <h2 className="mb-2 text-xs">{g}</h2>
               <ul className="divide-y divide-line">{q.data.filter((r) => r.group === g).map((r) => (
                 <li key={r.key}><Link to={`/reports/${r.key}`} className="flex min-h-12 items-center justify-between gap-3 py-2 hover:text-muted"><span><strong className="block text-sm">{r.title}</strong><span className="text-xs text-muted">{r.description}</span></span>{r.big && <Badge>Big report</Badge>}</Link></li>

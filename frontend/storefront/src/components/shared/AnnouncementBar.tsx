@@ -13,11 +13,11 @@ export function AnnouncementBar({ messages }: { messages: string[] }) {
     return () => clearInterval(t);
   }, [paused, messages.length]);
   return (
-    <div className="bg-navy text-white" role="region" aria-label="Offers">
-      <div className="mx-auto flex max-w-7xl items-center justify-center gap-3 px-4 py-2 text-xs">
+    <div className="bg-orange text-navy" role="region" aria-label="Offers">
+      <div className="mx-auto flex max-w-7xl items-center justify-center gap-3 px-4 py-2 text-xs font-bold tracking-wide">
         <p aria-live={paused ? 'polite' : 'off'} className="text-center" data-testid="announcement">{messages[i]}</p>
         {messages.length > 1 && (
-          <button type="button" onClick={() => setPaused((p) => !p)} aria-label={paused ? 'Play offer messages' : 'Pause offer messages'} aria-pressed={paused} className="flex h-6 w-6 shrink-0 items-center justify-center rounded border border-white/40 hover:bg-white/10">
+          <button type="button" onClick={() => setPaused((p) => !p)} aria-label={paused ? 'Play offer messages' : 'Pause offer messages'} aria-pressed={paused} className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-navy hover:bg-navy hover:text-white">
             <Icon name={paused ? 'play' : 'pause'} size={12} />
           </button>
         )}

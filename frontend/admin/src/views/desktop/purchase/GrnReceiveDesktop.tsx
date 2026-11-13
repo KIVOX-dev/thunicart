@@ -26,7 +26,7 @@ export function GrnReceiveDesktop() {
       <div className="mb-3 space-y-2" aria-live="polite"><ScanMessage feedback={r.feedback} />{r.finish.isError && !r.warning && <ErrorBanner message={(r.finish.error as Error).message} />}</div>
       <p className="mb-2 text-sm" role="status">Pieces received: <strong data-testid="grn-pieces">{g.pieces}</strong></p>
       <ScanLinesTable lines={lines.map((l) => ({ id: l.id, code: l.code, name: l.name, size: l.size, expected: l.orderedQty, qty: l.receivedQty, warning: l.warning }))} qtyLabel="Received" expectedLabel="Ordered" flashId={r.feedback.flash} readOnly={!r.canEdit} onSetQty={(lineId, qty) => r.setQty.mutate({ lineId, qty })} />
-      <div className="sticky bottom-0 mt-4 flex items-center gap-3 border-t border-line bg-white py-3">
+      <div className="sticky bottom-0 mt-4 flex items-center gap-3 border-t-2 border-navy-100 bg-white py-3">
         {g.status === 'draft' ? <Button variant="primary" size="lg" loading={r.finish.isPending} disabled={g.pieces === 0} onClick={async () => { try { await r.finish.mutateAsync(false); toast('Receipt finished. Stock updated.', 'success'); } catch { /* warnings open the dialog */ } }}>Finish receiving</Button>
           : <Link to="/purchase?tab=bills"><Button variant="primary">Create purchase bill</Button></Link>}
         <Link to="/purchase?tab=receipts"><Button>Back to receipts</Button></Link>

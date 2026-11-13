@@ -6,7 +6,7 @@ export function StatusPage({ code, title, body, requestId, action }: { code: str
   return (
     <div role="main" className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center gap-3 px-6 text-center">
       <p className="text-4xl font-semibold text-orange" aria-hidden>{code}</p>
-      <h1 className="text-base">{title}</h1>
+      <h1 className="text-2xl md:text-3xl">{title}</h1>
       <p className="text-sm text-muted">{body}</p>
       {requestId && <p className="text-xs text-muted">Request id: {requestId}</p>}
       <div className="mt-2 flex gap-2">{action ?? <Link to="/"><Button variant="primary">Go home</Button></Link>}</div>

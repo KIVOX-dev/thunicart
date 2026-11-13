@@ -18,7 +18,7 @@ function ProfileForm({ profile }: { profile: BusinessProfile }) {
         <legend className="mb-3 text-xs">Business</legend>
         <Field label="Legal name" required error={errors.legalName?.message}>{(p) => <Input {...p} {...register('legalName')} />}</Field>
         <Field label="Brand name" required error={errors.brandName?.message}>{(p) => <Input {...p} {...register('brandName')} />}</Field>
-        <Field label="Address (one line per row)" className="col-span-2" error={errors.addressText?.message}>{(p) => <textarea {...p} rows={3} {...register('addressText')} className="w-full rounded border border-line px-3 py-2 text-sm" />}</Field>
+        <Field label="Address (one line per row)" className="col-span-2" error={errors.addressText?.message}>{(p) => <textarea {...p} rows={3} {...register('addressText')} className="w-full rounded border-2 border-navy-100 px-3 py-2 text-sm" />}</Field>
         <Field label="City" error={errors.city?.message}>{(p) => <Input {...p} {...register('city')} />}</Field>
         <Field label="State" error={errors.state?.message}>{(p) => <Input {...p} {...register('state')} />}</Field>
         <Field label="State code" required hint="Two digits, 33 for Tamil Nadu" error={errors.stateCode?.message}>{(p) => <Input {...p} inputMode="numeric" {...register('stateCode')} />}</Field>
@@ -28,7 +28,7 @@ function ProfileForm({ profile }: { profile: BusinessProfile }) {
         <Field label="Website" error={errors.website?.message}>{(p) => <Input {...p} {...register('website')} />}</Field>
       </fieldset>
 
-      <fieldset disabled={!canEdit} className="grid grid-cols-2 gap-4 rounded border border-line p-4">
+      <fieldset disabled={!canEdit} className="grid grid-cols-2 gap-4 rounded border-2 border-navy-100 p-4">
         <legend className="px-2 text-xs">Tax</legend>
         <div className="col-span-2 flex items-center gap-3">
           <Badge tone={f.gstLive ? 'success' : 'neutral'}>{f.gstLive ? 'GST is on' : 'GST is off'}</Badge>
@@ -42,11 +42,11 @@ function ProfileForm({ profile }: { profile: BusinessProfile }) {
         <legend className="mb-3 text-xs">Invoices</legend>
         <Field label="Default print size" required error={errors.defaultPrintSize?.message}>{(p) => <Select {...p} {...register('defaultPrintSize')}>{PRINT_SIZES.map((s) => <option key={s} value={s}>{PRINT_SIZE_LABELS[s]}</option>)}</Select>}</Field>
         <Field label="Invoice footer line" error={errors.invoiceFooter?.message}>{(p) => <Input {...p} {...register('invoiceFooter')} />}</Field>
-        <Field label="Terms" className="col-span-2" error={errors.termsText?.message}>{(p) => <textarea {...p} rows={3} {...register('termsText')} className="w-full rounded border border-line px-3 py-2 text-sm" />}</Field>
+        <Field label="Terms" className="col-span-2" error={errors.termsText?.message}>{(p) => <textarea {...p} rows={3} {...register('termsText')} className="w-full rounded border-2 border-navy-100 px-3 py-2 text-sm" />}</Field>
       </fieldset>
 
       {canEdit ? (
-        <div className="flex items-center gap-3 border-t border-line pt-4">
+        <div className="flex items-center gap-3 border-t-2 border-navy-100 pt-4">
           <Button type="submit" variant="primary" size="lg" loading={f.saving}>Save profile</Button>
           {f.saved && <span role="status" className="text-sm">Saved.</span>}
         </div>

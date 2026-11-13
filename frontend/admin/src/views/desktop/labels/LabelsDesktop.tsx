@@ -26,7 +26,7 @@ function PrintTab() {
     <div className="grid grid-cols-[22rem_1fr] gap-6">
       <section aria-label="Choose items">
         <Field label="Find items">{(p) => <Input {...p} placeholder="Name or code" value={q} onChange={(e) => setQ(e.target.value)} />}</Field>
-        <ul className="mt-2 max-h-96 divide-y divide-line overflow-y-auto rounded border border-line">
+        <ul className="mt-2 max-h-96 divide-y divide-line overflow-y-auto rounded border-2 border-navy-100">
           {q.trim().length < 2 ? <li className="p-3 text-sm text-muted">Type at least two letters.</li> : results.data?.pages[0]?.items.length === 0 ? <li className="p-3 text-sm text-muted">No items found.</li> : results.data?.pages[0]?.items.map((i) => (
             <li key={i.id} className="flex items-center justify-between gap-2 p-2 text-sm"><span className="min-w-0"><strong className="block truncate">{i.name}</strong><span className="font-mono text-xs text-muted">{i.code}</span></span><Button size="sm" onClick={() => { basket.addItem(i); toast(`Added ${i.name}`, 'info'); }} aria-label={`Add ${i.name}`}>Add</Button></li>
           ))}
@@ -49,7 +49,7 @@ function PrintTab() {
                   <Td><Button size="sm" variant="ghost" onClick={() => basket.remove(l.key)} aria-label={`Remove ${l.name} size ${l.size}`}>Remove</Button></Td></Tr>
               ))}</TBody>
             </Table>
-            {t && <div><h3 className="mb-2 text-xs">Preview</h3><div className="border border-line bg-mist p-3"><Label line={basket.lines[0]!} t={t} /></div></div>}
+            {t && <div><h3 className="mb-2 text-xs">Preview</h3><div className="border-2 border-navy-100 bg-mist p-3"><Label line={basket.lines[0]!} t={t} /></div></div>}
           </div>
         )}
       </section>
@@ -87,7 +87,7 @@ function DesignerTab() {
         </fieldset>
         <Button type="submit" variant="primary" loading={save.isPending} disabled={!name.trim()}>Save template</Button>
       </form>
-      <div><h3 className="mb-2 text-xs">Live preview</h3><div className="inline-block border border-line bg-mist p-4"><div className="border border-dashed border-muted"><Label line={SAMPLE} t={t} /></div></div></div>
+      <div><h3 className="mb-2 text-xs">Live preview</h3><div className="inline-block border-2 border-navy-100 bg-mist p-4"><div className="border border-dashed border-muted"><Label line={SAMPLE} t={t} /></div></div></div>
     </div>
   );
 }

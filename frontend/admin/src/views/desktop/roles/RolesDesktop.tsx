@@ -32,7 +32,7 @@ function Matrix({ role }: { role: Role }) {
     <div>
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-sm">{role.name} {role.isSystem && <Badge className="ml-2">System role</Badge>}</h2>
+          <h2 className="text-lg">{role.name} {role.isSystem && <Badge className="ml-2">System role</Badge>}</h2>
           <p className="mt-1 text-sm text-muted">{role.isAdmin ? 'The Admin role always has every permission.' : role.description || 'No description.'}</p>
         </div>
         {canEdit && (

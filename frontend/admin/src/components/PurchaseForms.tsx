@@ -41,7 +41,7 @@ export function ReturnForm({ onDone }: { onDone: () => void }) {
       <ItemPicker onPick={(i, v) => r.addItem(i, v)} />
       <ul className="flex flex-col gap-2" aria-label="Items to return">
         {r.lines.map((l) => (
-          <li key={l.variantId} className="flex items-center justify-between gap-2 rounded border border-line p-2 text-sm">
+          <li key={l.variantId} className="flex items-center justify-between gap-2 rounded border-2 border-navy-100 p-2 text-sm">
             <span className="min-w-0"><strong className="block truncate">{l.name}</strong><span className="text-xs text-muted">Size {l.size}</span></span>
             <span className="flex items-center gap-2"><Input type="number" min={1} aria-label={`Return quantity for ${l.name} size ${l.size}`} className="w-20" value={l.qty} onChange={(e) => r.setQty(l.variantId, e.target.value)} /><Button size="sm" variant="ghost" className="min-h-11" onClick={() => r.remove(l.variantId)}>Remove</Button></span>
           </li>
@@ -63,7 +63,7 @@ export function PaymentForm({ vendorId, onVendor, onDone }: { vendorId: string; 
       {vendorId && (f.loading ? <ListSkeleton rows={2} label="Loading bills" /> : f.open.length === 0 ? <p className="text-sm text-muted">This vendor has no open bills.</p> : (
         <ul className="flex flex-col gap-2" aria-label="Open bills">
           {f.open.map((b) => (
-            <li key={b.id} className="rounded border border-line p-2 text-sm">
+            <li key={b.id} className="rounded border-2 border-navy-100 p-2 text-sm">
               <div className="flex items-center justify-between"><strong>{b.number}</strong><span className="text-muted">Balance {formatPaise(b.balance)}</span></div>
               <div className="mt-2 flex items-center gap-2">
                 <Input aria-label={`Amount to pay on ${b.number}`} inputMode="decimal" placeholder="Amount" value={f.amounts[b.id] ?? ''} onChange={(e) => f.setAmount(b.id, e.target.value)} />

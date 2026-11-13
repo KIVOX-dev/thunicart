@@ -15,3 +15,7 @@ frontend/admin/dev-dist
 frontend/admin/test-results
 frontend/admin/playwright-report
 frontend/storefront/.next
+frontend/storefront/.next-test
+frontend/storefront/playwright-report
+frontend/storefront/test-results
+frontend/storefront/.next-test

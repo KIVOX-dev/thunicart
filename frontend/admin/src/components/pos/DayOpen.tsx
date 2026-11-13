@@ -9,8 +9,8 @@ export function DayOpen({ big }: { big?: boolean }) {
   const [err, setErr] = useState<string | null>(null);
   const a = useShiftActions(setErr);
   return (
-    <form onSubmit={(e) => { e.preventDefault(); setErr(null); a.open.mutate(cash); }} className="mx-auto flex max-w-sm flex-col gap-4 rounded border border-line bg-mist p-6" aria-label="Open the day">
-      <h2 className="text-sm">Open the day</h2>
+    <form onSubmit={(e) => { e.preventDefault(); setErr(null); a.open.mutate(cash); }} className="mx-auto flex max-w-sm flex-col gap-4 rounded border-2 border-navy-100 bg-mist p-6" aria-label="Open the day">
+      <h2 className="text-lg">Open the day</h2>
       <p className="text-sm text-muted">Count the cash in the drawer and enter it. Billing starts after this.</p>
       {err && <ErrorBanner message={err} />}
       <Field label="Cash in the drawer (₹)" required>{(p) => <Input {...p} inputMode="decimal" autoFocus className={big ? 'min-h-12' : ''} value={cash} onChange={(e) => setCash(e.target.value)} />}</Field>

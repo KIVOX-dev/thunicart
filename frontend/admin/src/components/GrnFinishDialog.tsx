@@ -9,7 +9,7 @@ export function GrnFinishDialog({ grn, message, saving, onConfirm, onCancel, she
     <Shell open={!!message} onClose={onCancel} title="Check before finishing"
       footer={<><Button onClick={onCancel}>Keep scanning</Button><Button variant="primary" loading={saving} onClick={onConfirm}>Finish anyway</Button></>}>
       <p className="mb-3 text-sm">{message}</p>
-      <ul className="divide-y divide-line rounded border border-line text-sm">
+      <ul className="divide-y divide-line rounded border-2 border-navy-100 text-sm">
         {warned.map((l) => (
           <li key={l.id} className="flex items-center justify-between gap-2 p-2">
             <span className="min-w-0"><strong className="block truncate">{l.name}</strong><span className="text-xs text-muted">Size {l.size} · ordered {l.orderedQty}, received {l.receivedQty}</span></span>

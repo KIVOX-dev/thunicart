@@ -276,10 +276,10 @@ test.describe('login with an email code', () => {
   test('clear errors for a wrong and an expired code, a resend timer, and no Google button in demo mode', async ({ page }) => {
     await page.goto('/login');
     await expect(page.getByRole('button', { name: /Google/ })).toHaveCount(0);
-    await page.getByLabel('Email').fill('nope');
+    await page.getByLabel('Email', { exact: true }).fill('nope');
     await page.getByRole('button', { name: 'Send me a code' }).click();
-    await expect(page.getByRole('alert')).toContainText('Enter a valid email');
-    await page.getByLabel('Email').fill('expired@example.com');
+    await expect(page.getByRole('alert').filter({ hasText: /\S/ })).toContainText('Enter a valid email');
+    await page.getByLabel('Email', { exact: true }).fill('expired@example.com');
     await page.getByRole('button', { name: 'Send me a code' }).click();
     await expect(page.getByTestId('otp-hint')).toContainText('123456');
     await expect(page.getByTestId('resend')).toBeDisabled();
@@ -288,7 +288,7 @@ test.describe('login with an email code', () => {
     await page.getByRole('button', { name: 'Sign in' }).click();
     await expect(page.getByTestId('code-error')).toContainText('expired');
     await page.getByRole('button', { name: 'Change email' }).click();
-    await page.getByLabel('Email').fill('someone@example.com');
+    await page.getByLabel('Email', { exact: true }).fill('someone@example.com');
     await page.getByRole('button', { name: 'Send me a code' }).click();
     await page.getByLabel('6 digit code').fill('000000');
     await page.getByRole('button', { name: 'Sign in' }).click();
@@ -302,7 +302,7 @@ test.describe('login with an email code', () => {
   test('account pages send a signed out shopper to sign in and bring them back', async ({ page }) => {
     await page.goto('/account/wallet');
     await expect(page).toHaveURL(/\/login\?next=%2Faccount%2Fwallet/);
-    await page.getByLabel('Email').fill('back@example.com');
+    await page.getByLabel('Email', { exact: true }).fill('back@example.com');
     await page.getByRole('button', { name: 'Send me a code' }).click();
     await page.getByLabel('6 digit code').fill('123456');
     await page.getByRole('button', { name: 'Sign in' }).click();
@@ -317,10 +317,10 @@ async function placeOrder(page: Page, isMobile: boolean, opts: { wallet?: boolea
   await page.getByLabel('Mobile').fill('9876543210');
   await page.getByLabel('Address line 1').fill('12 Temple Street');
   await page.getByLabel('City').fill('Coimbatore');
-  await page.getByLabel('Pincode').fill('641016');
-  await expect(page.getByTestId('checkout-delivery')).toContainText('Coimbatore: Delivery in 2 days');
+  await page.getByRole('textbox', { name: 'Pincode' }).fill('641016');
   const next = async () => { if (isMobile) await page.getByRole('button', { name: 'Continue' }).click(); };
-  await next(); // address -> delivery
+  await next(); // address -> delivery (a phone shows the delivery step after Continue)
+  await expect(page.getByTestId('checkout-delivery')).toContainText('Coimbatore: Delivery in 2 days');
   await next(); // delivery -> payment
   if (opts.cod) await page.getByRole('radio', { name: /Cash on delivery/ }).check();
   if (opts.wallet) await page.getByRole('checkbox', { name: /Use my wallet/ }).check();
@@ -359,7 +359,7 @@ test.describe('checkout and the whole order, in mock mode', () => {
 
     // Checkout with part of the wallet, then pay in the practice window.
     await page.goto('/checkout');
-    await page.getByLabel('Coupon code').first().fill('SAVE10').catch(() => undefined);
+    await page.getByLabel('Coupon code').first().fill('SAVE10', { timeout: 2000 }).catch(() => undefined);
     await placeOrder(page, isMobile, { wallet: true });
     await expect(page).toHaveURL(/\/order\/.+pay=1/);
     const dlg = page.getByRole('dialog', { name: 'Practice payment' });
@@ -374,13 +374,13 @@ test.describe('checkout and the whole order, in mock mode', () => {
     expect(number).toMatch(/^ECM-\d+$/);
 
     // Track it, move it along, and ask for a return with photos.
-    await page.getByRole('link', { name: 'Track my order' }).click();
+    await page.getByRole('link', { name: 'Track my order' }).first().click();
     await expect(page.getByTestId('order-status')).toContainText('Confirmed');
     for (const s of ['Packed', 'Shipped', 'Delivered']) { await page.getByRole('button', { name: /Demo: move to the next step/ }).click(); await expect(page.getByTestId('order-status')).toContainText(s); }
     const form = page.getByRole('form', { name: 'Return or exchange' });
     await form.getByLabel(/^Quantity to send back/).fill('1');
     await form.getByRole('button', { name: /^Send return request/ }).click();
-    await expect(form.getByRole('alert').first()).toContainText('Choose a reason');
+    await expect(form.getByRole('alert').filter({ hasText: /\S/ }).first()).toContainText('Choose a reason');
     await form.getByRole('combobox', { name: 'Reason' }).selectOption('Size does not fit');
     await form.getByLabel('Add photos').setInputFiles([{ name: 'a.png', mimeType: 'image/png', buffer: PNG }, { name: 'b.png', mimeType: 'image/png', buffer: PNG }]);
     await expect(form.getByTestId('photo-uploaded')).toHaveCount(2, { timeout: 15_000 });
@@ -399,7 +399,7 @@ test.describe('checkout and the whole order, in mock mode', () => {
     await placeOrder(page, isMobile);
     const dlg = page.getByRole('dialog', { name: 'Practice payment' });
     await dlg.getByRole('button', { name: 'Simulate a failed payment' }).click();
-    await expect(dlg.getByRole('alert')).toContainText('failed');
+    await expect(dlg.getByRole('alert').filter({ hasText: /\S/ })).toContainText('failed');
     await dlg.getByRole('button', { name: 'Not now' }).click();
     await expect(page.getByTestId('pay-pending')).toContainText('held for');
     await expect(page.getByTestId('hold-countdown')).toHaveText(/^1[45]:\d\d$/);
@@ -417,14 +417,15 @@ test.describe('checkout and the whole order, in mock mode', () => {
     await page.getByLabel('Mobile').fill('9876500000');
     await page.getByLabel('Address line 1').fill('5 Market Road');
     await page.getByLabel('City').fill('Coimbatore');
-    await page.getByLabel('Pincode').fill('641016');
+    await page.getByRole('textbox', { name: 'Pincode' }).fill('641016');
+    if (isMobile) await page.getByRole('button', { name: 'Continue' }).click();
     await expect(page.getByTestId('checkout-delivery')).toBeVisible();
-    if (isMobile) { await page.getByRole('button', { name: 'Continue' }).click(); await page.getByRole('button', { name: 'Continue' }).click(); }
+    if (isMobile) await page.getByRole('button', { name: 'Continue' }).click();
     await page.getByRole('radio', { name: /Cash on delivery/ }).check();
     if (isMobile) await page.getByRole('button', { name: 'Continue' }).click();
     await page.getByRole('button', { name: 'Place order', exact: true }).click();
     await expect(page.getByTestId('order-success')).toBeVisible();
-    await expect(page.getByText('Pay when it arrives')).toBeVisible();
+    await expect(page.getByText('Pay when it arrives').first()).toBeVisible();
     // A guest can still open the order they just placed.
     await expect(page.getByTestId('order-number')).toBeVisible();
   });
@@ -437,7 +438,7 @@ test.describe('checkout and the whole order, in mock mode', () => {
     await page.getByLabel('Email for order updates').fill('a@b.co');
     await page.getByLabel('Full name').fill('A');
     await page.getByLabel('Mobile').fill('12345');
-    await page.getByLabel('Pincode').fill('641016');
+    await page.getByRole('textbox', { name: 'Pincode' }).fill('641016');
     await page.getByRole('button', { name: /^Place order/ }).click();
     await expect(page.getByRole('alert').filter({ hasText: 'Enter the name' })).toBeVisible();
     await expect(page.getByRole('alert').filter({ hasText: '10 digit Indian mobile' })).toBeVisible();
@@ -450,7 +451,7 @@ test.describe('checkout and the whole order, in mock mode', () => {
     await addToBag(page, p.slug, v.color, v.size);
     await placeOrder(page, isMobile, { cod: true, wallet: true });
     await expect(page.getByTestId('order-success')).toBeVisible();
-    await page.getByRole('link', { name: 'Track my order' }).click();
+    await page.getByRole('link', { name: 'Track my order' }).first().click();
     await page.getByRole('button', { name: 'Cancel order' }).click();
     await expect(page.getByTestId('order-status')).toContainText('Cancelled');
     await page.goto('/account/wallet');
@@ -464,14 +465,14 @@ test.describe('account', () => {
     await signIn(page, 'addr@example.com', '/account');
     await page.goto('/account/addresses');
     await page.getByLabel('Full name').fill('Home');
-    await page.getByLabel('Pincode').fill('999999');
+    await page.getByRole('textbox', { name: 'Pincode' }).fill('999999');
     await expect(page.getByTestId('pin-message')).toContainText('do not deliver');
     await page.getByRole('button', { name: 'Save address' }).click();
     await expect(page.getByRole('alert').filter({ hasText: 'Enter a 10 digit Indian mobile number' })).toBeVisible();
     await page.getByLabel('Mobile').fill('9876543210');
     await page.getByLabel('Address line 1').fill('1 Lake Road');
     await page.getByLabel('City').fill('Coimbatore');
-    await page.getByLabel('Pincode').fill('641016');
+    await page.getByRole('textbox', { name: 'Pincode' }).fill('641016');
     await expect(page.getByTestId('pin-message')).toContainText('Delivery in 2 days');
     await page.getByRole('button', { name: 'Save address' }).click();
     await expect(page.getByRole('list').filter({ hasText: '1 Lake Road' })).toBeVisible();

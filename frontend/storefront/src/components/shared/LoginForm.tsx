@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ApiError, capi } from '@/lib/client-api';
 import { GOOGLE_CLIENT_ID, MOCK_MODE } from '@/lib/config';
 
-const input = 'min-h-12 w-full rounded-sm border border-line px-3 text-base aria-[invalid=true]:border-danger';
+const input = 'min-h-12 w-full rounded-md border-2 border-navy-100 px-4 text-base focus:border-teal focus:outline-none aria-[invalid=true]:border-danger';
 
 /** Sign in with an email code: enter the email, then the 6 digit code, with a 30 second resend timer. Google sign in is the second option. */
 export function LoginForm() {
@@ -31,7 +31,7 @@ export function LoginForm() {
   };
   return (
     <div className="mx-auto max-w-md px-4 py-10 md:py-16">
-      <h1 className="mb-2 text-base md:text-lg">Sign in or create an account</h1>
+      <h1 className="mb-3 text-3xl md:text-4xl">Sign in or create an account</h1>
       <p className="mb-6 text-sm text-muted">We will email you a 6 digit code. No password to remember.</p>
       {step === 'email' ? (
         <form onSubmit={(e) => { e.preventDefault(); void send(); }} noValidate className="flex flex-col gap-4" aria-label="Sign in with email">
@@ -52,7 +52,7 @@ export function LoginForm() {
         </form>
       )}
       {!MOCK_MODE && GOOGLE_CLIENT_ID && (
-        <div className="mt-8 border-t border-line pt-6"><p className="mb-3 text-center text-xs text-muted">or</p><button type="button" className="min-h-12 w-full rounded-sm border border-navy text-sm font-medium" onClick={() => { window.location.href = `/auth/google?next=${encodeURIComponent(next)}`; }}>Continue with Google</button></div>
+        <div className="mt-8 border-t-2 border-navy-100 pt-6"><p className="mb-3 text-center text-xs text-muted">or</p><button type="button" className="min-h-12 w-full rounded-sm border border-navy text-sm font-medium" onClick={() => { window.location.href = `/auth/google?next=${encodeURIComponent(next)}`; }}>Continue with Google</button></div>
       )}
     </div>
   );

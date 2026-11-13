@@ -14,7 +14,7 @@ export function GstMobile() {
   return (
     <div className="flex flex-col gap-3">
       {check.data && <GstWarnings warnings={check.data.warnings} />}
-      <ul className="divide-y divide-line rounded border border-line">{gst.map((r) => (
+      <ul className="divide-y divide-line rounded border-2 border-navy-100">{gst.map((r) => (
         <li key={r.key}><Link to={`/reports/${r.key}`} className="flex min-h-14 items-center gap-3 px-4 text-sm"><span className="min-w-0 flex-1"><strong className="block">{r.title}</strong><span className="text-xs text-muted">{r.description}</span></span><ChevronRight aria-hidden size={16} className="text-muted" /></Link></li>
       ))}</ul>
     </div>

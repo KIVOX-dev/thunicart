@@ -16,7 +16,7 @@ export function DashboardDesktop() {
   return (
     <div>
       <PageHeader title="Dashboard" description="Today and this month at a glance." />
-      <dl className="grid grid-cols-4 gap-4">
+      <dl className="grid grid-cols-4 gap-4 [&>div:nth-child(3n+1)]:bg-orange-100 [&>div:nth-child(3n+2)]:bg-teal-100">
         <StatCard label="Sales today" value={formatPaise(d.today.total)} hint={channels(d.today.channels)} testId="sales-today" />
         <StatCard label="Sales this month" value={formatPaise(d.month.total)} hint={channels(d.month.channels)} testId="sales-month" />
         <StatCard label="Bills today" value={d.today.bills} hint={`${d.month.bills} this month`} testId="bills-today" />
@@ -28,8 +28,8 @@ export function DashboardDesktop() {
         <StatCard label="Receivables overdue" value={formatPaise(d.receivablesOverdue)} hint="Customers past their due date" testId="receivables" />
       </dl>
       <div className="mt-6 grid grid-cols-[2fr_1fr] gap-6">
-        <section aria-label="Sales for 30 days" className="rounded border border-line p-4"><h2 className="mb-2 text-xs">Sales, last 30 days</h2><LineChart points={d.salesLine} /></section>
-        <section aria-label="Top items" className="rounded border border-line p-4"><h2 className="mb-2 text-xs">Top items, last 30 days</h2>
+        <section aria-label="Sales for 30 days" className="rounded-xl bg-navy-50 p-5"><h2 className="mb-3 text-xl">Sales, last 30 days</h2><LineChart points={d.salesLine} /></section>
+        <section aria-label="Top items" className="rounded-xl bg-navy-50 p-5"><h2 className="mb-3 text-xl">Top items, last 30 days</h2>
           {d.topItems.length === 0 ? <p className="text-sm text-muted">No sales yet.</p> : (
             <Table caption="Top items"><THead><Tr><Th>Item</Th><Th className="text-right">Pieces</Th><Th className="text-right">Amount</Th></Tr></THead><TBody>{d.topItems.map((t) => <Tr key={t.name}><Td>{t.name}</Td><Td className="text-right">{t.qty}</Td><Td className="text-right">{formatPaise(t.amount)}</Td></Tr>)}</TBody></Table>
           )}

@@ -25,8 +25,8 @@ export async function Listing({ category, title, search, basePath }: { category?
   next.set('pages', String((data.nextPage ?? pages)));
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-10">
-      <div className="mb-4 flex items-end justify-between gap-4">
-        <div><h1 className="text-base md:text-lg">{title}</h1><p className="mt-1 text-sm text-muted" data-testid="result-count">{data.total} {data.total === 1 ? 'product' : 'products'}</p></div>
+      <div className="mb-6 flex items-end justify-between gap-4 rounded-2xl bg-navy p-5 text-white md:p-8">
+        <div><h1 className="tk-display">{title}</h1><p className="mt-2 text-sm font-medium text-white/85" data-testid="result-count">{data.total} {data.total === 1 ? 'product' : 'products'}</p></div>
         <SortSelect />
       </div>
       <FilterSheets facets={data.facets} total={data.total} />
@@ -34,13 +34,13 @@ export async function Listing({ category, title, search, basePath }: { category?
         <FilterSidebar facets={data.facets} />
         <div className="min-w-0 flex-1">
           {data.items.length === 0 ? (
-            <div className="rounded-sm border border-dashed border-line bg-mist p-10 text-center"><p className="text-sm">No products match these filters.</p><Link href={basePath} className="mt-3 inline-flex min-h-11 items-center text-sm underline">Clear all filters</Link></div>
+            <div className="rounded-xl border-2 border-dashed border-navy-200 bg-navy-50 p-10 text-center"><p className="text-sm">No products match these filters.</p><Link href={basePath} className="mt-3 inline-flex min-h-11 items-center text-sm underline">Clear all filters</Link></div>
           ) : (
             <>
               <ProductGrid items={data.items} />
               <div className="mt-8 flex flex-col items-center gap-2">
                 <p className="text-xs text-muted" aria-live="polite">Showing {data.items.length} of {data.total}</p>
-                {data.nextPage && <Link href={`${basePath}?${next}`} scroll={false} className="flex min-h-12 items-center rounded-sm border border-navy px-8 text-sm font-medium uppercase tracking-wider hover:bg-mist">Load more</Link>}
+                {data.nextPage && <Link href={`${basePath}?${next}`} scroll={false} className="flex min-h-12 items-center rounded-full font-semibold tk-press hover:bg-navy hover:text-white border-2 border-navy px-8 text-sm font-medium hover:bg-mist">Load more</Link>}
               </div>
             </>
           )}

@@ -20,13 +20,13 @@ export function CustomerLookup({ onPick }: { onPick: (c: Customer) => void }) {
     <div className="flex flex-col gap-3">
       <Field label="Customer mobile or name">{(p) => <Input {...p} inputMode="tel" autoFocus placeholder="Type at least 3 digits" value={q} onChange={(e) => setQ(e.target.value)} className="min-h-12" />}</Field>
       {search.data?.map((c) => (
-        <button key={c.id} type="button" onClick={() => onPick(c)} className="flex min-h-12 items-center justify-between rounded border border-line px-3 text-left text-sm hover:bg-mist" aria-label={`Choose ${c.name}`}>
+        <button key={c.id} type="button" onClick={() => onPick(c)} className="flex min-h-12 items-center justify-between rounded border-2 border-navy-100 px-3 text-left text-sm hover:bg-mist" aria-label={`Choose ${c.name}`}>
           <span><strong>{c.name}</strong><span className="block text-xs text-muted">{c.mobile} · {c.accountGroup}</span></span><span className="text-xs text-muted">{c.loyaltyPoints} pts</span>
         </button>
       ))}
       {search.data && search.data.length === 0 && q.trim().length >= 3 && !adding && <p className="text-sm text-muted">No customer found for {q}.</p>}
       {!adding ? <Button onClick={() => setAdding(true)} className="min-h-11">Add new customer</Button> : (
-        <form onSubmit={(e) => { e.preventDefault(); void quick.submit({ name, mobile: q.trim() }); }} noValidate className="flex flex-col gap-3 rounded border border-line bg-mist p-3" aria-label="Quick add customer">
+        <form onSubmit={(e) => { e.preventDefault(); void quick.submit({ name, mobile: q.trim() }); }} noValidate className="flex flex-col gap-3 rounded border-2 border-navy-100 bg-mist p-3" aria-label="Quick add customer">
           {quick.banner && <ErrorBanner {...quick.banner} />}
           <Field label="Name" required error={quick.errors.name}>{(p) => <Input {...p} value={name} onChange={(e) => setName(e.target.value)} className="min-h-11" />}</Field>
           <Field label="Mobile" required error={quick.errors.mobile}>{(p) => <Input {...p} inputMode="tel" value={q} onChange={(e) => setQ(e.target.value)} className="min-h-11" />}</Field>
@@ -77,7 +77,7 @@ export function ShiftPanel() {
         </form>
       )}
       {s?.closedAt && (
-        <dl className="rounded border border-line p-3 text-sm" aria-label="Day closed summary">
+        <dl className="rounded border-2 border-navy-100 p-3 text-sm" aria-label="Day closed summary">
           <div className="flex justify-between"><dt>Opening cash</dt><dd>{formatPaise(s.openingCash)}</dd></div>
           <div className="flex justify-between"><dt>Expected cash</dt><dd data-testid="expected-cash">{formatPaise(s.expectedCash ?? 0)}</dd></div>
           <div className="flex justify-between"><dt>Counted cash</dt><dd>{formatPaise(s.countedCash ?? 0)}</dd></div>
@@ -100,7 +100,7 @@ export function BillTotals({ preview }: { preview: Preview | null }) {
       {t.discount > 0 && <div className="flex justify-between"><dt>Discount</dt><dd>-{formatPaise(t.discount)}</dd></div>}
       {gst === 'on' && t.tax !== null && <div className="flex justify-between text-muted"><dt>{preview!.interState ? 'IGST' : 'CGST + SGST'} included</dt><dd>{formatPaise(t.tax)}</dd></div>}
       {gst === 'on' && <div className="flex justify-between text-muted"><dt>Round off</dt><dd>{t.roundOff < 0 ? '-' : ''}{formatPaise(Math.abs(t.roundOff))}</dd></div>}
-      <div className="flex justify-between border-t border-line pt-2 text-lg font-semibold"><dt>Total</dt><dd data-testid="bill-total">{formatPaise(t.grandTotal)}</dd></div>
+      <div className="flex justify-between border-t-2 border-navy-100 pt-2 text-lg font-semibold"><dt>Total</dt><dd data-testid="bill-total">{formatPaise(t.grandTotal)}</dd></div>
     </dl>
   );
 }
@@ -117,7 +117,7 @@ export function PaymentPanel({ cart, big }: { cart: Cart; big?: boolean }) {
       {cart.cart.payments.length === 0 && <p className="text-xs text-muted">Choose how the customer pays. You can split across several.</p>}
       <ul className="flex flex-col gap-2">
         {cart.cart.payments.map((p) => (
-          <li key={p.id} className="rounded border border-line p-2">
+          <li key={p.id} className="rounded border-2 border-navy-100 p-2">
             <div className="flex items-center gap-2">
               <span className="w-28 text-sm font-medium">{p.mode}</span>
               <Input aria-label={`${p.mode} amount`} inputMode="decimal" placeholder="Amount" value={p.amount} onChange={(e) => cart.setPayment(p.id, { amount: e.target.value })} className={h} />

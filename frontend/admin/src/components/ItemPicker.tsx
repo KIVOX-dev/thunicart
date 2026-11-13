@@ -25,7 +25,7 @@ export function ItemPicker({ onPick, large, hint, autoFocus }: { onPick: (item: 
       <Input aria-label="Search items to add" placeholder="Or search by name or code" value={q} onChange={(e) => setQ(e.target.value)} className={large ? 'min-h-12' : ''} />
       {hint && <p className="text-xs text-muted">{hint}</p>}
       {list.length > 0 && (
-        <ul className="divide-y divide-line rounded border border-line bg-white">
+        <ul className="divide-y divide-line rounded border-2 border-navy-100 bg-white">
           {list.flatMap((i) => i.variants.map((v) => (
             <li key={v.id} className="flex items-center justify-between gap-2 p-2 text-sm">
               <span className="min-w-0"><strong className="block truncate">{i.name}</strong><span className="font-mono text-xs text-muted">{i.code} · Size {v.size}</span></span>

@@ -6,6 +6,7 @@ import { Drawer } from '@thunikart/ui';
 import { capi } from '@/lib/client-api';
 import { formatPaise } from '@/lib/format';
 import { useUi } from './ui-context';
+import { Photo } from '@/components/shared/Photo';
 
 interface Suggestion { slug: string; name: string; image: string; price: number }
 
@@ -24,14 +25,14 @@ export function SearchPanel() {
   return (
     <Drawer side="right" open={searchOpen} onClose={() => setSearchOpen(false)} title="Search">
       <form role="search" onSubmit={(e) => { e.preventDefault(); go(); }} className="flex gap-2">
-        <input aria-label="Search the store" autoFocus type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search kurtis, leggings, dothis" className="min-h-12 w-full rounded-sm border border-line px-3 text-base" />
-        <button type="submit" className="min-h-12 rounded-sm bg-orange px-4 text-sm font-semibold uppercase tracking-wider text-navy">Go</button>
+        <input aria-label="Search the store" autoFocus type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search kurtis, leggings, dothis" className="min-h-12 w-full rounded-md border-2 border-navy-100 px-4 text-base focus:border-teal focus:outline-none" />
+        <button type="submit" className="min-h-12 rounded-full tk-press shadow-soft hover:bg-navy hover:text-white hover:shadow-lift bg-orange px-4 text-sm font-bold text-navy">Go</button>
       </form>
       <ul className="mt-3 divide-y divide-line" aria-label="Suggestions">
         {list.map((s) => (
           <li key={s.slug}><Link href={`/p/${s.slug}`} onClick={() => setSearchOpen(false)} className="flex min-h-14 items-center gap-3 py-2">
             
-            <img src={s.image} alt="" width={44} height={56} className="h-14 w-11 rounded-sm object-cover" /><span className="flex-1 text-sm">{s.name}</span><span className="text-sm font-semibold">{formatPaise(s.price)}</span></Link></li>
+            <Photo src={s.image} alt="" width={44} height={56} className="h-14 w-11 rounded-lg object-cover" /><span className="flex-1 text-sm">{s.name}</span><span className="text-sm font-semibold">{formatPaise(s.price)}</span></Link></li>
         ))}
       </ul>
       {q.trim().length >= 2 && list.length === 0 && <p className="mt-3 text-sm text-muted">No suggestions. Press Go to search everything.</p>}

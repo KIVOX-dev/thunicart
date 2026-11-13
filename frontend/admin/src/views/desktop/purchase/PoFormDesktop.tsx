@@ -66,7 +66,7 @@ function Editor({ po }: { po?: Po }) {
         </Table>
       )}
       <PoTotals totals={d.totals} />
-      <div className="sticky bottom-0 flex flex-wrap items-center gap-3 border-t border-line bg-white py-3">
+      <div className="sticky bottom-0 flex flex-wrap items-center gap-3 border-t-2 border-navy-100 bg-white py-3">
         {draft && can(po ? 'purchase.edit' : 'purchase.create') && <Button variant={po ? 'secondary' : 'primary'} size="lg" loading={d.save.isPending} onClick={save}>{po ? 'Save changes' : 'Create order'}</Button>}
         {po?.status === 'draft' && can('purchase.approve') && <Button variant="primary" size="lg" loading={action.isPending} onClick={() => run('approve')}>Approve</Button>}
         {po?.status === 'approved' && can('purchase.edit') && <Button variant="primary" size="lg" loading={action.isPending} onClick={() => run('send')}>Send to vendor</Button>}

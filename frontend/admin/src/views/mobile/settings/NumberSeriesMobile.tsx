@@ -17,7 +17,7 @@ export function NumberSeriesMobile() {
     <>
       <ul className="flex flex-col gap-3">
         {q.data.map((s) => (
-          <li key={s.key} className="rounded border border-line p-4">
+          <li key={s.key} className="rounded border-2 border-navy-100 p-4">
             <div className="flex items-start justify-between gap-2">
               <div><strong className="text-sm">{SERIES_LABELS[s.key] ?? s.key}</strong><p className="text-xs text-muted">{s.key} · {s.perFinancialYear ? `resets yearly (${s.financialYear})` : 'never resets'}</p></div>
               {canEdit && <Button size="lg" onClick={() => setEditing(s)} aria-label={`Edit ${s.key}`}>Edit</Button>}

@@ -22,7 +22,7 @@ export function GrnReceiveMobile() {
       <div aria-live="polite" className="space-y-2"><ScanMessage feedback={r.feedback} />{r.finish.isError && !r.warning && <ErrorBanner message={(r.finish.error as Error).message} />}</div>
       <p role="status" className="rounded bg-mist p-3 text-center text-sm">Pieces received <strong className="ml-1 text-xl" data-testid="grn-pieces">{g.pieces}</strong></p>
       <ScanLinesCards lines={lines.map((l) => ({ id: l.id, code: l.code, name: l.name, size: l.size, expected: l.orderedQty, qty: l.receivedQty, warning: l.warning }))} qtyLabel="Received" expectedLabel="Ordered" flashId={r.feedback.flash} readOnly={!r.canEdit} onSetQty={(lineId, qty) => r.setQty.mutate({ lineId, qty })} />
-      <div className="fixed inset-x-0 bottom-14 z-30 border-t border-line bg-white p-3">
+      <div className="fixed inset-x-0 bottom-14 z-30 border-t-2 border-navy-100 bg-white p-3">
         {g.status === 'draft'
           ? <Button variant="primary" size="lg" block className="min-h-12" disabled={g.pieces === 0} loading={r.finish.isPending} onClick={async () => { try { await r.finish.mutateAsync(false); toast('Receipt finished. Stock updated.', 'success'); } catch { /* warnings open the sheet */ } }}>Finish receiving</Button>
           : <Link to="/purchase?tab=receipts"><Button size="lg" block className="min-h-12">Back to receipts</Button></Link>}

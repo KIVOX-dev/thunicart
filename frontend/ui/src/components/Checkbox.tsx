@@ -8,7 +8,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
   const cid = id ?? auto;
   return (
     <span className={cn('inline-flex min-h-6 items-center gap-2', className)}>
-      <input ref={ref} id={cid} type="checkbox" className="h-5 w-5 rounded-sm border-line accent-[var(--color-navy)]" {...rest} />
+      <input ref={ref} id={cid} type="checkbox" className="h-5 w-5 rounded-md border-navy-200 accent-[var(--color-teal-700)]" {...rest} />
       {label && <label htmlFor={cid} className="text-sm text-navy">{label}</label>}
     </span>
   );

@@ -12,10 +12,10 @@ export interface OverlayProps {
 }
 
 const pos = {
-  center: 'm-auto w-[min(92vw,32rem)] max-h-[90vh] rounded tk-fade',
+  center: 'm-auto w-[min(92vw,32rem)] max-h-[90vh] rounded-xl tk-pop',
   left: 'mr-auto ml-0 my-0 h-full max-h-none w-[min(88vw,20rem)] rounded-none tk-slide-right',
   right: 'ml-auto mr-0 my-0 h-full max-h-none w-[min(92vw,26rem)] rounded-none tk-fade',
-  bottom: 'mt-auto mb-0 mx-0 w-full max-w-none rounded-t-md rounded-b-none max-h-[88vh] tk-slide-up',
+  bottom: 'mt-auto mb-0 mx-0 w-full max-w-none rounded-t-xl rounded-b-none max-h-[88vh] tk-slide-up',
 };
 
 /** Built on the native dialog element: focus trap, Esc to close and aria-modal come for free. */
@@ -39,14 +39,14 @@ export function Overlay({ open, onClose, title, children, footer, className, pos
     >
       {open && (
         <>
-          <div className="flex items-center justify-between border-b border-line px-4 py-2">
+          <div className="flex items-center justify-between border-b-2 border-navy-100 bg-navy-50 px-5 py-2">
             <h2 className="text-sm">{title}</h2>
-            <button type="button" onClick={onClose} aria-label="Close" className="flex h-11 w-11 items-center justify-center rounded text-xl hover:bg-mist">
+            <button type="button" onClick={onClose} aria-label="Close" className="flex h-11 w-11 items-center justify-center rounded-full text-xl hover:bg-white">
               ×
             </button>
           </div>
           <div className="flex-1 overflow-y-auto p-4">{children}</div>
-          {footer && <div className="flex justify-end gap-2 border-t border-line p-4">{footer}</div>}
+          {footer && <div className="flex justify-end gap-2 border-t-2 border-navy-100 p-4">{footer}</div>}
         </>
       )}
     </dialog>

@@ -23,7 +23,7 @@ export function MediaManager({ media }: { media: Media }) {
         {media.imageKeys.length === 0 ? <p className="rounded border border-dashed border-line p-4 text-center text-sm text-muted">No images yet.</p> : (
           <ul className="grid grid-cols-2 gap-3 md:grid-cols-4">
             {media.imageKeys.map((k, i) => (
-              <li key={k} draggable onDragStart={() => { drag.current = i; }} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (drag.current !== null) media.move(drag.current, i); drag.current = null; }} className="rounded border border-line p-2">
+              <li key={k} draggable onDragStart={() => { drag.current = i; }} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (drag.current !== null) media.move(drag.current, i); drag.current = null; }} className="rounded border-2 border-navy-100 p-2">
                 <div className="flex aspect-[3/4] items-center justify-center overflow-hidden rounded bg-mist">
                   {media.previewOf(k) ? <img src={media.previewOf(k)} alt={`Image ${i + 1}`} className="h-full w-full object-cover" /> : <span className="px-2 text-center text-xs text-muted">{fileName(k)}</span>}
                 </div>
@@ -51,7 +51,7 @@ export function MediaManager({ media }: { media: Media }) {
       {media.entries.length > 0 && (
         <ul aria-label="Uploads" className="flex flex-col gap-2">
           {media.entries.map((e) => (
-            <li key={e.id} className="flex items-center gap-3 rounded border border-line p-2 text-sm">
+            <li key={e.id} className="flex items-center gap-3 rounded border-2 border-navy-100 p-2 text-sm">
               {e.previewUrl && <img src={e.previewUrl} alt="" className="h-10 w-10 rounded object-cover" />}
               <span className="min-w-0 flex-1 truncate">{e.name}</span>
               {e.status === 'uploading' && <span role="progressbar" aria-valuenow={e.progress} aria-valuemin={0} aria-valuemax={100} className="text-xs text-muted">Uploading {e.progress}%</span>}

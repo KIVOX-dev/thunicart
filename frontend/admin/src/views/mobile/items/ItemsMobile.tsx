@@ -41,7 +41,7 @@ export function ItemsMobile() {
             const pr = priceSpan(i);
             return (
               <li key={i.id}>
-                <Link to={`/items/${i.id}`} className="block rounded border border-line p-3">
+                <Link to={`/items/${i.id}`} className="block rounded border-2 border-navy-100 p-3">
                   <div className="flex items-start justify-between gap-2"><strong className="text-sm">{i.name}</strong><Badge tone={statusTone(i.stockStatus)}>{i.stockStatus}</Badge></div>
                   <p className="mt-1 font-mono text-xs text-muted">{i.code}</p>
                   <p className="mt-2 flex flex-wrap items-center gap-2 text-sm">
@@ -55,7 +55,7 @@ export function ItemsMobile() {
         </ul>
       )}
       {items.hasNextPage && <Button size="lg" className="min-h-12" onClick={() => items.fetchNextPage()} loading={items.isFetchingNextPage}>Load more</Button>}
-      {can('items.create') && <div className="fixed inset-x-0 bottom-14 z-30 border-t border-line bg-white p-3"><Link to="/items/new"><Button variant="primary" size="lg" block className="min-h-12">Add item</Button></Link></div>}
+      {can('items.create') && <div className="fixed inset-x-0 bottom-14 z-30 border-t-2 border-navy-100 bg-white p-3"><Link to="/items/new"><Button variant="primary" size="lg" block className="min-h-12">Add item</Button></Link></div>}
       <BottomSheet open={sheet} onClose={() => setSheet(false)} title="Filters" footer={<><Button onClick={reset}>Clear</Button><Button variant="primary" onClick={() => setSheet(false)}>Show items</Button></>}>
         <div className="flex flex-col gap-4">
           <label className="text-xs font-medium">Category<Select className="mt-1 min-h-12" value={filters.category} onChange={(e) => set({ category: e.target.value })}><option value="">All categories</option>{facets?.categories.map((c) => <option key={c}>{c}</option>)}</Select></label>

@@ -283,7 +283,8 @@ export async function handle(req: Req): Promise<Res> {
       if (!o.canCancel || !['paid', 'pending-payment'].includes(o.status)) return err(409, 'CANNOT_CANCEL', 'This order is already packed, so it cannot be cancelled now.');
       const wasPaid = o.payment.status === 'paid'; release(o, 'Cancelled by you.');
       const uid = (o as unknown as { userId?: string }).userId;
-      if (uid && wasPaid) walletAdd(uid, o.totals.total + o.totals.walletUsed, `Refund for ${o.number}`);
+      const back = (wasPaid ? o.totals.total : 0) + o.totals.walletUsed; // wallet money is returned even when the order was cash on delivery
+      if (uid && back > 0) walletAdd(uid, back, `Refund for ${o.number}`);
       return ok(clean(o));
     }
     if (c === 'return' && m === 'POST') {

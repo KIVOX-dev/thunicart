@@ -14,24 +14,24 @@ export function LoginDesktop() {
   if (me) return <Navigate to={from} replace />;
   return (
     <div className="grid min-h-screen grid-cols-2">
-      <div className="flex flex-col justify-between bg-navy p-12 text-white">
+      <div className="relative flex flex-col justify-between overflow-hidden bg-navy p-12 text-white"><span aria-hidden className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-orange" /><span aria-hidden className="absolute -bottom-20 right-24 h-56 w-56 rounded-full bg-teal" />
         <Logo variant="primary" tile className="w-56 !p-3" />
         <div>
-          <h1 className="text-2xl leading-snug">Billing, stock and the online store in one place</h1>
+          <h1 className="tk-display relative max-w-lg">Billing, stock and the online store in one place</h1>
           <p className="mt-4 max-w-md text-sm text-white/80">Thunikart by Krishnas Orchids. Near KN Hall, Peedampalli Main Road, Pattanam, Coimbatore 641016.</p>
         </div>
         <p className="text-xs text-white/70">Built by GrowaLabs</p>
       </div>
       <div className="flex items-center justify-center p-12">
         <form onSubmit={submit} noValidate className="flex w-full max-w-sm flex-col gap-4" aria-label="Sign in">
-          <h2 className="text-lg">Sign in</h2>
+          <h2 className="text-3xl">Sign in</h2>
           {banner && <ErrorBanner {...banner} />}
           <Field label="Email" required error={errors.email?.message}>{(p) => <Input {...p} type="email" autoComplete="username" autoFocus {...register('email')} />}</Field>
           <Field label="Password" required error={errors.password?.message}>{(p) => <Input {...p} type="password" autoComplete="current-password" {...register('password')} />}</Field>
           <Button type="submit" variant="primary" size="lg" loading={busy}>Sign in</Button>
           <Link to="/forgot-password" className="text-sm text-navy underline underline-offset-2 hover:text-muted">Forgot password?</Link>
           {demoHint && (
-            <p className="rounded border border-line bg-mist p-3 text-xs text-muted">
+            <p className="rounded border-2 border-navy-100 bg-mist p-3 text-xs text-muted">
               Demo mode. Try <strong>admin@thunikart.test</strong>, <strong>sales@thunikart.test</strong>, <strong>buyer@thunikart.test</strong> or <strong>accounts@thunikart.test</strong>. Password: <strong>Thunikart@123</strong>
             </p>
           )}

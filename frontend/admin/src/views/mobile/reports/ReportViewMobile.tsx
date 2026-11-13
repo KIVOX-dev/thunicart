@@ -26,14 +26,14 @@ export function ReportViewMobile() {
   const keyCols = cols.slice(1, 4);
   return (
     <div className="flex flex-col gap-3 pb-6">
-      <h2 className="text-sm">{r.title}</h2>
+      <h2 className="text-lg">{r.title}</h2>
       {r.gstOnly && <GstWarnings warnings={r.warnings} />}
       <div className="flex gap-2"><Button className="min-h-12 flex-1" onClick={() => setSheet(true)}>Filters</Button><DownloadMenu sheet reportKey={r.key} title={r.title} big={r.big} gst={r.gstOnly} query={filterQuery(f)} /></div>
       {Object.keys(r.totals).length > 0 && <dl className="grid grid-cols-2 gap-2" aria-label="Totals">{cols.filter((c) => c.key in r.totals && c.type !== 'text').slice(0, 4).map((c) => <StatCard key={c.key} label={`Total ${c.label.toLowerCase()}`} value={c.type === 'money' ? formatPaise(r.totals[c.key]!) : r.totals[c.key]!.toLocaleString('en-IN')} testId={`total-${c.key}`} />)}</dl>}
       {r.items.length === 0 ? <EmptyState title="Nothing to show" /> : (
         <ul className="flex flex-col gap-2">
           {r.items.map((row, i) => (
-            <li key={i} className="rounded border border-line p-3 text-sm">
+            <li key={i} className="rounded border-2 border-navy-100 p-3 text-sm">
               <div className="flex items-start justify-between gap-2"><strong>{fmtCell(titleCol, row[titleCol.key])}</strong>{money.length > 0 && <strong>{fmtCell(money[money.length - 1]!, row[money[money.length - 1]!.key])}</strong>}</div>
               <p className="mt-1 text-xs text-muted">{keyCols.filter((c) => c.key !== money[money.length - 1]?.key).map((c) => `${c.label}: ${fmtCell(c, row[c.key])}`).join(' · ')}</p>
             </li>

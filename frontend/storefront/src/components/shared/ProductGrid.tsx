@@ -15,8 +15,8 @@ export function ProductRow({ title, items, href }: { title: string; items: Produ
   if (!items.length) return null;
   return (
     <section aria-label={title} className="mx-auto max-w-7xl px-4 pt-12 md:px-6">
-      <div className="mb-4 flex items-end justify-between"><h2 className="text-sm md:text-base">{title}</h2>{href && <a href={href} className="flex min-h-11 items-center text-xs font-medium uppercase tracking-wider underline">View all</a>}</div>
-      <ul className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] md:mx-0 md:gap-6 md:px-0">
+      <div className="mb-5 flex items-end justify-between gap-3"><h2 className="text-2xl md:text-4xl">{title}<span aria-hidden className="ml-2 inline-block h-3 w-3 rounded-full bg-orange align-middle" /></h2>{href && <a href={href} className="tk-press flex min-h-11 items-center rounded-full bg-navy px-5 text-sm font-bold text-white hover:bg-teal hover:text-navy">View all</a>}</div>
+      <ul className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-6 pt-1 [scrollbar-width:none] md:mx-0 md:gap-6 md:px-0">
         {items.map((p) => <li key={p.id} className="w-[44vw] shrink-0 snap-start md:w-[calc(25%-18px)]"><ProductCard p={p} /></li>)}
       </ul>
     </section>

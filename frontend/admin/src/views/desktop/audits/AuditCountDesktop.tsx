@@ -35,7 +35,7 @@ export function AuditCountDesktop() {
           <div className="mb-3 flex items-center gap-3 text-sm"><span role="status">Pieces counted: <strong data-testid="audit-count">{piecesCounted}</strong></span><span className="text-muted">{a.notCounted} items not counted yet</span>
             <Button className="ml-auto" disabled={a.scans === 0} loading={c.undo.isPending} onClick={() => c.undo.mutate()}>Undo last scan</Button></div>
           {counted.length === 0 ? <EmptyState title="Nothing counted yet" body="Scan an item to start." /> : <ScanLinesTable lines={counted.map((l) => ({ id: l.variantId, code: l.code, name: l.name, size: l.size, expected: l.expected, qty: l.counted }))} qtyLabel="Counted" expectedLabel="Expected" flashId={c.feedback.flash ?? a.lastVariantId} onSetQty={(variantId, qty) => c.setCounted.mutate({ variantId, counted: qty })} />}
-          <div className="sticky bottom-0 mt-4 flex gap-3 border-t border-line bg-white py-3"><Button variant="primary" size="lg" loading={c.submit.isPending} disabled={a.scans === 0} onClick={() => c.submit.mutate()}>Finish counting and review</Button><Link to="/stock/audits"><Button>Back to counts</Button></Link></div>
+          <div className="sticky bottom-0 mt-4 flex gap-3 border-t-2 border-navy-100 bg-white py-3"><Button variant="primary" size="lg" loading={c.submit.isPending} disabled={a.scans === 0} onClick={() => c.submit.mutate()}>Finish counting and review</Button><Link to="/stock/audits"><Button>Back to counts</Button></Link></div>
         </>
       )}
 
@@ -49,7 +49,7 @@ export function AuditCountDesktop() {
               <TBody>{varianceRows.map((l) => <Tr key={l.variantId}><Td className="font-mono text-xs">{l.code}</Td><Td className="font-medium">{l.name}</Td><Td>{l.size}</Td><Td className="text-right">{l.expected}</Td><Td className="text-right">{l.counted}</Td><Td className={`text-right font-semibold ${l.variance < 0 ? 'text-danger' : l.variance > 0 ? 'text-navy' : ''}`}>{l.variance > 0 ? `+${l.variance}` : l.variance}</Td></Tr>)}</TBody>
             </Table>
           )}
-          <div className="sticky bottom-0 mt-4 flex gap-3 border-t border-line bg-white py-3">
+          <div className="sticky bottom-0 mt-4 flex gap-3 border-t-2 border-navy-100 bg-white py-3">
             {a.status === 'review' && (can('stock.approve') ? <Button variant="primary" size="lg" loading={c.approve.isPending} onClick={async () => { await c.approve.mutateAsync(); toast('Count approved. Stock updated.', 'success'); }}>Approve and update stock</Button> : <Badge tone="warning">Waiting for an approver</Badge>)}
             <Link to="/stock/audits"><Button>Back to counts</Button></Link>
           </div>

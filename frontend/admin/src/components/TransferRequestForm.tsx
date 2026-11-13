@@ -19,7 +19,7 @@ export function TransferRequestForm({ onDone }: { onDone: (id: string) => void }
       {t.errors.lines && <p role="alert" className="text-xs text-danger">{t.errors.lines}</p>}
       <ul className="flex flex-col gap-2" aria-label="Items to move">
         {t.lines.map((l) => (
-          <li key={l.variantId} className="flex items-center justify-between gap-2 rounded border border-line p-2 text-sm">
+          <li key={l.variantId} className="flex items-center justify-between gap-2 rounded border-2 border-navy-100 p-2 text-sm">
             <span className="min-w-0"><strong className="block truncate">{l.name}</strong><span className="text-xs text-muted">Size {l.size}</span></span>
             <span className="flex items-center gap-2"><Input type="number" min={1} aria-label={`Quantity to move for ${l.name} size ${l.size}`} className="w-20" value={l.qty} onChange={(e) => t.setQty(l.variantId, e.target.value)} /><Button size="sm" variant="ghost" className="min-h-11" onClick={() => t.remove(l.variantId)}>Remove</Button></span>
           </li>

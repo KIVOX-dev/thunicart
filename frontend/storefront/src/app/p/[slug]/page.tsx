@@ -36,14 +36,14 @@ export default async function ProductPage({ params }: Props) {
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 pb-32 md:px-6 md:py-10 md:pb-10">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
-      <nav aria-label="Breadcrumb" className="mb-4 text-xs text-muted"><ol className="flex gap-1"><li><Link href="/" className="hover:underline">Home</Link></li><li aria-hidden>/</li><li><Link href={`/c/${p.categorySlug}`} className="hover:underline">{p.category}</Link></li><li aria-hidden>/</li><li><Link href={`/c/${p.subSlug}`} className="hover:underline">{p.typeName}</Link></li><li aria-hidden>/</li><li aria-current="page" className="text-navy">{p.name}</li></ol></nav>
+      <nav aria-label="Breadcrumb" className="mb-4 text-xs font-medium text-muted"><ol className="flex gap-1"><li><Link href="/" className="hover:underline">Home</Link></li><li aria-hidden>/</li><li><Link href={`/c/${p.categorySlug}`} className="hover:underline">{p.category}</Link></li><li aria-hidden>/</li><li><Link href={`/c/${p.subSlug}`} className="hover:underline">{p.typeName}</Link></li><li aria-hidden>/</li><li aria-current="page" className="text-navy">{p.name}</li></ol></nav>
       <div className="grid gap-8 md:grid-cols-[1.2fr_1fr] md:gap-12">
         <Gallery images={p.images} name={p.name} />
         <ProductBuy p={p} />
       </div>
       <div className="mt-12"><DetailTabs p={p} /></div>
-      {related.length > 0 && <section aria-label="Related products" className="mt-12"><h2 className="mb-4 text-sm md:text-base">You may also like</h2><ProductGrid items={related} /></section>}
-      {look.length > 0 && <section aria-label="Complete the look" className="mt-12"><h2 className="mb-4 text-sm md:text-base">Complete the look</h2><ProductGrid items={look} /></section>}
+      {related.length > 0 && <section aria-label="Related products" className="mt-12"><h2 className="mb-5 text-2xl md:text-4xl">You may also like</h2><ProductGrid items={related} /></section>}
+      {look.length > 0 && <section aria-label="Complete the look" className="mt-12"><h2 className="mb-5 text-2xl md:text-4xl">Complete the look</h2><ProductGrid items={look} /></section>}
       <RecentlyViewed excludeId={p.id} />
     </div>
   );

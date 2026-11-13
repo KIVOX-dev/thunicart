@@ -44,7 +44,7 @@ export function CameraScanner({ open, onClose, onScan }: { open: boolean; onClos
             <video ref={video} muted playsInline className="aspect-[4/3] w-full object-cover" aria-label="Camera view" />
             <div aria-hidden className="pointer-events-none absolute inset-x-8 top-1/2 h-0.5 bg-orange" />
           </div>
-        ) : <p className="rounded border border-line bg-mist p-3 text-sm">This browser cannot scan with the camera. Type the code instead.</p>}
+        ) : <p className="rounded border-2 border-navy-100 bg-mist p-3 text-sm">This browser cannot scan with the camera. Type the code instead.</p>}
         {error && <p role="alert" className="text-sm text-danger">{error}</p>}
         <form onSubmit={(e) => { e.preventDefault(); if (manual.trim()) { onScan(manual.trim()); setManual(''); } }} className="flex gap-2">
           <Input aria-label="Type a code" placeholder="Type the code" value={manual} onChange={(e) => setManual(e.target.value)} className="min-h-12" />

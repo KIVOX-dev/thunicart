@@ -42,7 +42,7 @@ function Editor({ po }: { po?: Po }) {
         {d.lines.map((l) => {
           const pl = po?.lines.find((x) => x.variantId === l.variantId);
           return (
-            <li key={l.variantId} className="rounded border border-line p-3">
+            <li key={l.variantId} className="rounded border-2 border-navy-100 p-3">
               <div className="flex items-start justify-between gap-2"><span><strong className="text-sm">{l.name}</strong><span className="block font-mono text-xs text-muted">{l.code} · Size {l.size}</span></span>{draft && <Button size="sm" variant="danger" className="min-h-11" onClick={() => d.removeLine(l.variantId)} aria-label={`Remove ${l.name} size ${l.size}`}>Remove</Button>}</div>
               <div className="mt-2 grid grid-cols-2 gap-3">
                 <Field label="Quantity">{(p) => draft ? <Input {...p} type="number" min={1} className={big} value={l.qty} onChange={(e) => d.setLine(l.variantId, { qty: e.target.value })} /> : <p className="text-sm">{l.qty}{pl ? ` (received ${pl.receivedQty})` : ''}</p>}</Field>
@@ -53,7 +53,7 @@ function Editor({ po }: { po?: Po }) {
         })}
       </ul>
       <PoTotals totals={d.totals} />
-      <div className="fixed inset-x-0 bottom-14 z-30 flex gap-2 border-t border-line bg-white p-3">
+      <div className="fixed inset-x-0 bottom-14 z-30 flex gap-2 border-t-2 border-navy-100 bg-white p-3">
         {draft && can(po ? 'purchase.edit' : 'purchase.create') && <Button variant={po?.status === 'draft' ? 'secondary' : 'primary'} size="lg" className="min-h-12 flex-1" loading={d.save.isPending} onClick={save}>{po ? 'Save' : 'Create order'}</Button>}
         {po?.status === 'draft' && can('purchase.approve') && <Button variant="primary" size="lg" className="min-h-12 flex-1" loading={action.isPending} onClick={() => run('approve')}>Approve</Button>}
         {po?.status === 'approved' && <Button variant="primary" size="lg" className="min-h-12 flex-1" loading={action.isPending} onClick={() => run('send')}>Send</Button>}

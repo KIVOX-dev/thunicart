@@ -43,7 +43,7 @@ export function PosMobile() {
             return (
               <li key={l.variantId}>
                 <SwipeRow onRemove={() => cart.remove(l.variantId)} label={`Remove ${l.name}`}>
-                  <div className={`rounded border p-3 ${conflict ? 'border-danger bg-danger-bg' : 'border-line'}`}>
+                  <div className={`rounded border p-3 ${conflict ? 'border-danger bg-danger-bg' : 'border-navy-100'}`}>
                     <div className="flex items-start justify-between gap-2"><span><strong className="text-sm">{l.name}</strong><span className="block text-xs text-muted">{l.code} · Size {l.size}{l.color && ` · ${l.color}`}</span></span><strong>{pl ? formatPaise(pl.net) : '…'}</strong></div>
                     {conflict && <p role="alert" className="mt-1 text-xs text-danger">{conflict}</p>}
                     <div className="mt-2 flex items-center justify-between gap-2">
@@ -53,7 +53,7 @@ export function PosMobile() {
                         <button type="button" aria-label={`More ${l.name}`} onClick={() => cart.setQty(l.variantId, l.qty + 1)} className="flex h-11 w-11 items-center justify-center rounded border border-navy bg-navy text-white"><Plus size={18} /></button>
                       </span>
                       <span className="flex items-center gap-1"><Select aria-label={`Discount type for ${l.name}`} className="w-16 min-h-11" value={l.discType} onChange={(e) => cart.setLineDiscount(l.variantId, e.target.value as 'amount' | 'percent', l.discValue)}><option value="amount">₹</option><option value="percent">%</option></Select>
-                        <input aria-label={`Discount for ${l.name}`} inputMode="decimal" placeholder="Disc" className="h-11 w-20 rounded border border-line px-2 text-right text-base" value={l.discValue} onChange={(e) => cart.setLineDiscount(l.variantId, l.discType, e.target.value)} /></span>
+                        <input aria-label={`Discount for ${l.name}`} inputMode="decimal" placeholder="Disc" className="h-11 w-20 rounded border-2 border-navy-100 px-2 text-right text-base" value={l.discValue} onChange={(e) => cart.setLineDiscount(l.variantId, l.discType, e.target.value)} /></span>
                     </div>
                   </div>
                 </SwipeRow>
@@ -62,11 +62,11 @@ export function PosMobile() {
           })}
         </ul>
       )}
-      {cart.cart.lines.length > 0 && <div className="rounded border border-line p-3"><PosTotals cart={cart} /><div className="mt-3"><BillDiscount cart={cart} big /></div></div>}
+      {cart.cart.lines.length > 0 && <div className="rounded border-2 border-navy-100 p-3"><PosTotals cart={cart} /><div className="mt-3"><BillDiscount cart={cart} big /></div></div>}
       {pv?.approvalNeeded && <Badge tone="warning" className="self-start">Discount above your limit. A manager must approve.</Badge>}
       {cart.previewError && <ErrorBanner message={cart.previewError.message} requestId={cart.previewError.requestId} />}
 
-      <div className="fixed inset-x-0 bottom-14 z-30 flex items-center gap-3 border-t border-line bg-white p-3">
+      <div className="fixed inset-x-0 bottom-14 z-30 flex items-center gap-3 border-t-2 border-navy-100 bg-white p-3">
         <div className="min-w-0 flex-1"><p className="text-xs text-muted">Total</p><p className="text-xl font-semibold" data-testid="bar-total">{pv ? formatPaise(pv.totals.grandTotal) : formatPaise(0)}</p></div>
         <Button variant="primary" size="lg" className="min-h-12 min-w-32" disabled={!pv || pv.totals.grandTotal === 0} onClick={() => setPayOpen(true)}>Pay</Button>
       </div>

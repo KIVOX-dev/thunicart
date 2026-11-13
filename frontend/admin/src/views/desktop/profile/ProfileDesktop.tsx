@@ -18,7 +18,7 @@ export function ProfileDesktop() {
         <dt className="text-muted">Permissions</dt><dd>{me.role.isAdmin ? 'Every permission' : `${me.permissions.length} permissions`}</dd>
         <dt className="text-muted">GST</dt><dd>{me.gst.gstMode === 'on' ? `On (${me.gst.gstin})` : 'Off'}</dd>
       </dl>
-      <section className="mt-8 border-t border-line pt-5" aria-label="View">
+      <section className="mt-8 border-t-2 border-navy-100 pt-5" aria-label="View">
         <h2 className="mb-2 text-xs">View</h2>
         <p className="mb-3 text-sm text-muted">Showing the {view} view{pref === 'auto' ? ' (automatic, by screen width)' : ' (your choice, remembered on this device)'}.</p>
         <div className="flex gap-2">
@@ -27,7 +27,7 @@ export function ProfileDesktop() {
           {pref !== 'auto' && <Button variant="ghost" onClick={() => setPref('auto')}>Use automatic</Button>}
         </div>
       </section>
-      <section className="mt-8 border-t border-line pt-5" aria-label="Sessions">
+      <section className="mt-8 border-t-2 border-navy-100 pt-5" aria-label="Sessions">
         <h2 className="mb-2 text-xs">Signed in on</h2>
         {sessions.data?.map((s) => <p key={s.id} className="text-sm">{s.current ? 'This device' : 'Other device'} · {s.ip ?? 'unknown address'}</p>)}
       </section>

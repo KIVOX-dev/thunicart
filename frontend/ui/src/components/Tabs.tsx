@@ -17,7 +17,7 @@ export function Tabs({ items, value, onChange }: { items: TabItem[]; value: stri
   const current = items.find((t) => t.key === value) ?? items[0]!;
   return (
     <div>
-      <div role="tablist" className="flex gap-4 overflow-x-auto border-b border-line">
+      <div role="tablist" className="flex gap-2 overflow-x-auto rounded-full bg-navy-50 p-1">
         {items.map((t, i) => (
           <button
             key={t.key}
@@ -29,7 +29,7 @@ export function Tabs({ items, value, onChange }: { items: TabItem[]; value: stri
             tabIndex={t.key === current.key ? 0 : -1}
             onClick={() => onChange(t.key)}
             onKeyDown={(e) => onKey(e, i)}
-            className={cn('min-h-11 whitespace-nowrap border-b-2 px-1 text-sm uppercase tracking-wider', t.key === current.key ? 'border-teal font-semibold text-navy' : 'border-transparent text-muted hover:text-navy')}
+            className={cn('tk-press min-h-10 whitespace-nowrap rounded-full px-4 text-sm', t.key === current.key ? 'bg-navy font-bold text-white shadow-soft' : 'font-medium text-navy hover:bg-white')}
           >
             {t.label}
           </button>

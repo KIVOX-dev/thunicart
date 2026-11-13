@@ -20,7 +20,7 @@ export function TenderPanel({ cart, big }: { cart: Cart; big?: boolean }) {
       </div>
       <ul className="flex flex-col gap-2" aria-label="Payment lines">
         {cart.cart.payments.map((p) => (
-          <li key={p.id} className="rounded border border-line p-2">
+          <li key={p.id} className="rounded border-2 border-navy-100 p-2">
             <div className="flex items-center gap-2">
               <span className="w-24 text-sm font-medium">{p.mode}</span>
               <Input aria-label={`${p.mode} amount`} inputMode="decimal" className={`${h} text-right`} value={p.amount} onChange={(e) => cart.setPayment(p.id, { amount: e.target.value })} />

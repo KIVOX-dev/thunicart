@@ -12,7 +12,7 @@ export function RolesMobile() {
       {roles.isPending ? <ListSkeleton rows={4} label="Loading roles" /> : roles.isError ? <QueryError error={roles.error} onRetry={() => roles.refetch()} /> : roles.data.length === 0 ? <EmptyState title="No roles" /> : (
         <ul className="flex flex-col gap-3">
           {roles.data.map((r) => (
-            <li key={r.id} className="rounded border border-line p-4">
+            <li key={r.id} className="rounded border-2 border-navy-100 p-4">
               <div className="flex items-center justify-between gap-2"><strong className="text-sm">{r.name}</strong>{r.isSystem && <Badge>System role</Badge>}</div>
               <p className="mt-1 text-xs text-muted">{r.description || 'No description'}</p>
               <p className="mt-2 text-sm">{r.isAdmin ? 'Every permission' : `${r.permissions.length} permissions`} · {r.userCount ?? 0} users</p>

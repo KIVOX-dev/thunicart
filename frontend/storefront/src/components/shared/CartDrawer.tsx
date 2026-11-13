@@ -4,6 +4,7 @@ import { Drawer } from '@thunikart/ui';
 import { formatPaise } from '@/lib/format';
 import { Icon } from './Icon';
 import { useCart } from './cart-context';
+import { Photo } from '@/components/shared/Photo';
 
 /** Cart drawer: the lines as priced by the API, quantity steppers, quick links and a Checkout button. */
 export function CartDrawer() {
@@ -20,13 +21,13 @@ export function CartDrawer() {
           {(p?.lines ?? []).map((l) => (
             <li key={l.variantId} className="flex gap-3 py-3">
               
-              <img src={l.image} alt="" width={72} height={96} className="h-24 w-[72px] rounded-sm object-cover" />
+              <Photo src={l.image} alt="" width={72} height={96} className="h-24 w-[72px] rounded-lg object-cover" />
               <div className="min-w-0 flex-1 text-sm">
                 <Link href={`/p/${l.slug}`} onClick={close} className="font-medium hover:underline">{l.name}</Link>
                 <p className="text-xs text-muted">Size {l.size} · {l.color}</p>
                 {l.message && <p role="alert" className="text-xs text-danger">{l.message}</p>}
                 <div className="mt-2 flex items-center justify-between">
-                  <span className="inline-flex items-center rounded-sm border border-line">
+                  <span className="inline-flex items-center rounded-full border-2 border-navy-100">
                     <button type="button" aria-label={`Fewer ${l.name}`} onClick={() => cart.setQty(l.variantId, l.qty - 1)} className="flex h-11 w-11 items-center justify-center"><Icon name="minus" size={14} /></button>
                     <span className="w-8 text-center" aria-live="polite">{l.qty}</span>
                     <button type="button" aria-label={`More ${l.name}`} onClick={() => cart.setQty(l.variantId, l.qty + 1)} className="flex h-11 w-11 items-center justify-center"><Icon name="plus" size={14} /></button>

@@ -20,7 +20,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-20 z-[100] flex flex-col items-center gap-2 px-4 md:bottom-6 md:items-end md:pr-6">
         {items.map((t) => (
-          <div key={t.id} className={cn('tk-slide-up pointer-events-auto max-w-sm rounded border bg-white px-4 py-3 text-sm shadow-overlay', t.tone === 'success' && 'border-teal', t.tone === 'error' && 'border-danger', t.tone === 'info' && 'border-line')}>
+          <div key={t.id} className={cn('tk-slide-up pointer-events-auto max-w-sm rounded-lg border-2 bg-white px-5 py-3 text-sm font-medium shadow-overlay', t.tone === 'success' && 'border-teal', t.tone === 'error' && 'border-danger', t.tone === 'info' && 'border-line')}>
             <span className="font-semibold">{t.tone === 'success' ? 'Done. ' : t.tone === 'error' ? 'Problem. ' : ''}</span>
             {t.message}
           </div>

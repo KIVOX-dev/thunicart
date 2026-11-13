@@ -25,7 +25,7 @@ export function InvoiceViewer({ invoice, onClose, sheet, title = 'Invoice' }: { 
           <label className="flex items-center gap-2 text-xs font-medium">Paper
             <Select aria-label="Paper size" className="w-64" value={use} onChange={(e) => setSize(e.target.value as PrintSizeKey)}>{PRINT_SIZES_UI.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}</Select>
           </label>
-          <div className="max-h-[55vh] overflow-auto rounded border border-line bg-mist p-3">
+          <div className="max-h-[55vh] overflow-auto rounded border-2 border-navy-100 bg-mist p-3">
             <div style={{ transform: use === 'a4' ? 'scale(0.62)' : 'none', transformOrigin: 'top left', width: use === 'a4' ? '210mm' : undefined }}><style>{pageCss(use)}</style><InvoicePaper inv={invoice} size={use} /></div>
           </div>
         </div>

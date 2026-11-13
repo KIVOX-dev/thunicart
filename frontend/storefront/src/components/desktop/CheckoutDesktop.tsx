@@ -13,10 +13,10 @@ export function CheckoutDesktop({ c }: { c: Checkout }) {
         <DeliverySection c={c} />
         <PaymentSection c={c} />
         <section aria-label="Review" className="flex flex-col gap-3"><h2 className="text-sm">4. Review and place the order</h2>
-          <button type="submit" disabled={c.placing || blocked} aria-busy={c.placing} className="min-h-12 rounded-sm bg-orange px-8 text-sm font-semibold uppercase tracking-wider text-navy hover:bg-navy hover:text-white disabled:opacity-50">{c.placing ? 'Placing your order…' : c.method === 'cod' ? 'Place order' : 'Place order and pay'}</button>
+          <button type="submit" disabled={c.placing || blocked} aria-busy={c.placing} className="min-h-12 rounded-full tk-press shadow-soft hover:bg-navy hover:text-white hover:shadow-lift bg-orange px-8 text-sm font-bold text-navy hover:bg-navy hover:text-white disabled:opacity-50">{c.placing ? 'Placing your order…' : c.method === 'cod' ? 'Place order' : 'Place order and pay'}</button>
         </section>
       </form>
-      <aside className="sticky top-6 h-fit rounded-sm border border-line p-5" aria-label="Your order"><h2 className="mb-3 text-sm">Your order</h2><CouponBox c={c} /><div className="mt-5"><Summary c={c} /></div></aside>
+      <aside className="sticky top-6 h-fit rounded-xl border-2 border-navy-100 p-5" aria-label="Your order"><h2 className="mb-3 text-sm">Your order</h2><CouponBox c={c} /><div className="mt-5"><Summary c={c} /></div></aside>
     </div>
   );
 }

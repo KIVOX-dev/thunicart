@@ -38,7 +38,7 @@ function Form({ item }: { item?: Item }) {
         <Field label="Type" required hint="For example Knitted or Woven/Not Knitted" error={e.type?.message}>{(p) => <Input {...p} {...register('type')} />}</Field>
         <Field label="HSN Code" hint="4, 6 or 8 digits" error={e.hsn?.message}>{(p) => <Input {...p} inputMode="numeric" {...register('hsn')} />}</Field>
         <div className="flex items-end gap-3 pb-2">{!hsn && <Badge tone="warning">No HSN. Add one before GST goes live.</Badge>}<Checkbox label="Active" {...register('active')} /></div>
-        <Field label="Description" className="col-span-3" error={e.description?.message}>{(p) => <textarea {...p} rows={3} {...register('description')} className="w-full rounded border border-line px-3 py-2 text-sm" />}</Field>
+        <Field label="Description" className="col-span-3" error={e.description?.message}>{(p) => <textarea {...p} rows={3} {...register('description')} className="w-full rounded border-2 border-navy-100 px-3 py-2 text-sm" />}</Field>
         <datalist id="item-cats">{facets?.categories.map((c) => <option key={c} value={c} />)}</datalist>
         <datalist id="item-brands">{facets?.brands.map((c) => <option key={c} value={c} />)}</datalist>
       </fieldset>
@@ -76,7 +76,7 @@ function Form({ item }: { item?: Item }) {
 
       {canSave && <section aria-label="Media"><h2 className="mb-2 text-xs">Images, video and size chart</h2><MediaManager media={media} /></section>}
 
-      <div className="sticky bottom-0 flex items-center gap-3 border-t border-line bg-white py-3">
+      <div className="sticky bottom-0 flex items-center gap-3 border-t-2 border-navy-100 bg-white py-3">
         {canSave && <Button type="submit" variant="primary" size="lg" loading={saving} disabled={media.busy}>{item ? 'Save item' : 'Add item'}</Button>}
         <Link to="/items"><Button>Back to items</Button></Link>
         {item && <Link to="/items/labels" state={{ items: [item] }}><Button>Print labels</Button></Link>}

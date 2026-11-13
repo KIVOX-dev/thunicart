@@ -43,7 +43,7 @@ export function ReturnPanel({ big, sheet }: { big?: boolean; sheet?: boolean }) 
       )}
       {invoice && !done && (
         <div className="flex flex-col gap-4">
-          <section aria-label="Bill to return from" className="rounded border border-line p-3 text-sm">
+          <section aria-label="Bill to return from" className="rounded border-2 border-navy-100 p-3 text-sm">
             <div className="flex justify-between"><strong data-testid="return-invoice">{invoice.number}</strong><span>{formatPaise(invoice.totals.grandTotal)}</span></div>
             <p className="text-xs text-muted">{invoice.customer?.name ?? 'Walk-in'} · {invoice.date}</p>
           </section>
@@ -51,7 +51,7 @@ export function ReturnPanel({ big, sheet }: { big?: boolean; sheet?: boolean }) 
             {invoice.lines.map((l, i) => {
               const left = l.qty - (invoice.returned[i] ?? 0);
               return (
-                <li key={i} className="flex items-center justify-between gap-3 rounded border border-line p-2 text-sm">
+                <li key={i} className="flex items-center justify-between gap-3 rounded border-2 border-navy-100 p-2 text-sm">
                   <span className="min-w-0"><strong className="block truncate">{l.name}</strong><span className="text-xs text-muted">Size {l.size} · sold {l.qty} · paid {formatPaise(l.net)} · {left} can be returned</span></span>
                   <Input type="number" min={0} max={left} aria-label={`Return quantity for ${l.name} size ${l.size}`} disabled={left === 0} className={`w-20 ${h}`} value={r.qtys[i] ?? 0} onChange={(e) => r.setQty(i, Math.max(0, Math.min(left, Math.round(Number(e.target.value)))))} />
                 </li>
@@ -63,7 +63,7 @@ export function ReturnPanel({ big, sheet }: { big?: boolean; sheet?: boolean }) 
             <Field label="Reason" required error={r.errors.reason}>{(p) => <Select {...p} className={h} value={r.reason} onChange={(e) => r.setReason(e.target.value)}><option value="">Choose a reason</option>{RETURN_REASONS_SALE.map((x) => <option key={x}>{x}</option>)}</Select>}</Field>
             <Field label="Refund method" required>{(p) => <Select {...p} className={h} value={r.refundMode} onChange={(e) => r.setRefundMode(e.target.value)}>{REFUND_MODES.map((x) => <option key={x}>{x}</option>)}</Select>}</Field>
           </div>
-          <section aria-label="Exchange" className="rounded border border-line p-3">
+          <section aria-label="Exchange" className="rounded border-2 border-navy-100 p-3">
             <h3 className="mb-2 text-xs">Exchange for new items (optional)</h3>
             <ItemPicker large={big} onPick={(i, v) => r.addExchange(i, v)} />
             <ul className="mt-2 flex flex-col gap-1" aria-label="Exchange items">{r.exchange.map((e) => <li key={e.variantId} className="flex items-center justify-between text-sm"><span>{e.name} {e.size} x {e.qty}</span><Button size="sm" variant="ghost" className="min-h-11" onClick={() => r.removeExchange(e.variantId)}>Remove</Button></li>)}</ul>

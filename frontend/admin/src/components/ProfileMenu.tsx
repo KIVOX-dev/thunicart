@@ -28,7 +28,7 @@ export function ProfileMenu() {
         <span className="hidden text-left text-xs md:block"><strong className="block">{me?.name}</strong><span className="text-muted">{me?.role.name}</span></span>
       </button>
       {open && (
-        <div role="menu" className="absolute right-0 z-50 mt-1 w-60 overflow-hidden rounded border border-line bg-white py-1 shadow-overlay">
+        <div role="menu" className="absolute right-0 z-50 mt-1 w-60 overflow-hidden rounded border-2 border-navy-100 bg-white py-1 shadow-overlay">
           <Link role="menuitem" to="/profile" className={item} onClick={() => setOpen(false)}><User aria-hidden size={16} />My profile</Link>
           {view === 'desktop'
             ? <button role="menuitem" className={item} onClick={() => { setPref('mobile'); setOpen(false); }}><Smartphone aria-hidden size={16} />Switch to mobile view</button>
