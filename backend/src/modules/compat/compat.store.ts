@@ -3,6 +3,8 @@ import { storage } from '../../adapters/storage';
 import { ok, real, relay } from './compat';
 import { artTypeFor, garmentSvg } from './compat.art';
 import { posterSvg } from './compat.poster';
+import { Item, Variant } from '../../models';
+import { priceCart, storeSettings } from '../store/store.service';
 
 /**
  * Catalogue adapters for the storefront (it calls /catalog/* and /cms/*; the API serves /store/*). Mounted under /shop/api/v1.
@@ -134,6 +136,35 @@ export function registerStoreCompat(app: FastifyInstance) {
     const pin = q(req).pincode ?? ''; const r = await real(app, req, 'GET', `/store/pincode/${pin}`);
     if (!ok(r)) return reply.send({ pincode: pin, ok: false, city: '', days: 0, fee: 0, cod: false, message: 'We do not deliver to this pincode yet.' });
     const j = r.json; return reply.send({ pincode: pin, ok: j.serviceable ?? true, city: j.city ?? '', days: j.estimatedDays ?? j.days ?? 4, fee: j.shippingCharge ?? 0, cod: j.codAvailable ?? false, message: j.message ?? `Delivery in about ${j.estimatedDays ?? 4} days` });
+  });
+
+  /**
+   * The storefront keeps its bag in the browser and asks for prices. The API's own cart is server side, so this prices the lines with the
+   * same function (stock, price, coupon, GST when on) and returns the storefront's shape. The only rule applied here is the shipping rule from the store settings.
+   */
+  app.post(`${P}/cart/price`, async (req, reply) => {
+    const body = (req.body ?? {}) as { lines?: Array<{ variantId?: string; qty?: number }>; coupon?: string | null };
+    const lines = (body.lines ?? []).filter((l) => /^[a-f\d]{24}$/i.test(l.variantId ?? '') && Number(l.qty) > 0).map((l) => ({ variantId: String(l.variantId), qty: Math.min(20, Math.floor(Number(l.qty))) }));
+    if (!lines.length) return reply.send({ lines: [], subtotal: 0, discount: 0, shipping: 0, tax: null, walletUsed: 0, total: 0, coupon: null, couponError: null, unavailable: [], pieces: 0 });
+    let priced: any; let couponError: string | null = null;
+    try { priced = await priceCart(lines, body.coupon || null, undefined); }
+    catch (e: any) { if (String(e?.code ?? '').startsWith('COUPON')) { couponError = e.message; priced = await priceCart(lines, null, undefined); } else throw e; }
+    const variants: any[] = await Variant.find({ _id: { $in: lines.map((l) => l.variantId) } }).select('itemId').lean();
+    const items: any[] = await Item.find({ _id: { $in: variants.map((v) => v.itemId) } }).select('slug').lean();
+    const itemOf = new Map(variants.map((v) => [String(v._id), items.find((i) => String(i._id) === String(v.itemId))]));
+    const shipping = (await storeSettings()).shipping;
+    const ship = shipping.freeAbove != null && priced.subtotal >= shipping.freeAbove ? 0 : (shipping.flatCharge ?? 0);
+    const out = priced.lines.map((l: any) => {
+      const it = itemOf.get(l.variantId);
+      return { variantId: l.variantId, productId: String(it?._id ?? l.variantId), slug: it?.slug ?? '', name: niceName(l.name), image: l.image ? img(req, l.image) : '', size: niceSize(l.size), color: l.color || 'Standard', qty: l.qty, mrp: l.mrp, price: l.unitPrice, lineTotal: l.lineTotal, stock: l.available, available: l.inStock, message: l.inStock ? null : l.available === 0 ? 'Sold out' : `Only ${l.available} left` };
+    });
+    const nameOf = (id: string) => out.find((o: any) => o.variantId === id);
+    return reply.send({
+      lines: out, subtotal: priced.subtotal, discount: priced.couponDiscount ?? 0, shipping: ship, tax: priced.taxSplit ? priced.taxSplit.tax : null, walletUsed: 0, total: priced.goodsTotal + ship,
+      coupon: priced.coupon ? { code: priced.coupon.code, message: priced.coupon.message } : null, couponError,
+      unavailable: (priced.unavailable ?? []).map((u: any) => ({ variantId: u.variantId, name: nameOf(u.variantId)?.name ?? u.itemCode, size: nameOf(u.variantId)?.size ?? '', message: u.available === 0 ? 'Sold out' : `Only ${u.available} left` })),
+      pieces: out.reduce((a: number, l: any) => a + l.qty, 0),
+    });
   });
 
   // Product photos from the private bucket. Only the images folder is served.

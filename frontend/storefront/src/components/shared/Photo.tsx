@@ -10,6 +10,6 @@ export const realPhotos = (list: string[]): string[] => list.filter((s) => !isDr
 
 /** An image that never shows drawn art: in its place is a plain empty tile of the same size. */
 export function Photo({ src, alt = '', className, width, height, ...rest }: ImgHTMLAttributes<HTMLImageElement>) {
-  if (isDrawnArt(typeof src === 'string' ? src : undefined)) return <span role={alt ? 'img' : undefined} aria-label={alt || undefined} aria-hidden={alt ? undefined : true} className={`${className ?? ''} block bg-mist`} style={{ width: undefined, aspectRatio: width && height ? `${width} / ${height}` : undefined }} />;
+  if (!src || isDrawnArt(typeof src === 'string' ? src : undefined)) return <span role={alt ? 'img' : undefined} aria-label={alt || undefined} aria-hidden={alt ? undefined : true} className={`${className ?? ''} block bg-mist`} style={{ width: undefined, aspectRatio: width && height ? `${width} / ${height}` : undefined }} />;
   return <img src={src} alt={alt} className={className} width={width} height={height} {...rest} />;
 }
