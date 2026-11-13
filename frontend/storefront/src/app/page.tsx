@@ -39,7 +39,7 @@ export default async function Home() {
             return (
               <li key={c.slug}>
                 <Link href={`/c/${c.slug}`} className={`tk-lift group relative flex min-h-48 items-end justify-between overflow-hidden rounded-2xl p-6 md:min-h-72 md:p-8 ${b.bg}`}>
-                  <Photo src={c.image} alt="" width={480} height={480} loading="lazy" className="absolute inset-y-0 right-0 h-full w-2/5 object-cover opacity-90 transition-transform duration-500 group-hover:scale-105" />
+                  {!isDrawnArt(c.image) && <Photo src={c.image} alt="" width={480} height={480} loading="lazy" className="absolute inset-y-0 right-0 h-full w-2/5 object-cover transition-transform duration-500 group-hover:scale-105" />}
                   <span className="relative">
                     <span className="tk-display block">{c.name}</span>
                     <span className={`mt-4 inline-flex min-h-11 items-center gap-2 rounded-full px-5 text-sm font-bold ${b.chip}`}>Shop {c.name.toLowerCase()} <span aria-hidden>→</span></span>

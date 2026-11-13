@@ -5,12 +5,14 @@ import { Badge, Button, EmptyState, ListSkeleton, Modal, Select, Table, TBody, T
 import { ErrorBanner } from '../../../components/ErrorBanner';
 import { ItemPicker } from '../../../components/ItemPicker';
 import { ApprovalDialog } from '../../../components/pos/ApprovalDialog';
+import { MobileCapture } from '../../../components/pos/MobileCapture';
 import { CustomerLookup } from '../../../components/pos/CustomerLookup';
 import { DayOpen } from '../../../components/pos/DayOpen';
 import { InvoiceViewer } from '../../../components/pos/InvoiceViewer';
 import { BillDiscount, PosTotals } from '../../../components/pos/PosTotals';
 import { TenderPanel } from '../../../components/pos/TenderPanel';
 import { useCan } from '../../../features/auth/permissions';
+import { usePrint } from '../../../features/pos/use-print';
 import { usePosScreen } from '../../../features/pos/use-pos-screen';
 
 /** Counter billing. Left: scan box and cart. Right: customer, totals and payment. F2 new bill, F4 hold, F8 pay, Esc clear. */
@@ -21,6 +23,17 @@ export function PosDesktop() {
   const [custOpen, setCustOpen] = useState(false);
   const [clearOpen, setClearOpen] = useState(false);
   const pv = cart.preview;
+  const { print, size: printSize } = usePrint();
+  // Print automatically after each paid bill (per device choice).
+  const [autoPrint, setAutoPrint] = useState(() => { try { return localStorage.getItem('tk.print.auto') === '1'; } catch { return false; } });
+  const toggleAuto = (v: boolean) => { setAutoPrint(v); try { localStorage.setItem('tk.print.auto', v ? '1' : '0'); } catch { /* storage blocked */ } };
+  const [lastInvoice, setLastInvoice] = useState<typeof s.invoice>(null);
+  useEffect(() => {
+    if (!s.invoice) return;
+    setLastInvoice(s.invoice);
+    if (autoPrint) print(s.invoice, s.invoice.channel === 'Counter' ? 'a4' : printSize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s.invoice]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -74,9 +87,10 @@ export function PosDesktop() {
 
       <aside aria-label="Customer and payment" className="flex flex-col gap-4 rounded border-2 border-navy-100 p-4">
         <div className="flex items-center justify-between gap-2">
-          <div className="min-w-0 text-sm">{cart.cart.customer ? <><strong className="block truncate">{cart.cart.customer.name}</strong><span className="text-xs text-muted">{cart.cart.customer.mobile} · wallet {formatPaise(cart.cart.customer.walletBalance)}</span></> : <span className="text-muted">Walk-in customer</span>}</div>
+          <div className="min-w-0 text-sm">{cart.cart.customer ? <><strong className="block truncate">{cart.cart.customer.name}</strong><span className="text-xs text-muted">{cart.cart.customer.code} · {cart.cart.customer.mobile} · wallet {formatPaise(cart.cart.customer.walletBalance)}</span></> : <span className="text-muted">Walk-in customer</span>}</div>
           <span className="flex gap-1"><Button size="sm" onClick={() => setCustOpen(true)}>{cart.cart.customer ? 'Change' : 'Add customer'}</Button>{cart.cart.customer && <Button size="sm" variant="ghost" onClick={() => cart.setCustomer(null)}>Remove</Button>}</span>
         </div>
+        {!cart.cart.customer && <MobileCapture onPick={(c) => cart.setCustomer(c)} />}
         <PosTotals cart={cart} />
         <BillDiscount cart={cart} />
         {pv?.approvalNeeded && <Badge tone="warning">Discount above your limit. A manager must approve.</Badge>}
@@ -92,6 +106,10 @@ export function PosDesktop() {
         )}
         <div className="flex gap-2">
           <Button variant="primary" size="lg" className="flex-1" disabled={!s.canPay && !pv?.approvalNeeded} loading={cart.finalize.isPending} onClick={() => s.pay()}>{pv?.approvalNeeded && !cart.cart.approverToken ? 'Get approval (F8)' : 'Pay (F8)'}</Button>
+        </div>
+        <div className="flex items-center justify-between gap-2 text-sm">
+          <label className="flex items-center gap-2"><input type="checkbox" checked={autoPrint} onChange={(e) => toggleAuto(e.target.checked)} />Print after payment</label>
+          <Button size="sm" disabled={!lastInvoice} onClick={() => lastInvoice && print(lastInvoice, lastInvoice.channel === 'Counter' ? 'a4' : printSize)}>Print last bill</Button>
         </div>
         <div className="flex gap-2"><Button className="flex-1" disabled={!cart.cart.lines.length} onClick={() => s.holdBill()}>Hold (F4)</Button><Button className="flex-1" onClick={() => cart.clear()}>New bill (F2)</Button></div>
       </aside>
