@@ -5,6 +5,7 @@ import type { HomeData } from '@/lib/types';
 import { HeroSlider } from '@/components/shared/HeroSlider';
 import { ProductRow } from '@/components/shared/ProductGrid';
 import { Photo, isDrawnArt } from '@/components/shared/Photo';
+import { isStandardSize, sortSizes } from '@/lib/sizes';
 
 export const metadata: Metadata = { title: 'Thunikart by Krishnas Orchids | Kurtis, innerwear, nightwear and more', alternates: { canonical: '/' } };
 
@@ -33,16 +34,16 @@ export default async function Home() {
       </div>
       <section aria-label="Shop by category" className={wrap}>
         <h2 className={h2}>Shop by category</h2>
-        <ul className="grid gap-4 md:grid-cols-2 md:gap-6">
+        <ul className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           {h.categories.map((c, n) => {
             const b = BLOCKS[n % BLOCKS.length]!;
             return (
               <li key={c.slug}>
-                <Link href={`/c/${c.slug}`} className={`tk-lift group relative flex min-h-48 items-end justify-between overflow-hidden rounded-2xl p-6 md:min-h-72 md:p-8 ${b.bg}`}>
+                <Link href={`/c/${c.slug}`} className={`tk-lift group relative flex min-h-36 items-end justify-between overflow-hidden rounded-xl p-4 md:min-h-44 md:p-5 ${b.bg}`}>
                   {!isDrawnArt(c.image) && <Photo src={c.image} alt="" width={480} height={480} loading="lazy" className="absolute inset-y-0 right-0 h-full w-2/5 object-cover transition-transform duration-500 group-hover:scale-105" />}
                   <span className="relative">
-                    <span className="tk-display block">{c.name}</span>
-                    <span className={`mt-4 inline-flex min-h-11 items-center gap-2 rounded-full px-5 text-sm font-bold ${b.chip}`}>Shop {c.name.toLowerCase()} <span aria-hidden>→</span></span>
+                    <span className="block text-xl font-extrabold leading-tight tracking-tight md:text-2xl">{c.name}</span>
+                    <span className={`mt-3 inline-flex min-h-9 items-center gap-1 rounded-full px-3 text-xs font-bold ${b.chip}`}>Shop now <span aria-hidden>→</span></span>
                   </span>
                 </Link>
               </li>
@@ -52,7 +53,7 @@ export default async function Home() {
       </section>
       <section aria-label="Shop by size" className={wrap}>
         <h2 className={h2}>Shop by size</h2>
-        <ul className="flex flex-wrap gap-3">{h.sizes.map((s, n) => <li key={s}><Link href={`/c/all?size=${encodeURIComponent(s)}`} className={`tk-press flex h-14 min-w-14 items-center justify-center rounded-full px-5 text-base font-extrabold text-navy ring-2 ring-navy hover:bg-navy hover:text-white ${SOFT[n % 3]}`}>{s}</Link></li>)}</ul>
+        <ul className="flex flex-wrap gap-3">{sortSizes(h.sizes.filter(isStandardSize)).map((s, n) => <li key={s}><Link href={`/c/all?size=${encodeURIComponent(s)}`} className={`tk-press flex h-14 min-w-14 items-center justify-center rounded-full px-5 text-base font-extrabold text-navy ring-2 ring-navy hover:bg-navy hover:text-white ${SOFT[n % 3]}`}>{s}</Link></li>)}</ul>
       </section>
       <ProductRow title="Trending now" items={h.trending} href="/c/bestseller" />
       <section aria-label="Shop by occasion" className={wrap}>
