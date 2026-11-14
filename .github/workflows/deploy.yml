@@ -1,10 +1,17 @@
 name: Deploy backend to Catalyst AppSail
-# Manual on purpose: a person chooses when production changes. Run it from the Actions tab.
+# Two ways in:
+#  1. Automatic: when CI succeeds for a push to main, the exact image CI just built is deployed to the Catalyst "development" environment.
+#  2. Manual (Actions tab, "Run workflow"): pick any image tag and development or production. Production is gated by the required reviewers
+#     you set on the "production" environment in the repo settings, so a person always approves production.
 on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
     inputs:
       image_tag:
-        description: Image tag to deploy (a commit SHA from the CI run, or latest)
+        description: Image tag to deploy (a commit SHA from a CI run, or latest)
         default: latest
       environment:
         description: Catalyst environment
@@ -12,23 +19,57 @@ on:
         options: [development, production]
         default: development
 
+# One deploy at a time per environment. A newer one waits for the running one instead of cancelling it half way.
+concurrency:
+  group: deploy-${{ inputs.environment || 'development' }}
+  cancel-in-progress: false
+
 jobs:
   deploy:
+    # Automatic runs only for a successful CI run of a push to main (not for pull requests).
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}   # add required reviewers on "production" in repo settings
+    environment: ${{ inputs.environment || 'development' }}
+    permissions:
+      contents: read
+      packages: read
+    env:
+      TAG: ${{ github.event.workflow_run.head_sha || inputs.image_tag }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
       - run: npm i -g zcatalyst-cli
-      - name: Pull the CI built image
+      - name: Pull the image CI built
         run: |
-          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}/backend:${{ inputs.image_tag }}"
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}/backend:${TAG}"
+          echo "Deploying ${IMAGE}"
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
           docker pull --platform linux/amd64 "$IMAGE"
           docker tag "$IMAGE" thunikart-backend:deploy
       - name: Deploy (Catalyst CLI, non interactive)
         env:
           CATALYST_TOKEN: ${{ secrets.CATALYST_TOKEN }}   # from `catalyst token:generate`
-        run: catalyst deploy appsail --name thunikart-api --source docker://thunikart-backend:deploy --port 9000 -ni
+          CATALYST_PROJECT_ID: ${{ secrets.CATALYST_PROJECT_ID }}
+          CATALYST_ORG_ID: ${{ secrets.CATALYST_ORG_ID }}
+        run: |
+          # There is no catalyst.json in the repo, so the project is named here (secrets are set per GitHub environment).
+          EXTRA=""
+          [ -n "$CATALYST_PROJECT_ID" ] && EXTRA="$EXTRA --project $CATALYST_PROJECT_ID"
+          [ -n "$CATALYST_ORG_ID" ] && EXTRA="$EXTRA --org $CATALYST_ORG_ID"
+          catalyst deploy appsail --name thunikart-api --source docker://thunikart-backend:deploy --port 9000 -ni $EXTRA
+      - name: Health check after deploy
+        # Set the repository (or environment) variable BACKEND_HEALTH_URL, for example https://thunikart-api-xxxx.development.catalystappsail.in/health
+        if: vars.BACKEND_HEALTH_URL != ''
+        run: |
+          for i in $(seq 1 12); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 "${{ vars.BACKEND_HEALTH_URL }}" || true)
+            echo "attempt $i: HTTP $code"
+            [ "$code" = "200" ] && exit 0
+            sleep 15
+          done
+          echo "The new version did not answer /health in time."
+          exit 1
