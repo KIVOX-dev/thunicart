@@ -1,8 +1,8 @@
 name: Deploy backend to Catalyst AppSail
-# Two ways in:
-#  1. Automatic: when CI succeeds for a push to main, the exact image CI just built is deployed to the Catalyst "development" environment.
-#  2. Manual (Actions tab, "Run workflow"): pick any image tag and development or production. Production is gated by the required reviewers
-#     you set on the "production" environment in the repo settings, so a person always approves production.
+# One target, no GitHub environments. Two ways in:
+#  1. Automatic: when CI succeeds for a push to main, the exact image CI just built is deployed to Catalyst AppSail.
+#  2. Manual (Actions tab, "Run workflow"): deploy any image tag again, for example to roll back.
+# The three Catalyst values are ordinary repository secrets (Settings, Secrets and variables, Actions).
 on:
   workflow_run:
     workflows: [CI]
@@ -13,15 +13,10 @@ on:
       image_tag:
         description: Image tag to deploy (a commit SHA from a CI run, or latest)
         default: latest
-      environment:
-        description: Catalyst environment
-        type: choice
-        options: [development, production]
-        default: development
 
-# One deploy at a time per environment. A newer one waits for the running one instead of cancelling it half way.
+# One deploy at a time. A newer one waits for the running one instead of cancelling it half way.
 concurrency:
-  group: deploy-${{ inputs.environment || 'development' }}
+  group: deploy
   cancel-in-progress: false
 
 jobs:
@@ -31,7 +26,6 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment || 'development' }}
     permissions:
       contents: read
       packages: read
@@ -56,7 +50,7 @@ jobs:
           CATALYST_PROJECT_ID: ${{ secrets.CATALYST_PROJECT_ID }}
           CATALYST_ORG_ID: ${{ secrets.CATALYST_ORG_ID }}
         run: |
-          # There is no catalyst.json in the repo, so the project is named here (secrets are set per GitHub environment).
+          # There is no catalyst.json in the repo, so the project is named here (repository secrets).
           EXTRA=""
           [ -n "$CATALYST_PROJECT_ID" ] && EXTRA="$EXTRA --project $CATALYST_PROJECT_ID"
           [ -n "$CATALYST_ORG_ID" ] && EXTRA="$EXTRA --org $CATALYST_ORG_ID"

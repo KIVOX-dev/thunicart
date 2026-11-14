@@ -4,7 +4,7 @@ For GrowaLabs on call. Everything here is a command or a click you can do today.
 
 ## Deploy
 1. CI (`.github/workflows/ci.yml`) lints, type checks, tests on an in-memory MongoDB replica set, regenerates the OpenAPI file, builds the image and pushes it to `ghcr.io/<owner>/<repo>/backend:<sha>` and `:latest` from `main`.
-2. A green CI run on `main` deploys that exact image to the Catalyst `development` environment by itself (**Deploy backend to Catalyst AppSail**, `.github/workflows/deploy.yml`). For production, or to redeploy another version, run the same workflow by hand (Actions tab). Choose the image tag and `development` or `production`. It pulls the image and runs `catalyst deploy appsail --name thunikart-api --source docker://... --port 9000 -ni`.
+2. A green CI run on `main` deploys that exact image to Catalyst AppSail by itself (**Deploy backend to Catalyst AppSail**, `.github/workflows/deploy.yml`). To redeploy another version, run the same workflow by hand (Actions tab, choose the image tag). Choose the image tag and `development` or `production`. It pulls the image and runs `catalyst deploy appsail --name thunikart-api --source docker://... --port 9000 -ni`.
 3. Without Docker: `node deploy/deploy-backend.mjs managed` builds the bundle and deploys it on the managed `node24` runtime.
 4. Check `GET /health` (process) and `GET /ready` (database). Uptime monitor: point it at `/health`.
 5. Never commit secrets. Set them in the Catalyst console (Docker path) or as CI secrets. For a linked managed deploy, `app-config.json` replaces console variables on every deploy, so put all variables there at deploy time.
