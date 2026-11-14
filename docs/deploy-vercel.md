@@ -15,20 +15,24 @@ The admin build is told its base with `VITE_BASE=/admin/` (in the service's `bui
 Without `VITE_BASE` (local development, tests) nothing changes: the admin stays at the root of its own port.
 
 ## Environment variables (Project Settings)
+The browser only ever talks to the Vercel site. `frontend/vercel.json` forwards `/api/v1/...` and `/shop/api/v1/...` to the backend on Catalyst, so the login cookies are first party and CORS is not involved. Change the backend address in `vercel.json` if it ever moves.
+
 | Variable | Used by | Value |
 |---|---|---|
-| `NEXT_PUBLIC_API_URL` | storefront | the backend's storefront address, ending in `/shop` (for example `https://api.example.com/shop`) |
-| `NEXT_PUBLIC_SITE_URL` | storefront | the public domain, for example `https://shop.example.com` |
-| `VITE_API_URL` | admin | the backend's address, for example `https://api.example.com` |
-| `VITE_STOREFRONT_URL` | admin | the public domain (the store is at its root) |
+| `VITE_API_URL` | admin | `/` (the same site; any real value switches off demo mode) |
+| `VITE_STOREFRONT_URL` | admin | `/` |
+| `NEXT_PUBLIC_API_URL` | storefront (browser) | `/shop` |
+| `API_SERVER_URL` | storefront (server side rendering) | the backend's storefront address, for example `https://thunikart-api-50047658361.development.catalystappsail.in/shop` |
+| `NEXT_PUBLIC_SITE_URL` | storefront | your Vercel address, for example `https://thunikart.vercel.app` |
 | `NEXT_PUBLIC_RAZORPAY_KEY_ID`, `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | storefront | when payments and Google sign in are switched on |
 
-**Do not leave any of these as `REPLACE_ME`.** A placeholder switches the app into demo mode, with fake data and a fake payment window.
+**Do not leave any of these as `REPLACE_ME` or empty.** A placeholder switches the app into demo mode, with fake data and a fake payment window.
 
 ## Backend
-The backend (Fastify, MongoDB, jobs, backups) is not a Vercel service here. Run it where it already runs and set, on the backend:
-- `ADMIN_URL` and `STOREFRONT_URL` both to the public domain (browsers check the origin only, so `/admin` is not part of it).
-- Cookies: if the backend is on a different registrable domain from the frontends, its login cookies are third party cookies and need `SameSite=None; Secure`. Putting the backend on a subdomain of the same domain avoids the problem.
+The backend (Fastify, MongoDB, jobs, backups) is not a Vercel service. Run it on Catalyst AppSail and set, on the backend:
+- `STOREFRONT_URL` and `ADMIN_URL` both to your Vercel address (address only, no `/admin`, no trailing slash). Requests arrive through the Vercel rewrite, so this matters little, but keep it correct for anything that calls the backend directly.
+- Leave `COOKIE_DOMAIN` as `localhost` (the default). The login cookies then belong to the Vercel address only.
+- The Razorpay and other webhooks call the backend's own Catalyst address directly, not the Vercel site.
 
 ## Services calling each other
 Neither frontend calls the other on the server, and the backend is outside Vercel, so there are **no service bindings**.

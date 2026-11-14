@@ -7,7 +7,10 @@
       "buildCommand": "VITE_BASE=/admin/ pnpm build",
       "outputDirectory": "dist",
       "rewrites": [
-        { "source": "/admin/:path*", "destination": "/admin/index.html" }
+        {
+          "source": "/admin/:path*",
+          "destination": "/admin/index.html"
+        }
       ]
     },
     "storefront": {
@@ -17,12 +20,24 @@
   },
   "rewrites": [
     {
+      "source": "/api/v1/:path*",
+      "destination": "https://thunikart-api-50047658361.development.catalystappsail.in/api/v1/:path*"
+    },
+    {
+      "source": "/shop/api/v1/:path*",
+      "destination": "https://thunikart-api-50047658361.development.catalystappsail.in/shop/api/v1/:path*"
+    },
+    {
       "source": "/admin/:path*",
-      "destination": { "service": "admin" }
+      "destination": {
+        "service": "admin"
+      }
     },
     {
       "source": "/(.*)",
-      "destination": { "service": "storefront" }
+      "destination": {
+        "service": "storefront"
+      }
     }
   ]
 }
