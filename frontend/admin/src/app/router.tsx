@@ -95,4 +95,7 @@ export const router = createBrowserRouter([
       ],
     }],
   },
-]);
+], {
+  // On Vercel the admin is served under /admin/ (VITE_BASE). Locally it stays at the root.
+  basename: import.meta.env.BASE_URL.replace(/\/$/, '') || undefined,
+});

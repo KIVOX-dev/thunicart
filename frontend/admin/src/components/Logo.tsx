@@ -1,4 +1,5 @@
-const SRC = { sidebar: ['/logo-sidebar.png', 720, 239], mark: ['/logo-mark.png', 256, 256], primary: ['/logo-primary.png', 640, 506] } as const;
+const BASE = import.meta.env.BASE_URL; // '/' locally, '/admin/' on Vercel
+const SRC = { sidebar: [`${BASE}logo-sidebar.png`, 720, 239], mark: [`${BASE}logo-mark.png`, 256, 256], primary: [`${BASE}logo-primary.png`, 640, 506] } as const;
 
 /**
  * Thunikart logo files (source copies are in docs/source/logos).

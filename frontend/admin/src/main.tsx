@@ -14,7 +14,7 @@ import { bootstrapSession } from './features/auth/use-session';
 async function start() {
   if (MOCK_MODE) {
     const { worker } = await import('./mocks/browser');
-    await worker.start({ onUnhandledRequest: 'bypass', quiet: true });
+    await worker.start({ onUnhandledRequest: 'bypass', quiet: true, serviceWorker: { url: `${import.meta.env.BASE_URL}mockServiceWorker.js` } });
   }
   // Restore the session from the refresh cookie before the first /me call.
   await bootstrapSession();
