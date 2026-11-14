@@ -1635,6 +1635,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pos/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Totals for a cart while the cashier types. Writes nothing. */
+        post: operations["postApiV1PosPreview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/pos/shifts/open": {
         parameters: {
             query?: never;
@@ -15839,6 +15856,100 @@ export interface operations {
                         managerPinSet: boolean;
                         version: number;
                         updatedAt: string;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    postApiV1PosPreview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * @default POS
+                     * @enum {string}
+                     */
+                    channel?: "POS" | "CNT";
+                    storeId: string;
+                    customerId?: string;
+                    customer?: {
+                        /** @default Walk-in Customer */
+                        name?: string;
+                        /** @default  */
+                        mobile?: string;
+                        /** @default  */
+                        address?: string;
+                        stateCode?: string;
+                        /** @default  */
+                        gstin?: string;
+                    };
+                    lines: {
+                        variantId: string;
+                        qty: number;
+                        unitPrice?: number;
+                        discount?: {
+                            /** @enum {string} */
+                            type: "amount" | "percent";
+                            value: number;
+                        };
+                    }[];
+                    billDiscount?: {
+                        /** @enum {string} */
+                        type: "amount" | "percent";
+                        value: number;
+                    };
+                    /** @default  */
+                    notes?: string;
+                    /** Format: date-time */
+                    dueDate?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        gstMode: "on" | "off";
+                    } & {
+                        [key: string]: unknown;
                     };
                 };
             };
