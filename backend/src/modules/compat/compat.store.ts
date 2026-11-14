@@ -99,8 +99,6 @@ export function registerStoreCompat(app: FastifyInstance) {
     const out: any[] = [];
     for (const g of GROUPS) {
       const kids = g.kids.filter((k) => have.has(k)); if (!kids.length) continue;
-      const top = kids.slice().sort((a, b) => have.get(b).productCount - have.get(a).productCount)[0]!;
-      const p = await real(app, req, 'GET', `/store/products?category=${top}&pageSize=1`);
       const seen = new Set<string>();
       out.push({ slug: g.slug, name: g.name, image: `${base(req)}/media/poster/${g.slug}.svg`, children: kids.map((k) => ({ slug: k, name: NICE[k] ?? title(have.get(k).name) })).filter((k) => !seen.has(k.name) && seen.add(k.name)) });
     }

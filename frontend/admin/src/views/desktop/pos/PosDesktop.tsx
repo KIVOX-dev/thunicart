@@ -32,7 +32,6 @@ export function PosDesktop() {
     if (!s.invoice) return;
     setLastInvoice(s.invoice);
     if (autoPrint) print(s.invoice, s.invoice.channel === 'Counter' ? 'a4' : printSize);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [s.invoice]);
 
   useEffect(() => {
