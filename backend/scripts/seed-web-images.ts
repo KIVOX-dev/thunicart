@@ -16,7 +16,6 @@ import { storage } from '../src/adapters/storage';
 loadConfig();
 const API = process.env.API ?? 'http://localhost:4000';
 const UA = 'ThunikartSeed/1.0 (open-licence product images)';
-const OK_LICENSE = /^(CC0|Public domain|PD|CC BY(-SA)?( [\d.]+)?)/i;
 
 /** Image themes: Commons search words, and the category names or item-name words that belong to each. */
 const THEMES: Record<string, { q: string[]; cats: string[]; words: string[]; blurb: string }> = {

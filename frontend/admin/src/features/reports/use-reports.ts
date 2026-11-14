@@ -9,20 +9,25 @@ import { dashboardDto, exportRecord, expenseList, jobDto, receiptList, receivabl
 
 /** The real backend publishes the dashboard as /dashboard/summary with its own field names. This maps it onto the shape the screens use. */
 const CHANNEL_NAMES: Record<string, string> = { POS: 'POS', ECM: 'Online', CNT: 'Counter' };
-function fromBackend(r: any) {
-  const period = (p: any) => ({
+interface BackendPeriod { total?: number; bills?: number; averageBill?: number; byChannel?: Record<string, number> }
+interface BackendDashboard {
+  today?: BackendPeriod; monthToDate?: BackendPeriod; grossMargin?: { amount?: number }; lowStockCount?: number; nonMovingStockValue?: number;
+  payablesDueThisWeek?: number; receivablesOverdue?: number; last30Days?: Array<{ date: string; sales?: number }>; topItems?: Array<{ name: string; qty: number; netSales?: number }>;
+}
+function fromBackend(r: BackendDashboard) {
+  const period = (p?: BackendPeriod) => ({
     total: p?.total ?? 0, bills: p?.bills ?? 0, average: p?.averageBill ?? 0,
-    channels: Object.fromEntries(Object.entries<number>(p?.byChannel ?? {}).filter(([, v]) => v > 0).map(([k, v]) => [CHANNEL_NAMES[k] ?? k, v])),
+    channels: Object.fromEntries(Object.entries(p?.byChannel ?? {}).filter(([, v]) => v > 0).map(([k, v]) => [CHANNEL_NAMES[k] ?? k, v])),
   });
   return {
     today: period(r.today), month: period(r.monthToDate), margin: { today: 0, month: r.grossMargin?.amount ?? 0 },
     lowStock: r.lowStockCount ?? 0, nonMovingValue: r.nonMovingStockValue ?? 0, payablesDue: r.payablesDueThisWeek ?? 0, receivablesOverdue: r.receivablesOverdue ?? 0,
-    salesLine: (r.last30Days ?? []).map((d: any) => ({ date: d.date, total: d.sales ?? 0 })),
-    topItems: (r.topItems ?? []).map((t: any) => ({ name: t.name, qty: t.qty, amount: t.netSales ?? 0 })),
+    salesLine: (r.last30Days ?? []).map((d) => ({ date: d.date, total: d.sales ?? 0 })),
+    topItems: (r.topItems ?? []).map((t) => ({ name: t.name, qty: t.qty, amount: t.netSales ?? 0 })),
   };
 }
 export function useDashboard() {
-  return useQuery({ queryKey: ['dashboard'], queryFn: async () => dashboardDto.parse(MOCK_MODE ? await api.get('/dashboard') : fromBackend(await api.get('/dashboard/summary'))) });
+  return useQuery({ queryKey: ['dashboard'], queryFn: async () => dashboardDto.parse(MOCK_MODE ? await api.get('/dashboard') : fromBackend(await api.get<BackendDashboard>('/dashboard/summary'))) });
 }
 export function useReportList() { return useQuery({ queryKey: ['report-list'], queryFn: async () => (await api.get<unknown[]>('/reports')).map((r) => reportMeta.parse(r)) }); }
 
