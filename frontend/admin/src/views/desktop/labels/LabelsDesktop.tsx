@@ -8,7 +8,7 @@ import { useItems } from '../../../features/catalog/use-items';
 import { LABEL_FIELDS, useLabelBasket, useLabelTemplates, useSaveTemplate, type LabelLine, type LabelTemplate } from '../../../features/catalog/use-labels';
 import { Label, PrintableLabels } from '../../../print/LabelSheet';
 
-const SAMPLE: LabelLine = { key: 's', itemId: 's', code: 'KO1000369', name: 'ADV Kurties 10165', size: 'M', color: 'Blue', mrp: 37000, barcode: 'KO1000369', copies: 1 };
+const SAMPLE: LabelLine = { key: 's', itemId: 's', code: 'KO1000369', name: 'ADV Kurties 10165', size: 'M', color: 'Blue', mrp: 37000, barcode: 'KO1000369', batch: 'KO20261107', copies: 1 };
 
 function PrintTab() {
   const { toast } = useToast();

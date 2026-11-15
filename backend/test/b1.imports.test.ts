@@ -1,3 +1,4 @@
+import { parseSizes } from '../src/lib/sizes';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Brand, Category, Customer, ImportEffect, Item, LoyaltyLedger, ReviewItem, StockBalance, StockLedger, Variant, Vendor } from '../src/models';
 import { setupTest, type TestCtx } from './helpers';
@@ -116,9 +117,11 @@ describe('stock sheet import: the Krishnas Orchids rules', () => {
     expect(by('KO1000404').reasons).toEqual(['MISSING_HSN']);
     expect(by('KO1000405').reasons).toContain('INVALID_HSN');
     expect(by('KO1000405').detail.hsnProblem).toMatch(/6407 is not a valid heading in Chapter 64/);
-    expect(by('KO1000406').reasons).toContain('MULTI_SIZE');
-    expect(by('KO1000407').detail.sizes).toEqual(['S', 'M', 'L', 'XL', 'XXL']);
-    expect(by('KO1000406').detail.sizes).toEqual(['M', 'L', 'XL', '2XL']);
+    // several sizes in one row is allowed: the row stays as it came and the size is chosen at billing
+    expect(by('KO1000406')).toBeUndefined();
+    expect(by('KO1000407')).toBeUndefined();
+    expect(parseSizes(((await Variant.findOne({ itemCode: 'KO1000406' }).lean()) as any).size).sizes).toEqual(['M', 'L', 'XL', '2XL']);
+    expect(parseSizes(((await Variant.findOne({ itemCode: 'KO1000407' }).lean()) as any).size).sizes).toEqual(['S', 'M', 'L', 'XL', 'XXL']);
     expect(by('KO1000408').reasons).toContain('NO_PRICE');
     expect(by('KO1000409').reasons).toEqual(['MRP_RAISED']);
     expect(by('KO1000410').reasons).toContain('NEGATIVE_QTY');
@@ -155,12 +158,6 @@ describe('stock sheet import: the Krishnas Orchids rules', () => {
     expect(v.size).toBe('M');
     expect(item.model).toBe('10165');
     expect((await Category.findById(item.categoryId).lean() as any).name).toBe('Kurties');
-    // split a combined size row
-    const multi = await q('KO1000406');
-    const split = await t.api('PATCH', `${A}/imports/review-queue/bulk`, { token: t.adminToken, body: { ids: [String(multi._id)], action: 'split_sizes' } });
-    expect(split.body.resolved).toBe(1);
-    const sizes = (await Variant.find({ itemId: (await Variant.findOne({ itemCode: 'KO1000406' }).lean() as any).itemId }).lean() as any[]).map((x) => x.size).sort();
-    expect(sizes).toEqual(['2XL', 'L', 'M', 'XL']);
     // a sticky review reason stays until dismissed
     const raised = await q('KO1000409');
     const keep = await t.api('PATCH', `${A}/imports/review-queue/bulk`, { token: t.adminToken, body: { ids: [String(raised._id)], action: 'set', set: { size: 'Free Size' } } });

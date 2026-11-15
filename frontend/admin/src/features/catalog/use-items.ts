@@ -6,33 +6,75 @@ import { z } from 'zod';
 import { api, newIdempotencyKey } from '../api/http';
 import { applyApiError } from '../api/apply-field-errors';
 import { paiseToRupees, rupeesToPaise } from '../api/money';
-import { facetsDto, itemBody, itemDto, listEnvelope, variantDto, type Item, type ItemBody } from './types';
+import { facetsDto, itemBody, itemDto, variantDto, type Item, type ItemBody } from './types';
 import { useMediaUploads } from './use-uploads';
 
 export interface ItemFilters { q: string; category: string; brand: string; stockStatus: string; active: string; issue: string; sort: string }
 export const EMPTY_FILTERS: ItemFilters = { q: '', category: '', brand: '', stockStatus: '', active: '', issue: '', sort: 'code' };
 const KEY = ['items'] as const;
-const env = listEnvelope(itemDto).extend({ pieces: z.number().int().default(0) });
 
+/* The API's item has its own field names and no per store stock on its sizes. buildItem makes the item the screens use. loadItem also asks the stock endpoint once per store. */
+interface ApiVariant { id: string; itemCode: string; barcode: string; size: string | null; color: string | null; mrp: number; sellingPrice: number; offerPrice: number | null; baseCost: number; reorderLevel: number; binLocation: string | null; batchRef?: string | null; onHand: number; stockStatus: 'In Stock' | 'Low Stock' | 'Out of Stock' }
+interface ApiItem { id: string; name: string; categoryName: string | null; brandName: string | null; model: string | null; type: string | null; hsn: string | null; description: string | null; active: boolean; images: string[]; video: string | null; sizeChart: string | null; variants?: ApiVariant[] }
+function buildItem(it: ApiItem, vs: ApiVariant[], stockOf: (variantId: string) => Record<string, number>): Item {
+  const code = vs[0]?.itemCode ?? '';
+  const total = vs.reduce((a, v) => a + v.onHand, 0);
+  return itemDto.parse({
+    id: it.id, code, name: it.name, category: it.categoryName ?? '', brand: it.brandName ?? '', model: it.model ?? '', type: it.type ?? '', hsn: it.hsn ?? '', description: it.description ?? '', active: it.active,
+    imageKeys: it.images, videoKey: it.video, sizeChartKey: it.sizeChart,
+    variants: vs.map((v) => ({ id: v.id, size: v.size ?? '', color: v.color ?? '', mrp: v.mrp, selling: v.sellingPrice, offer: v.offerPrice, cost: v.baseCost, reorderLevel: v.reorderLevel, bin: v.binLocation ?? '', barcode: v.barcode, batch: v.batchRef ?? '', stock: stockOf(v.id) })),
+    stockStatus: vs.some((v) => v.stockStatus === 'In Stock') ? 'In Stock' : vs.some((v) => v.stockStatus === 'Low Stock') ? 'Low Stock' : 'Out of Stock',
+    totalStock: total, importBatchId: null, issues: [],
+  });
+}
+async function loadItem(id: string): Promise<Item> {
+  const it = await api.get<ApiItem>(`/items/${id}`);
+  const vs = it.variants ?? [];
+  const code = vs[0]?.itemCode ?? '';
+  const stores = (await api.get<{ items: { id: string }[] }>('/stores', { pageSize: 100 })).items;
+  const perStore = await Promise.all(stores.map(async (s) => ({ id: s.id, rows: (await api.get<{ items: { variantId: string; onHand: number }[] }>('/stock', { q: code, storeId: s.id, includeZero: 'true', pageSize: 100 })).items })));
+  const stockOf = (variantId: string) => Object.fromEntries(perStore.map((s) => [s.id, s.rows.find((r) => r.variantId === variantId)?.onHand ?? 0]));
+  return buildItem(it, vs, stockOf);
+}
+
+/** Item list. The API's list has no sizes or prices, so each page's sizes are fetched alongside it. Category and brand are chosen by name on screen and by id in the API. */
+const SORTABLE = new Set(['name', 'createdAt', 'hsn']);
 export function useItems(filters: ItemFilters) {
   return useInfiniteQuery({
     queryKey: [...KEY, 'list', filters],
     initialPageParam: 1,
-    queryFn: async ({ pageParam }) => env.parse(await api.get('/items', { ...filters, page: pageParam, pageSize: 25 })),
+    queryFn: async ({ pageParam }) => {
+      const idOf = async (path: string, name: string) => (name ? (await api.get<{ items: { id: string; name: string }[] }>(path, { pageSize: 100 })).items.find((x) => x.name === name)?.id ?? 'none' : undefined);
+      const [category, brand] = await Promise.all([idOf('/categories', filters.category), idOf('/brands', filters.brand)]);
+      const r = await api.get<{ items: ApiItem[]; total: number; nextPage: number | null }>('/items', {
+        q: filters.q || undefined, category, brand, active: filters.active || undefined, sort: SORTABLE.has(filters.sort) ? filters.sort : 'name', page: pageParam, pageSize: 25,
+      });
+      const full = await Promise.all(r.items.map(async (it) => buildItem(it, (await api.get<{ items: ApiVariant[] }>(`/items/${it.id}/variants`)).items, () => ({}))));
+      const shown = filters.stockStatus ? full.filter((i) => i.stockStatus === filters.stockStatus) : full;
+      return { items: shown, total: r.total, nextPage: r.nextPage, pieces: full.reduce((a, i) => a + i.totalStock, 0) };
+    },
     getNextPageParam: (l) => l.nextPage ?? undefined,
   });
 }
 export function useItem(id: string | undefined) {
-  return useQuery({ queryKey: [...KEY, id], enabled: !!id, queryFn: async () => itemDto.parse(await api.get(`/items/${id}`)) });
+  return useQuery({ queryKey: [...KEY, id], enabled: !!id, queryFn: () => loadItem(id!) });
 }
 export function useFacets() {
-  return useQuery({ queryKey: [...KEY, 'facets'], queryFn: async () => facetsDto.parse(await api.get('/items/facets')) });
+  // The API keeps these in three master lists, so the screen's one list of choices is built from them.
+  return useQuery({
+    queryKey: [...KEY, 'facets'],
+    queryFn: async () => {
+      const list = async (path: string) => (await api.get<{ items: { id: string; name: string }[] }>(path, { pageSize: 100 })).items;
+      const [categories, brands, stores] = await Promise.all([list('/categories'), list('/brands'), list('/stores')]);
+      return facetsDto.parse({ categories: categories.map((c) => c.name), brands: brands.map((b) => b.name), stores: stores.map((x) => ({ id: x.id, name: x.name })) });
+    },
+  });
 }
 
 /** Scan or type a barcode and get the item. Both the keyboard scanner and the camera call this. */
 export async function lookupBarcode(barcode: string): Promise<{ item: Item; variantId: string }> {
-  const r = await api.get<{ item: unknown; variantId: string }>('/items/lookup', { barcode });
-  return { item: itemDto.parse(r.item), variantId: r.variantId };
+  const r = await api.get<{ variant: { id: string }; item: { id: string } }>('/items/lookup', { barcode });
+  return { item: await loadItem(r.item.id), variantId: r.variant.id };
 }
 
 export function useBulkItems() {

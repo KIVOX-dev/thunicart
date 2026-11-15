@@ -302,3 +302,22 @@ describe('B2B counter, shifts, loyalty and inbound orders', () => {
   });
   void key;
 });
+
+describe('several sizes in one row: the size is chosen at billing, stock is one count', () => {
+  it('needs a size from the row, puts it on the bill, and takes the pieces off the one count', async () => {
+    const item = (await h.post('/items', { name: 'Babita Kurtis 300', hsn: '6104', variants: [{ size: 'S, M, L, XL, XXL', color: '', mrp: 30000, sellingPrice: 30000 }] })).body;
+    const v = item.variants[0];
+    await h.post('/stock/adjustments', { storeId: fx.shop.id, reason: 'Opening for tests', lines: [{ variantId: v.id, qty: 10 }] });
+    const noSize = await h.post('/pos/bills', { storeId: fx.shop.id, lines: [{ variantId: v.id, qty: 1 }] });
+    expect(noSize.status).toBe(400);
+    const wrong = await h.post('/pos/bills', { storeId: fx.shop.id, lines: [{ variantId: v.id, qty: 1, size: '3XL' }] });
+    expect(wrong.status).toBe(400);
+    const d = await h.post('/pos/bills', { storeId: fx.shop.id, lines: [{ variantId: v.id, qty: 2, size: 'xl' }] });
+    expect(d.status).toBe(201);
+    expect(d.body.lines[0].size).toBe('XL');
+    const r = await fin(d.body.id, [{ mode: 'cash', amount: d.body.grandTotal }]);
+    expect(r.status).toBe(200);
+    expect(r.body.lines[0].size).toBe('XL');
+    expect((await stockOf(h, v.id, fx.shop.id)).onHand).toBe(8);
+  });
+});

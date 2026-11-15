@@ -5,7 +5,9 @@ export interface UploadEntry { id: string; name: string; status: 'uploading' | '
 
 /** Uploads straight to storage: ask the API for a presigned URL, PUT the file from the browser, return the file key. */
 export async function uploadFile(file: File, kind: string, onProgress: (pct: number) => void): Promise<string> {
-  const { uploadUrl, key } = await api.post<{ uploadUrl: string; key: string }>('/uploads/presign', { filename: file.name, contentType: file.type || 'application/octet-stream', kind });
+  // The API asks for `purpose` and `size`. Receipts can be a photo or a PDF, so the file decides.
+  const purpose = kind === 'size-chart' ? 'size_chart' : kind === 'receipt' ? (file.type === 'application/pdf' ? 'pdf' : 'image') : kind;
+  const { uploadUrl, key } = await api.post<{ uploadUrl: string; key: string }>('/uploads/presign', { purpose, filename: file.name, contentType: file.type || 'application/octet-stream', size: file.size });
   await new Promise<void>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open('PUT', uploadUrl);

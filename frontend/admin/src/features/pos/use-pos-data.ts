@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useShopId } from './use-shop';
+export { useShopId };
 import { api, ApiError, newIdempotencyKey } from '../api/http';
 import { applyFieldIssues } from '../api/field-issues';
 import { rupeesToPaise } from '../api/money';
 import { customerDto, listEnvelope, type Customer } from '../catalog/types';
 import type { Cart } from './use-cart';
-import { toCartIn } from './use-cart';
+import { apiBill } from './use-cart';
 import { billList, creditNoteDto, creditNoteList, heldDto, invoiceDto, returnPreviewDto, shiftDto, type Invoice, type ReturnPreview } from './types';
 
 const refreshAll = (qc: ReturnType<typeof useQueryClient>, keys: string[]) => Promise.all(keys.map((k) => qc.invalidateQueries({ queryKey: [k] })));
@@ -35,15 +37,31 @@ export function useApproval(onToken: (t: string) => void) {
   return { error, busy: m.isPending, submit: async (pin: string) => { setError(null); try { onToken((await m.mutateAsync(pin)).token); return true; } catch (e) { setError(e instanceof ApiError ? (e.fields[0]?.message ?? e.message) : 'Could not check the PIN.'); return false; } } };
 }
 
-/* Day open and close */
-export function useShift() { return useQuery({ queryKey: ['shift'], queryFn: async () => { const r = await api.get<unknown>('/pos/shift'); return r ? shiftDto.parse(r) : null; } }); }
-export function useShifts() { return useQuery({ queryKey: ['shift', 'history'], queryFn: async () => (await api.get<unknown[]>('/pos/shifts')).map((s) => shiftDto.parse(s)) }); }
+/* Day open and close. */
+const toShift = (r: any) => shiftDto.parse({
+  id: r.id, openedAt: r.openedAt ?? r.createdAt ?? new Date().toISOString(), openingCash: r.openingCash ?? 0, closedAt: r.closedAt ?? null, bills: r.bills ?? 0, cashSales: r.cashSales ?? 0, cashRefunds: r.cashRefunds ?? 0,
+  expectedCash: r.expectedCash ?? null, countedCash: r.countedCash ?? null, difference: r.difference ?? null,
+});
+export function useShift() {
+  const shop = useShopId();
+  return useQuery({ queryKey: ['shift', shop.data], enabled: !!shop.data, queryFn: async () => { const r = await api.get<{ shift: unknown | null }>('/pos/shifts/current', { storeId: shop.data }); return r.shift ? toShift(r.shift) : null; } });
+}
+/** The API has no shift history list yet. */
+export function useShifts() { return useQuery({ queryKey: ['shift', 'history'], queryFn: async () => [] as ReturnType<typeof toShift>[] }); }
 export function useShiftActions(onError: (m: string) => void) {
   const qc = useQueryClient();
+  const shop = useShopId();
   const fail = (e: unknown) => onError(e instanceof ApiError ? (e.fields[0]?.message ?? e.message) : 'Something went wrong.');
   return {
-    open: useMutation({ mutationFn: async (cash: string) => shiftDto.parse(await api.post('/pos/shift/open', { openingCash: rupeesToPaise(cash || '0') })), onSuccess: () => refreshAll(qc, ['shift']), onError: fail }),
-    close: useMutation({ mutationFn: async (cash: string) => shiftDto.parse(await api.post('/pos/shift/close', { countedCash: rupeesToPaise(cash || '0') })), onSuccess: () => refreshAll(qc, ['shift']), onError: fail }),
+    open: useMutation({ mutationFn: async (cash: string) => toShift(await api.post('/pos/shifts/open', { storeId: shop.data, openingCash: rupeesToPaise(cash || '0') })), onSuccess: () => refreshAll(qc, ['shift']), onError: fail }),
+    close: useMutation({
+      mutationFn: async (cash: string) => {
+        const cur = await api.get<{ shift: { id: string } | null }>('/pos/shifts/current', { storeId: shop.data });
+        if (!cur.shift) throw new ApiError(404, 'NOT_FOUND', 'There is no open day to close.');
+        return toShift(await api.post(`/pos/shifts/${cur.shift.id}/close`, { countedCash: rupeesToPaise(cash || '0') }));
+      },
+      onSuccess: () => refreshAll(qc, ['shift']), onError: fail,
+    }),
   };
 }
 
@@ -51,8 +69,13 @@ export function useShiftActions(onError: (m: string) => void) {
 export function useHeld() { return useQuery({ queryKey: ['held'], queryFn: async () => (await api.get<unknown[]>('/pos/held')).map((h) => heldDto.parse(h)) }); }
 export function useHold(cart: Cart) {
   const qc = useQueryClient();
+  const shop = useShopId();
   return useMutation({
-    mutationFn: async (v: { kind?: 'hold' | 'draft'; name?: string } = {}) => heldDto.parse(await api.post('/pos/held', { ...v, cart: { ...toCartIn(cart.cart, false), ui: cart.cart } })),
+    mutationFn: async (_v: { kind?: 'hold' | 'draft'; name?: string } = {}) => {
+      if (!shop.data) throw new Error('No store is selected yet.');
+      const bill = await api.post<{ id: string }>('/pos/bills', { ...apiBill(cart.cart, shop.data), hold: true });
+      return { id: bill.id, name: `at ${new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}` };
+    },
     onSuccess: () => refreshAll(qc, ['held']),
   });
 }

@@ -6,7 +6,6 @@ import { badRequest, forbidden, notFound } from '../../lib/errors';
 import { config } from '../../config/env';
 import { storage, type Bucket } from '../../adapters/storage';
 import { readLocalToken } from '../../adapters/storage/local';
-import { localStorageAdapter } from '../../adapters/storage/local';
 
 const MB = 1024 * 1024;
 const IMG = ['image/jpeg', 'image/png', 'image/webp'];
@@ -50,14 +49,15 @@ export const uploadRoutes = [
     method: 'PUT', path: '/uploads/local/:token', summary: 'Development only: receives a file when storage runs in mock mode', tags: ['Uploads'], permission: 'public',
     params: z.object({ token: z.string().min(10) }), response: okResponse, errors: [400, 404],
     handler: async ({ req, params }) => {
-      if (!config().mock.storage) throw notFound('Route');
       const t = readLocalToken(params.token);
       if (!t) throw badRequest('Upload link is invalid or expired');
+      // Besides mock mode, this route receives import spreadsheets, which are kept in MongoDB.
+      if (!config().mock.storage && !(t.bucket === 'backups' && t.key.startsWith('imports/'))) throw notFound('Route');
       const body = req.body as Buffer;
       if (!Buffer.isBuffer(body) || !body.length) throw badRequest('No file was sent');
       if (body.length > maxBytesForKey(t.key)) throw badRequest('This file is too large');
       if ((req.headers['content-type'] ?? '').split(';')[0]!.trim().toLowerCase() !== t.contentType.toLowerCase()) throw badRequest('Content-Type does not match the presigned request');
-      await localStorageAdapter.putObject(t.bucket, t.key, body, t.contentType);
+      await storage().putObject(t.bucket, t.key, body, t.contentType);
       return { ok: true as const };
     },
   }),

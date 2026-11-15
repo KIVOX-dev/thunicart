@@ -10,6 +10,7 @@ import { calcInvoice, discountToPaise, taxableOf } from '../../lib/invoiceCalc';
 import { getOperationsSettings, postStock } from '../../lib/stock';
 import { isGstEnabled } from '../../lib/gst';
 import { resolveGstRate } from '../../lib/gstRate';
+import { parseSizes } from '../../lib/sizes';
 import { effectivePrice } from '../../lib/stockStatus';
 import { supplyFor } from '../../lib/purchaseTax';
 import { escapeRegex, paginate, parseSort, iso } from '../../lib/list';
@@ -57,11 +58,19 @@ async function prepareLines(lines: any[], date: Date, gstOn: boolean, session?: 
     if (!v) throw badRequest('Item not found', [{ path: `lines.${i}.variantId`, message: 'Choose an existing item' }]);
     if (!v.active) throw businessRule(`${v.itemCode} is inactive`, 'VARIANT_INACTIVE');
     const item = im.get(String(v.itemId));
+    // Several sizes in one row share one stock count. The cashier says which size is being sold; it goes on the bill and stock drops by the quantity.
+    const sold = parseSizes(v.size);
+    let size: string | null = v.size ?? null;
+    if (sold.multi) {
+      const chosen = typeof l.size === 'string' ? sold.sizes.find((x) => x.toUpperCase() === l.size.trim().toUpperCase()) : undefined;
+      if (!chosen) throw badRequest(`Choose the size sold for ${v.itemCode}`, [{ path: `lines.${i}.size`, message: `Choose one of: ${sold.sizes.join(', ')}` }]);
+      size = chosen;
+    }
     const unitPrice = l.unitPrice ?? effectivePrice(v);
     let rate: number | null = null;
     if (item?.hsn) rate = (await resolveGstRate({ hsn: item.hsn, unitPricePaise: unitPrice, date, override: item.gstRateOverride }, session))?.rate ?? null;
     if (gstOn && rate === null) throw badRequest(`GST rate is not known for ${v.itemCode}`, [{ path: `lines.${i}.variantId`, message: item?.hsn ? `No GST rate rule covers HSN ${item.hsn}` : 'The item has no HSN' }]);
-    out.push({ variantId: l.variantId, itemCode: v.itemCode, description: [item?.printName || item?.name, v.size].filter(Boolean).join(' '), hsn: item?.hsn ?? '', size: v.size ?? null, qty: l.qty, mrp: v.mrp ?? 0, unitPrice, lineDiscount: discountToPaise(l.discount, l.qty * unitPrice), discountInput: l.discount ?? null, rate, unitCostAtSale: v.baseCost ?? 0 });
+    out.push({ variantId: l.variantId, itemCode: v.itemCode, description: [item?.printName || item?.name, size].filter(Boolean).join(' '), hsn: item?.hsn ?? '', size, qty: l.qty, mrp: v.mrp ?? 0, unitPrice, lineDiscount: discountToPaise(l.discount, l.qty * unitPrice), discountInput: l.discount ?? null, rate, unitCostAtSale: v.baseCost ?? 0 });
   }
   return out;
 }
@@ -267,7 +276,7 @@ export async function createInbound(user: AuthUser, input: any, audit: Audit, se
   const store: any = input.storeId ? { _id: input.storeId } : await Store.findOne({ type: 'online', active: true }).lean();
   if (!store) throw badRequest('No online store exists');
   const cust = await resolveCustomer({ customerId: input.customerId, customer: input.customer }, biz);
-  const lines = await prepareLines(input.lines.map((l: any) => ({ variantId: l.variantId, qty: l.qty, unitPrice: l.unitPrice, discount: l.discountAmount ? { type: 'amount', value: l.discountAmount } : undefined })), new Date(), gstOn);
+  const lines = await prepareLines(input.lines.map((l: any) => ({ variantId: l.variantId, qty: l.qty, size: l.size, unitPrice: l.unitPrice, discount: l.discountAmount ? { type: 'amount', value: l.discountAmount } : undefined })), new Date(), gstOn);
   const plan: Plan = { channel: 'ECM', storeId: String(store._id), customerId: cust.id, customer: { ...cust.snap, address: input.shipTo || cust.snap.address }, lines, billDiscount: 0, billDiscountInput: null, notes: `Online order ${input.orderNumber}`, orderNumber: input.orderNumber };
   let shippingNote = '';
   if (input.shippingCharge > 0) shippingNote = `Shipping ${input.shippingCharge}`;

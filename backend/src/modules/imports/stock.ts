@@ -63,7 +63,7 @@ export function prepareStockRows(raw: SheetRow[], mapping: Record<string, string
     const sz = parseSizes(get(r, 'size'));
     let size = '';
     if (sz.blank) flags.push('MISSING_SIZE');
-    else if (sz.multi) { size = str(get(r, 'size')); flags.push('MULTI_SIZE'); detail.sizes = sz.sizes; }
+    else if (sz.multi) { size = str(get(r, 'size')); detail.sizes = sz.sizes; } // kept as one row on purpose: the size is chosen at billing
     else { size = sz.sizes[0] ?? ''; if (sz.weird) { flags.push('ODD_SIZE'); detail.rawSize = str(get(r, 'size')); } }
 
     const hsn = normalizeHsn(get(r, 'hsn'));

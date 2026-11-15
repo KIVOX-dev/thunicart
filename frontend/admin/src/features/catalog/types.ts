@@ -18,6 +18,7 @@ export const variantDto = z.object({
   reorderLevel: z.number().int(),
   bin: z.string(),
   barcode: z.string(),
+  batch: z.string().optional(),
   /** Read only. Quantity per store id. */
   stock: z.record(z.string(), z.number().int()),
 });
@@ -31,6 +32,13 @@ export const ISSUE_LABELS: Record<ItemIssue, string> = {
   MISSING_MRP: 'No MRP',
   MISSING_RATE: 'No selling price',
   NEGATIVE_STOCK: 'Stock is below zero',
+};
+
+/** Problems the import can flag on a row, as the API names them. */
+export const REVIEW_LABELS: Record<string, string> = {
+  MISSING_SIZE: 'No size', ODD_SIZE: 'Unusual size', MULTI_SIZE: 'Several sizes in one row', MISSING_CATEGORY: 'No category', MISSING_BRAND: 'No brand', MISSING_MODEL: 'No model',
+  MISSING_HSN: 'No HSN code', INVALID_HSN: 'HSN is not valid', HSN_NO_RATE: 'HSN has no GST rate', NO_PRICE: 'No price', MRP_RAISED: 'MRP was below the selling price', NO_COST: 'Stock has no cost',
+  NEGATIVE_QTY: 'Quantity is below zero', ODD_CODE: 'Unusual item code',
 };
 
 export const itemDto = z.object({
@@ -208,6 +216,8 @@ export const reviewRow = z.object({
   hsn: z.string(),
   mrp: z.number().int(),
   suggestedHsn: z.string().nullable(),
+  /** Sizes the import found inside a combined size cell. */
+  sizes: z.array(z.string()).default([]),
 });
 export type ReviewRow = z.infer<typeof reviewRow>;
 export const dataQuality = z.object({ total: z.number().int(), byIssue: z.record(z.string(), z.number().int()), byCategory: z.array(z.object({ category: z.string(), items: z.number().int(), issues: z.number().int() })) });

@@ -10,6 +10,8 @@ export const saleLineBody = z.object({
   variantId: objectId, qty: z.number().int().min(1).max(10000),
   /** Defaults to the variant's online price rule (offer, else selling, else MRP). Paise, GST inclusive. */
   unitPrice: money.optional(), discount: discountInput.optional(),
+  /** The size sold, for an item whose sizes share one stock count (the item's size reads "S, M, L, XL"). Required for those items, ignored for the rest. */
+  size: z.string().trim().min(1).max(30).optional(),
 });
 export const customerSnapshotInput = z.object({
   name: z.string().trim().max(120).default('Walk-in Customer'), mobile: z.string().trim().max(15).default(''), address: z.string().trim().max(200).default(''),

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import { formatPaise } from '@thunikart/shared';
-import { Badge, Button, EmptyState, ListSkeleton, Modal, Select, Table, TBody, Td, Th, THead, Tr } from '@thunikart/ui';
+import { Badge, Button, EmptyState, Input, ListSkeleton, Modal, Select, Table, TBody, Td, Th, THead, Tr } from '@thunikart/ui';
 import { ErrorBanner } from '../../../components/ErrorBanner';
 import { ItemPicker } from '../../../components/ItemPicker';
 import { ApprovalDialog } from '../../../components/pos/ApprovalDialog';
@@ -65,14 +65,14 @@ export function PosDesktop() {
                   return (
                     <Tr key={l.variantId} className={conflict ? '!bg-danger-bg' : ''}>
                       <Td><strong>{l.name}</strong><span className="block font-mono text-xs text-muted">{l.code}</span>{conflict && <span role="alert" className="block text-xs text-danger">{conflict}</span>}</Td>
-                      <Td>{l.size}</Td><Td>{l.color}</Td>
+                      <Td>{l.sizes?.length ? <Select aria-label={`Size sold for ${l.name}`} className="w-28" value={l.size} onChange={(e) => cart.setSize(l.variantId, e.target.value)}><option value="">Choose size</option>{l.sizes.map((x) => <option key={x}>{x}</option>)}</Select> : l.size}</Td><Td>{l.color}</Td>
                       <Td className="text-center"><span className="inline-flex items-center gap-1">
                         <button type="button" aria-label={`Fewer ${l.name}`} onClick={() => cart.setQty(l.variantId, l.qty - 1)} className="flex h-9 w-9 items-center justify-center rounded border-2 border-navy-100 hover:bg-mist"><Minus size={14} /></button>
                         <span className="w-8 text-center" data-testid={`qty-${l.code}`}>{l.qty}</span>
                         <button type="button" aria-label={`More ${l.name}`} onClick={() => cart.setQty(l.variantId, l.qty + 1)} className="flex h-9 w-9 items-center justify-center rounded border-2 border-navy-100 hover:bg-mist"><Plus size={14} /></button></span></Td>
                       <Td className="text-right">{pl ? formatPaise(pl.rate) : '…'}</Td>
-                      <Td><span className="flex items-center gap-1"><Select aria-label={`Discount type for ${l.name}`} className="w-16" value={l.discType} onChange={(e) => cart.setLineDiscount(l.variantId, e.target.value as 'amount' | 'percent', l.discValue)}><option value="amount">₹</option><option value="percent">%</option></Select>
-                        <input aria-label={`Discount for ${l.name}`} inputMode="decimal" className="h-10 w-20 rounded border-2 border-navy-100 px-2 text-right text-sm" value={l.discValue} onChange={(e) => cart.setLineDiscount(l.variantId, l.discType, e.target.value)} placeholder="0" /></span></Td>
+                      <Td><span className="flex items-center gap-1"><Select aria-label={`Discount type for ${l.name}`} className="w-20 min-h-10" value={l.discType} onChange={(e) => cart.setLineDiscount(l.variantId, e.target.value as 'amount' | 'percent', l.discValue)}><option value="amount">₹</option><option value="percent">%</option></Select>
+                        <Input aria-label={`Discount for ${l.name}`} inputMode="decimal" className="min-h-10 w-24 text-right" value={l.discValue} onChange={(e) => cart.setLineDiscount(l.variantId, l.discType, e.target.value)} placeholder="0" /></span></Td>
                       <Td className="text-right font-semibold">{pl ? formatPaise(pl.net) : '…'}</Td>
                       <Td><button type="button" aria-label={`Remove ${l.name}`} onClick={() => cart.remove(l.variantId)} className="flex h-9 w-9 items-center justify-center text-danger"><Trash2 size={16} /></button></Td>
                     </Tr>
@@ -89,7 +89,7 @@ export function PosDesktop() {
           <div className="min-w-0 text-sm">{cart.cart.customer ? <><strong className="block truncate">{cart.cart.customer.name}</strong><span className="text-xs text-muted">{cart.cart.customer.code} · {cart.cart.customer.mobile} · wallet {formatPaise(cart.cart.customer.walletBalance)}</span></> : <span className="text-muted">Walk-in customer</span>}</div>
           <span className="flex gap-1"><Button size="sm" onClick={() => setCustOpen(true)}>{cart.cart.customer ? 'Change' : 'Add customer'}</Button>{cart.cart.customer && <Button size="sm" variant="ghost" onClick={() => cart.setCustomer(null)}>Remove</Button>}</span>
         </div>
-        {!cart.cart.customer && <MobileCapture onPick={(c) => cart.setCustomer(c)} />}
+        {!cart.cart.customer && <MobileCapture onPick={(c) => cart.setCustomer(c)} onWalkIn={cart.setWalkIn} />}
         <PosTotals cart={cart} />
         <BillDiscount cart={cart} />
         {pv?.approvalNeeded && <Badge tone="warning">Discount above your limit. A manager must approve.</Badge>}

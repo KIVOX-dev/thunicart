@@ -5,40 +5,72 @@ import { Badge, Button, EmptyState, Input, ListSkeleton, Modal, Select, Table, T
 import { ErrorBanner, QueryError } from '../../../components/ErrorBanner';
 import { PageHeader } from '../../../components/PageHeader';
 import { useCan } from '../../../features/auth/permissions';
-import { ISSUE_LABELS, type ReviewRow } from '../../../features/catalog/types';
+import { REVIEW_LABELS, type ReviewRow } from '../../../features/catalog/types';
 import { useFacets } from '../../../features/catalog/use-items';
-import { useBulkFix, useDataQuality, useFixRow, useReviewQueue } from '../../../features/catalog/use-review';
+import { useBulkFix, useDataQuality, useFixRow, useReviewQueue, type FixAction } from '../../../features/catalog/use-review';
 import { ApiError } from '../../../features/api/http';
 
-const label = (k: string) => ISSUE_LABELS[k as keyof typeof ISSUE_LABELS] ?? k;
+const label = (k: string) => REVIEW_LABELS[k] ?? k;
+
+const HSN = ['MISSING_HSN', 'INVALID_HSN', 'HSN_NO_RATE'];
+const TEXT_FIELD: Record<string, { key: 'category' | 'brand' | 'model'; label: string }> = { MISSING_CATEGORY: { key: 'category', label: 'Category' }, MISSING_BRAND: { key: 'brand', label: 'Brand' }, MISSING_MODEL: { key: 'model', label: 'Model' } };
+const rupeesToInt = (v: string) => Math.round(Number(v) * 100);
 
 function Row({ r }: { r: ReviewRow }) {
   const fix = useFixRow();
+  const facets = useFacets().data;
   const [hsn, setHsn] = useState(r.hsn);
   const [size, setSize] = useState(r.size);
+  const [text, setText] = useState('');
+  const [sizesText, setSizesText] = useState(((r.sizes ?? []).length ? r.sizes : [r.size]).filter(Boolean).join(', '));
   const [mrp, setMrp] = useState(r.mrp ? String(r.mrp / 100) : '');
+  const [rate, setRate] = useState('');
   const [err, setErr] = useState<string | null>(null);
-  const save = async (patch: { hsn?: string; size?: string; mrp?: string }) => {
+  const save = async (a: FixAction) => {
     setErr(null);
-    try { await fix.mutateAsync({ itemId: r.itemId, ...patch }); } catch (e) { setErr(e instanceof ApiError ? (e.fields[0]?.message ?? e.friendly) : 'Could not save'); }
+    try { await fix.mutateAsync({ id: r.id, ...a }); } catch (e) { setErr(e instanceof ApiError ? (e.fields[0]?.message ?? e.friendly) : 'Could not save'); }
   };
+  const tf = TEXT_FIELD[r.issue];
   return (
     <Tr>
       <Td className="font-mono text-xs">{r.code}</Td>
       <Td className="max-w-xs"><span className="block truncate">{r.name}</span><span className="text-xs text-muted">{r.category}</span></Td>
       <Td><Badge tone="warning">{label(r.issue)}</Badge></Td>
       <Td>
-        {r.issue === 'MISSING_HSN' && (
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {HSN.includes(r.issue) && (<>
             <Input aria-label={`HSN for ${r.code}`} className="w-28" inputMode="numeric" value={hsn} onChange={(e) => setHsn(e.target.value)} />
-            {r.suggestedHsn && <Button size="sm" onClick={() => save({ hsn: r.suggestedHsn! })} aria-label={`Use HSN ${r.suggestedHsn} for ${r.code}`}>Use {r.suggestedHsn}</Button>}
-            <Button size="sm" variant="primary" disabled={!hsn} onClick={() => save({ hsn })}>Save</Button>
-          </div>
-        )}
-        {r.issue === 'SIZE_PLACEHOLDER' && <div className="flex items-center gap-2"><Input aria-label={`Size for ${r.code}`} className="w-28" value={size} onChange={(e) => setSize(e.target.value)} /><Button size="sm" onClick={() => save({ size: 'Free Size' })}>Free Size</Button><Button size="sm" variant="primary" onClick={() => save({ size })}>Save</Button></div>}
-        {r.issue === 'MISSING_MRP' && <div className="flex items-center gap-2"><Input aria-label={`MRP for ${r.code}`} className="w-28" inputMode="decimal" value={mrp} onChange={(e) => setMrp(e.target.value)} /><Button size="sm" variant="primary" disabled={!Number(mrp)} onClick={() => save({ mrp })}>Save</Button></div>}
-        {r.issue === 'MISSING_RATE' && <Link to={`/items/${r.itemId}`} className="text-sm underline">Open item to add a price</Link>}
-        {r.issue === 'NEGATIVE_STOCK' && <Link to={`/items/${r.itemId}`} className="text-sm underline">Open item. Correct it with a stock adjustment</Link>}
+            {r.suggestedHsn && <Button size="sm" onClick={() => save({ action: 'apply_suggestion' })} aria-label={`Use HSN ${r.suggestedHsn} for ${r.code}`}>Use {r.suggestedHsn}</Button>}
+            <Button size="sm" variant="primary" disabled={!/^(\d{4}|\d{6}|\d{8})$/.test(hsn)} onClick={() => save({ action: 'set', set: { hsn } })}>Save</Button>
+          </>)}
+          {(r.issue === 'MISSING_SIZE' || r.issue === 'ODD_SIZE') && (<>
+            <Input aria-label={`Size for ${r.code}`} className="w-28" value={size} onChange={(e) => setSize(e.target.value)} />
+            <Button size="sm" onClick={() => save({ action: 'set', set: { size: 'Free Size' } })}>Free Size</Button>
+            <Button size="sm" variant="primary" disabled={!size.trim()} onClick={() => save({ action: 'set', set: { size: size.trim() } })}>Save</Button>
+          </>)}
+          {r.issue === 'MULTI_SIZE' && (<>
+            <Input aria-label={`Sizes for ${r.code}, separated by commas`} className="w-44" placeholder="S, M, L, XL" value={sizesText} onChange={(e) => setSizesText(e.target.value)} />
+            <Button size="sm" variant="primary" disabled={sizesText.split(/[,/\s]+/).filter(Boolean).length < 2} onClick={() => save({ action: 'split_sizes', sizes: sizesText.split(/[,/\s]+/).filter(Boolean) })}>Split into sizes</Button>
+            <Button size="sm" onClick={() => save({ action: 'set', set: { size: 'Free Size' } })}>Free Size</Button>
+          </>)}
+          {tf && (<>
+            {tf.key === 'model'
+              ? <Input aria-label={`${tf.label} for ${r.code}`} className="w-40" placeholder={tf.label} value={text} onChange={(e) => setText(e.target.value)} />
+              : <Select aria-label={`${tf.label} for ${r.code}`} className="w-44" value={text} onChange={(e) => setText(e.target.value)}><option value="">Choose {tf.label.toLowerCase()}</option>{(tf.key === 'category' ? facets?.categories : facets?.brands)?.map((o) => <option key={o}>{o}</option>)}</Select>}
+            <Button size="sm" variant="primary" disabled={!text.trim()} onClick={() => save({ action: 'set', set: { [tf.key]: text.trim() } })}>Save</Button>
+          </>)}
+          {r.issue === 'NO_PRICE' && (<>
+            <Input aria-label={`MRP for ${r.code}`} className="w-24" placeholder="MRP" inputMode="decimal" value={mrp} onChange={(e) => setMrp(e.target.value)} />
+            <Input aria-label={`Selling price for ${r.code}`} className="w-28" placeholder="Selling price" inputMode="decimal" value={rate} onChange={(e) => setRate(e.target.value)} />
+            <Button size="sm" variant="primary" disabled={!Number(mrp) || !Number(rate)} onClick={() => save({ action: 'set', set: { mrp: rupeesToInt(mrp), sellingPrice: rupeesToInt(rate) } })}>Save</Button>
+          </>)}
+          {r.issue === 'MRP_RAISED' && (<>
+            <Input aria-label={`MRP for ${r.code}`} className="w-28" inputMode="decimal" value={mrp} onChange={(e) => setMrp(e.target.value)} />
+            <Button size="sm" variant="primary" disabled={!Number(mrp)} onClick={() => save({ action: 'set', set: { mrp: rupeesToInt(mrp) } })}>Save</Button>
+          </>)}
+          {(r.issue === 'NO_COST' || r.issue === 'NEGATIVE_QTY' || r.issue === 'ODD_CODE') && <Link to={`/items/${r.itemId}`} className="text-sm underline">{r.issue === 'NEGATIVE_QTY' ? 'Open item. Correct it with a stock adjustment' : 'Open item to fix'}</Link>}
+          <Button size="sm" variant="ghost" onClick={() => save({ action: 'dismiss' })} aria-label={`Dismiss ${r.code}`}>Looks fine</Button>
+        </div>
         {err && <span role="alert" className="mt-1 block text-xs text-danger">{err}</span>}
       </Td>
       <Td className="text-right text-xs text-muted">{r.mrp ? formatPaise(r.mrp) : '–'}</Td>
@@ -65,7 +97,7 @@ function QueueTab() {
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-end gap-3">
-        <Select aria-label="Problem" className="w-52" value={issue} onChange={(e) => setIssue(e.target.value)}><option value="">All problems</option>{Object.entries(ISSUE_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</Select>
+        <Select aria-label="Problem" className="w-52" value={issue} onChange={(e) => setIssue(e.target.value)}><option value="">All problems</option>{Object.entries(REVIEW_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</Select>
         <Select aria-label="Category" className="w-44" value={category} onChange={(e) => setCategory(e.target.value)}><option value="">All categories</option>{cats.map((c) => <option key={c}>{c}</option>)}</Select>
         <div className="w-60"><Input aria-label="Search rows" placeholder="Search name or code" value={q} onChange={(e) => setQ(e.target.value)} /></div>
         {can('items.edit') && (

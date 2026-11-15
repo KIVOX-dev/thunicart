@@ -8,37 +8,41 @@ import { PageHeader } from '../../../components/PageHeader';
 import { statusTone } from '../../../components/StockCard';
 import { useCan } from '../../../features/auth/permissions';
 import { STOCK_STATUSES } from '../../../features/catalog/types';
-import { useFacets, useItemFilters, useItems } from '../../../features/catalog/use-items';
+import { useFacets } from '../../../features/catalog/use-items';
 import { useVendors } from '../../../features/catalog/use-parties';
 import { LEDGER_LABEL, LEDGER_TYPES } from '../../../features/inventory/types';
 import { useCreateFromReorder } from '../../../features/inventory/use-purchase-orders';
-import { EMPTY_LEDGER, useLedger, useReorder } from '../../../features/inventory/use-stock';
+import { Pager } from '../../../components/Pager';
+import { EMPTY_LEDGER, STOCK_PAGE_SIZE, useLedger, useReorder, useStockRows, type StockFilters } from '../../../features/inventory/use-stock';
 import { LookupDesktop } from './LookupDesktop';
 
 function ByItemTab() {
-  const { filters, set } = useItemFilters();
-  const items = useItems(filters);
-  const facets = useFacets().data;
-  const stores = facets?.stores ?? [];
-  const data = items.data?.pages.flatMap((p) => p.items) ?? [];
+  const [f, setF] = useState<StockFilters>({ q: '', storeId: '', stockStatus: '' });
+  const [page, setPage] = useState(1);
+  const q = useStockRows(f, page);
+  const change = (next: StockFilters) => { setF(next); setPage(1); };
+  const stores = useFacets().data?.stores ?? [];
+  const data = q.data?.items ?? [];
+  const total = q.data?.totals.onHand ?? 0;
   return (
     <div>
       <div className="mb-3 flex flex-wrap gap-3">
-        <div className="w-64"><Input aria-label="Search stock" placeholder="Name, code or barcode" value={filters.q} onChange={(e) => set({ q: e.target.value })} /></div>
-        <Select aria-label="Category" className="w-44" value={filters.category} onChange={(e) => set({ category: e.target.value })}><option value="">All categories</option>{facets?.categories.map((c) => <option key={c}>{c}</option>)}</Select>
-        <Select aria-label="Stock status" className="w-40" value={filters.stockStatus} onChange={(e) => set({ stockStatus: e.target.value })}><option value="">Any stock</option>{STOCK_STATUSES.map((s) => <option key={s}>{s}</option>)}</Select>
+        <div className="w-64"><Input aria-label="Search stock" placeholder="Name, code or barcode" value={f.q} onChange={(e) => change({ ...f, q: e.target.value })} /></div>
+        <Select aria-label="Store" className="w-48" value={f.storeId} onChange={(e) => change({ ...f, storeId: e.target.value })}><option value="">All stores</option>{stores.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select>
+        <Select aria-label="Stock status" className="w-40" value={f.stockStatus} onChange={(e) => change({ ...f, stockStatus: e.target.value })}><option value="">Any stock</option>{STOCK_STATUSES.map((s) => <option key={s}>{s}</option>)}</Select>
       </div>
-      {items.isPending ? <ListSkeleton rows={8} label="Loading stock" /> : items.isError ? <QueryError error={items.error} onRetry={() => items.refetch()} /> : data.length === 0 ? <EmptyState title="No stock found" /> : (
+      {q.isPending ? <ListSkeleton rows={8} label="Loading stock" /> : q.isError ? <QueryError error={q.error} onRetry={() => q.refetch()} /> : data.length === 0 ? <EmptyState title="No stock found" /> : (
         <>
+          <p className="mb-2 text-sm text-muted">{total.toLocaleString('en-IN')} pieces on hand{f.storeId ? ' in this store' : ' across all stores'}</p>
           <Table caption="Stock by item and size">
-            <THead><Tr><Th>Code</Th><Th>Item</Th><Th>Size</Th>{stores.map((s) => <Th key={s.id} className="text-right">{s.name}</Th>)}<Th className="text-right">Total</Th><Th>Reorder at</Th><Th>Status</Th></Tr></THead>
-            <TBody>{data.flatMap((i) => i.variants.map((v, n) => (
-              <Tr key={v.id}><Td className="font-mono text-xs">{n === 0 ? i.code : ''}</Td><Td className="font-medium">{n === 0 ? i.name : ''}</Td><Td>{v.size}</Td>
-                {stores.map((s) => <Td key={s.id} className="text-right">{v.stock[s.id] ?? 0}</Td>)}<Td className="text-right font-semibold">{Object.values(v.stock).reduce((a, b) => a + b, 0)}</Td><Td>{v.reorderLevel}</Td>
-                <Td>{n === 0 && <Badge tone={statusTone(i.stockStatus)}>{i.stockStatus}</Badge>}</Td></Tr>
-            )))}</TBody>
+            <THead><Tr><Th>Code</Th><Th>Item</Th><Th>Size</Th>{!f.storeId && <Th>Store</Th>}<Th className="text-right">On hand</Th><Th className="text-right">Reserved</Th><Th className="text-right">Available</Th><Th>Reorder at</Th><Th>Status</Th></Tr></THead>
+            <TBody>{data.map((r) => (
+              <Tr key={`${r.variantId}-${r.storeId ?? 'all'}`}><Td className="font-mono text-xs">{r.itemCode}</Td><Td className="font-medium">{r.name}</Td><Td>{r.size ?? ''}</Td>{!f.storeId && <Td>{r.storeName ?? 'All stores'}</Td>}
+                <Td className="text-right font-semibold">{r.onHand}</Td><Td className="text-right">{r.reserved}</Td><Td className="text-right">{r.available}</Td><Td>{r.reorderLevel}</Td>
+                <Td><Badge tone={statusTone(r.stockStatus)}>{r.stockStatus}</Badge></Td></Tr>
+            ))}</TBody>
           </Table>
-          {items.hasNextPage && <div className="mt-3"><Button onClick={() => items.fetchNextPage()} loading={items.isFetchingNextPage}>Load more</Button></div>}
+          <Pager page={page} total={q.data?.total ?? 0} pageSize={STOCK_PAGE_SIZE} onPage={setPage} />
         </>
       )}
     </div>

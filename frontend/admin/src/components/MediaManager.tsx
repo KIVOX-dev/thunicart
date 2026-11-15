@@ -46,7 +46,7 @@ export function MediaManager({ media }: { media: Media }) {
       </section>
       <section aria-label="Size chart" className="flex flex-wrap items-center justify-between gap-2">
         <div><h3 className="text-xs">Size chart</h3><p className="text-sm text-muted">{media.sizeChartKey ? fileName(media.sizeChartKey) : 'No size chart'}</p></div>
-        <span className="flex gap-2">{media.sizeChartKey && <Button onClick={media.clearSizeChart}>Remove</Button>}{pick('size-chart', 'image/*,application/pdf')}</span>
+        <span className="flex gap-2">{media.sizeChartKey && <Button onClick={media.clearSizeChart}>Remove</Button>}{pick('size-chart', 'image/jpeg,image/png,image/webp,application/pdf')}</span>
       </section>
       {media.entries.length > 0 && (
         <ul aria-label="Uploads" className="flex flex-col gap-2">

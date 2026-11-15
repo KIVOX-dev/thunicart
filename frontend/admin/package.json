@@ -19,6 +19,7 @@
     "@thunikart/shared": "workspace:*",
     "@thunikart/ui": "workspace:*",
     "lucide-react": "^0.510.0",
+    "qrcode-generator": "1.4.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-hook-form": "^7.56.0",
@@ -41,5 +42,9 @@
     "vite-plugin-pwa": "^1.0.0",
     "vitest": "^3.0.0"
   },
-  "msw": { "workerDirectory": ["public"] }
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
+  }
 }

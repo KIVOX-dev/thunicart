@@ -132,7 +132,7 @@ export const lookupResponse = z.object({
 export const labelTemplateDto = z.object({ id: objectId, name: z.string(), widthMm: z.number(), heightMm: z.number(), fields: z.array(z.string()), isDefault: z.boolean() });
 export const labelTemplateBody = z.object({
   name: z.string().trim().min(2).max(60), widthMm: z.number().min(20).max(210), heightMm: z.number().min(15).max(300),
-  fields: z.array(z.enum(['barcode', 'name', 'size', 'color', 'mrp', 'itemCode'])).min(1), isDefault: z.boolean().default(false),
+  fields: z.array(z.enum(['barcode', 'name', 'size', 'color', 'mrp', 'itemCode', 'qr', 'batch'])).min(1), isDefault: z.boolean().default(false),
 });
 export const labelPrintBody = z.object({
   templateId: objectId.optional(),

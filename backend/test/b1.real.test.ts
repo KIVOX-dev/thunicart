@@ -50,7 +50,7 @@ describe.skipIf(!has)('real stock file: Master Sheet Krishnas Orchids Nov 2026.x
     expect(dq.body.summary.MISSING_SIZE).toBe(111); // "Primary" size
     expect(dq.body.summary.MISSING_HSN).toBe(183);
     expect(dq.body.summary.INVALID_HSN).toBe(16); // 6407: Chapter 64 stops at 6406
-    expect(dq.body.summary.MULTI_SIZE).toBe(47); // MLXL2XL (32) + "S M L XL XXL" (15)
+    expect(dq.body.summary.MULTI_SIZE).toBeUndefined(); // MLXL2XL (32) + "S M L XL XXL" (15) stay as one row on purpose
     const bad = await ReviewItem.findOne({ reasons: 'INVALID_HSN' }).lean() as any;
     expect(bad.detail.hsnProblem).toMatch(/6407/);
     const sug = await t.api('GET', `${A}/imports/review-queue?reason=MISSING_HSN&pageSize=100`, { token: t.adminToken });

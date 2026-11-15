@@ -1,10 +1,12 @@
 import { Suspense, useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Search } from 'lucide-react';
-import { ListSkeleton, Select } from '@thunikart/ui';
+import { Search, Store } from 'lucide-react';
+import { ListSkeleton } from '@thunikart/ui';
 import { Logo } from '../components/Logo';
 import { ProfileMenu } from '../components/ProfileMenu';
 import { useCan, useGstMode } from '../features/auth/permissions';
+import { useFacets } from '../features/catalog/use-items';
+import { useShopId } from '../features/pos/use-pos-data';
 import { useCurrentModule, useMenuGroups, useVisibleModules } from './use-nav';
 
 function GoTo() {
@@ -46,6 +48,8 @@ function Breadcrumbs() {
 export function DesktopShell() {
   const groups = useMenuGroups();
   const gst = useGstMode();
+  const shopId = useShopId().data;
+  const shopName = useFacets().data?.stores.find((x) => x.id === shopId)?.name ?? 'Store';
   const can = useCan();
   return (
     <div className="flex min-h-screen bg-navy-50">
@@ -72,11 +76,13 @@ export function DesktopShell() {
         <p className="m-3 rounded-full bg-white/10 px-4 py-2 text-center text-xs font-semibold text-white">{gst === 'on' ? 'GST is on' : 'GST is off'}</p>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-3 z-40 mx-6 mt-3 flex items-center gap-4 rounded-full bg-white px-4 py-2 shadow-soft">
-          <div className="w-52"><Select aria-label="Store" defaultValue="main"><option value="main">Thunikart, Pattanam</option></Select></div>
-          <GoTo />
-          <div className="ml-auto"><ProfileMenu /></div>
-        </header>
+        <div className="sticky top-0 z-40 bg-navy-50 px-6 pb-3 pt-3">
+          <header className="flex items-center gap-4 rounded-full bg-white px-4 py-2 shadow-soft">
+            <div className="flex w-56 items-center gap-2 rounded-full border border-navy-100 px-4 py-2 text-sm font-medium text-navy" title="The store this screen works on"><Store aria-hidden size={16} /><span className="truncate">{shopName}</span></div>
+            <GoTo />
+            <div className="ml-auto"><ProfileMenu /></div>
+          </header>
+        </div>
         <main id="main" className="flex-1 px-6 py-6">
           <div className="min-h-full rounded-2xl bg-white p-6 shadow-soft">
             <Breadcrumbs />

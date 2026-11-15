@@ -30,7 +30,7 @@ export async function listReview(q: ListQuery & { reason?: string; batchId?: str
 function dataReasons(item: any, v: any): string[] {
   const out: string[] = [];
   if (!v.size) out.push('MISSING_SIZE');
-  else { const p = parseSizes(v.size); if (p.multi) out.push('MULTI_SIZE'); else if (p.weird) out.push('ODD_SIZE'); }
+  else { const p = parseSizes(v.size); if (!p.multi && p.weird) out.push('ODD_SIZE'); } // several sizes in one row is allowed: the size is chosen at billing
   if (!item.categoryId) out.push('MISSING_CATEGORY');
   if (!item.brandId) out.push('MISSING_BRAND');
   if (!item.model) out.push('MISSING_MODEL');
