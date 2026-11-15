@@ -107,6 +107,8 @@ export const billBody = z.object({
   grnIds: z.array(objectId).min(1).max(50),
   /** Amounts on the vendor's bill. They are payable but are not part of stock cost (freight on the GRN is). No GST on these. */
   freight: money.default(0),
+  /** Freight on the vendor's bill belongs to the goods: it is shared across the billed lines by value and added to the cost of the pieces still in stock. Turn off when the freight was already entered on the goods receipt, or is not part of the goods cost. */
+  addFreightToCost: z.boolean().default(true),
   otherCharges: money.default(0),
   /** Rounding on the vendor's bill, between -50 and +50 paise. */
   roundOff: z.number().int().min(-50).max(50).default(0),
@@ -119,6 +121,8 @@ export const billDto = z.object({
   totals: totalsDto, freight: paise, otherCharges: paise, roundOff: paise, grandTotal: paise,
   gstMode: gstModeEnum, supply: supplyEnum.nullable(), inputTaxCredit: paise,
   paid: paise, debitNotes: paise, outstanding: paise, notes: z.string(), createdAt: z.string(),
+  /** How much of the bill's freight was added to item cost, and why not when it was not. */
+  freightCostAdded: paise, freightNote: z.string(),
 });
 export const billQuery = z.object({ vendorId: objectId.optional(), billStatus: z.enum(['open', 'paid']).optional() });
 

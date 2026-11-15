@@ -12,6 +12,8 @@ export const saleLineBody = z.object({
   unitPrice: money.optional(), discount: discountInput.optional(),
   /** The size sold, for an item whose sizes share one stock count (the item's size reads "S, M, L, XL"). Required for those items, ignored for the rest. */
   size: z.string().trim().min(1).max(30).optional(),
+  /** Optional colour sold, printed on the bill line. */
+  color: z.string().trim().max(30).optional(),
 });
 export const customerSnapshotInput = z.object({
   name: z.string().trim().max(120).default('Walk-in Customer'), mobile: z.string().trim().max(15).default(''), address: z.string().trim().max(200).default(''),
@@ -56,3 +58,26 @@ export const invoiceDto = z.looseObject({
 export const listInvoices = z.object({ items: z.array(invoiceDto), total: z.number().int(), nextPage: z.number().int().nullable() });
 export const salesReturnDto = z.looseObject({ id: objectId, creditNoteNumber: z.string(), refundTotal: z.number().int(), currency: z.literal('INR') });
 export const shiftDto = z.looseObject({ id: objectId, status: z.enum(['open', 'closed']), openingCash: z.number().int() });
+
+// ---------- credit memo (a credit to a customer without goods coming back) ----------
+export const CREDIT_MEMO_SETTLE = ['wallet', 'refund', 'reduce_due'] as const;
+export const creditMemoBody = z.object({
+  customerId: objectId,
+  /** The invoice this is about. Needed to reduce what the customer still owes on it. */
+  invoiceId: objectId.optional(),
+  /** Paise, GST inclusive. */
+  amount: z.number().int().min(1).max(100_000_000),
+  reason: z.string().trim().min(2).max(300),
+  note: z.string().trim().max(500).default(''),
+  /** wallet: add to the customer's wallet. refund: paid back now (say how). reduce_due: take it off what they owe on the invoice. */
+  settle: z.enum(CREDIT_MEMO_SETTLE).default('wallet'),
+  refundMode: z.enum(['cash', 'upi', 'card', 'bank_transfer']).optional(),
+  /** GST rate in percent. Needed while GST is on, so the tax in the amount is shown on the credit note. */
+  gstRate: z.number().min(0).max(100).nullable().optional(),
+});
+export const creditMemoDto = z.looseObject({
+  id: objectId, creditNoteNumber: z.string(), customerId: objectId, customerName: z.string(), invoiceNumber: z.string().nullable(), reason: z.string(),
+  amount: z.number().int(), taxable: z.number().int(), cgst: z.number().int(), sgst: z.number().int(), igst: z.number().int(),
+  settle: z.enum(CREDIT_MEMO_SETTLE), refundMode: z.string().nullable(), gstMode: z.enum(['on', 'off']), gstRate: z.number().nullable(), createdAt: z.string(), currency: z.literal('INR'),
+});
+export const creditMemoQuery = z.object({ customerId: objectId.optional(), invoiceId: objectId.optional() });

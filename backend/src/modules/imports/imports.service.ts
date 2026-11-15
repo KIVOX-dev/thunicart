@@ -4,6 +4,7 @@ import { AppError, badRequest, businessRule, forbidden, notFound } from '../../l
 import { readSheetRows, readWorkbook, type SheetMeta } from '../../lib/excel/read';
 import { withTransaction } from '../../lib/transaction';
 import { bumpSeriesTo } from '../../lib/numberSeries';
+import { nextBatchNumber, noteBatchRef } from '../../lib/batchNumber';
 import { iso } from '../../lib/list';
 import type { AuthUser } from '../../middleware/auth';
 import type { AuditEntry } from '../../middleware/audit';
@@ -190,6 +191,13 @@ export async function commitImport(id: string, user: AuthUser, maxSeconds: numbe
   try {
     const r = await prepare(b);
     const first = (b.progress?.processed ?? 0) === 0;
+    // Batch numbers: one automatic number for this import (kept if the import is resumed), and the series moves past any number the sheet brought.
+    if (r.kind === 'stock') {
+      if (first) for (const ref of new Set(r.stock!.rows.map((x) => x.batchRef).filter(Boolean))) await noteBatchRef(ref);
+      if (!b.options?.autoBatchRef && r.stock!.rows.some((x) => !x.batchRef && x.qty > 0)) {
+        b.options = { ...(b.options ?? {}), autoBatchRef: await nextBatchNumber() }; b.markModified('options'); await b.save();
+      }
+    }
     if (first) { b.status = 'committing'; b.result = { new: 0, updated: 0, failed: 0, reviewFlagged: 0, pieces: 0, costValue: 0, failures: [] }; b.markModified('result'); await b.save(); }
     const total = r.units.length;
     const deadline = Date.now() + maxSeconds * 1000;
@@ -201,7 +209,7 @@ export async function commitImport(id: string, user: AuthUser, maxSeconds: numbe
     while (i < total && Date.now() < deadline) {
       const slice = r.units.slice(i, i + BATCH_UNITS);
       const run = (units: any[]) => withTransaction((session) => r.kind === 'stock'
-        ? applyStockUnits(units as Unit[], { batchId: id, userId: user.id, session, post, storeId, asOf, prepared: r.stock! })
+        ? applyStockUnits(units as Unit[], { batchId: id, userId: user.id, session, post, storeId, asOf, prepared: r.stock!, autoBatchRef: b.options?.autoBatchRef })
         : applyParties(b.target, units, { batchId: id, session }));
       let res;
       try { res = [await run(slice)]; } catch {

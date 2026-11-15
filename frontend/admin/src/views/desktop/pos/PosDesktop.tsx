@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import { formatPaise } from '@thunikart/shared';
 import { Badge, Button, EmptyState, Input, ListSkeleton, Modal, Select, Table, TBody, Td, Th, THead, Tr } from '@thunikart/ui';
+import { BASIC_COLOURS } from '../../../features/pos/colours';
 import { ErrorBanner } from '../../../components/ErrorBanner';
 import { ItemPicker } from '../../../components/ItemPicker';
 import { ApprovalDialog } from '../../../components/pos/ApprovalDialog';
@@ -36,10 +37,10 @@ export function PosDesktop() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'F2') { e.preventDefault(); cart.clear(); }
+      if (e.key === 'F2') { e.preventDefault(); s.newBill(); }
       if (e.key === 'F4') { e.preventDefault(); void s.holdBill(); }
       if (e.key === 'F8') { e.preventDefault(); void s.pay(); }
-      if (e.key === 'Escape' && !document.querySelector('dialog[open]')) { const el = document.activeElement as HTMLInputElement | null; if (el && el.tagName === 'INPUT' && el.value) el.value = ''; else if (cart.cart.lines.length) setClearOpen(true); }
+      if (e.key === 'Escape' && !document.querySelector('dialog[open]')) { const el = document.activeElement as HTMLInputElement | null; if (el && el.tagName === 'INPUT' && el.value) el.value = ''; else if (cart.cart.lines.length) setClearOpen(true); else s.say('The bill is already empty.'); }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -65,7 +66,7 @@ export function PosDesktop() {
                   return (
                     <Tr key={l.variantId} className={conflict ? '!bg-danger-bg' : ''}>
                       <Td><strong>{l.name}</strong><span className="block font-mono text-xs text-muted">{l.code}</span>{conflict && <span role="alert" className="block text-xs text-danger">{conflict}</span>}</Td>
-                      <Td>{l.sizes?.length ? <Select aria-label={`Size sold for ${l.name}`} className="w-28" value={l.size} onChange={(e) => cart.setSize(l.variantId, e.target.value)}><option value="">Choose size</option>{l.sizes.map((x) => <option key={x}>{x}</option>)}</Select> : l.size}</Td><Td>{l.color}</Td>
+                      <Td>{l.sizes?.length ? <Select aria-label={`Size sold for ${l.name}`} className="w-28" value={l.size} onChange={(e) => cart.setSize(l.variantId, e.target.value)}><option value="">Choose size</option>{l.sizes.map((x) => <option key={x}>{x}</option>)}</Select> : l.size}</Td><Td><Select aria-label={`Colour for ${l.name}`} className="w-32 min-h-10" value={l.color} onChange={(e) => cart.setColor(l.variantId, e.target.value)}><option value="">No colour</option>{l.color && !(BASIC_COLOURS as readonly string[]).includes(l.color) && <option>{l.color}</option>}{BASIC_COLOURS.map((x) => <option key={x}>{x}</option>)}</Select></Td>
                       <Td className="text-center"><span className="inline-flex items-center gap-1">
                         <button type="button" aria-label={`Fewer ${l.name}`} onClick={() => cart.setQty(l.variantId, l.qty - 1)} className="flex h-9 w-9 items-center justify-center rounded border-2 border-navy-100 hover:bg-mist"><Minus size={14} /></button>
                         <span className="w-8 text-center" data-testid={`qty-${l.code}`}>{l.qty}</span>
@@ -104,13 +105,13 @@ export function PosDesktop() {
           </div>
         )}
         <div className="flex gap-2">
-          <Button variant="primary" size="lg" className="flex-1" disabled={!s.canPay && !pv?.approvalNeeded} loading={cart.finalize.isPending} onClick={() => s.pay()}>{pv?.approvalNeeded && !cart.cart.approverToken ? 'Get approval (F8)' : 'Pay (F8)'}</Button>
+          <Button variant="primary" size="lg" className="flex-1" disabled={cart.finalize.isPending} loading={cart.finalize.isPending} onClick={() => s.pay()}>{pv?.approvalNeeded && !cart.cart.approverToken ? 'Get approval (F8)' : 'Pay (F8)'}</Button>
         </div>
         <div className="flex items-center justify-between gap-2 text-sm">
           <label className="flex items-center gap-2"><input type="checkbox" checked={autoPrint} onChange={(e) => toggleAuto(e.target.checked)} />Print after payment</label>
           <Button size="sm" disabled={!lastInvoice} onClick={() => lastInvoice && print(lastInvoice, lastInvoice.channel === 'Counter' ? 'a4' : printSize)}>Print last bill</Button>
         </div>
-        <div className="flex gap-2"><Button className="flex-1" disabled={!cart.cart.lines.length} onClick={() => s.holdBill()}>Hold (F4)</Button><Button className="flex-1" onClick={() => cart.clear()}>New bill (F2)</Button></div>
+        <div className="flex gap-2"><Button className="flex-1" disabled={!cart.cart.lines.length} onClick={() => s.holdBill()}>Hold (F4)</Button><Button className="flex-1" onClick={() => s.newBill()}>New bill (F2)</Button></div>
       </aside>
 
       <Modal open={custOpen} onClose={() => setCustOpen(false)} title="Customer"><CustomerLookup onPick={(c) => { cart.setCustomer(c); setCustOpen(false); }} /></Modal>

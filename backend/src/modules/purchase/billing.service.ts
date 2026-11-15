@@ -1,10 +1,11 @@
 import type { ListQuery } from '@thunikart/shared';
-import { Grn, PurchaseBill, PurchaseReturn, Vendor, VendorPayment } from '../../models';
+import { Grn, PurchaseBill, PurchaseReturn, Variant, Vendor, VendorPayment } from '../../models';
 import { AppError, badRequest, businessRule, notFound } from '../../lib/errors';
 import { withTransaction } from '../../lib/transaction';
 import { nextNumber } from '../../lib/numberSeries';
 import { calcPurchaseLine, sumLines, termDays } from '../../lib/purchaseTax';
-import { postStock } from '../../lib/stock';
+import { postStock, totalOnHand } from '../../lib/stock';
+import { allocateProportionally } from '../../lib/money';
 import { escapeRegex, paginate, parseSort } from '../../lib/list';
 import type { AuthUser } from '../../middleware/auth';
 import type { AuditEntry } from '../../middleware/audit';
@@ -22,7 +23,7 @@ export function billDto(b: any, vendorName: string) {
     paymentTerms: b.paymentTerms ?? '', grnIds: (b.grnIds ?? []).map(String), grnNumbers: b.grnNumbers ?? [],
     lines: b.lines.map((l: any) => ({ variantId: String(l.variantId), itemCode: l.itemCode, description: l.description, acceptedQty: l.acceptedQty, unitCost: l.unitCost, discountPercent: l.discountPercent ?? 0, gstRate: l.gstRate ?? null, taxable: l.taxable, cgst: l.cgst, sgst: l.sgst, igst: l.igst, total: l.total })),
     totals: totalsOf(b.totals), freight: b.freight ?? 0, otherCharges: b.otherCharges ?? 0, roundOff: b.roundOff ?? 0, grandTotal: b.grandTotal, gstMode: b.gstMode, supply: b.supply ?? null,
-    inputTaxCredit: b.inputTaxCredit ?? 0, paid: b.paid ?? 0, debitNotes: b.debitNotes ?? 0, outstanding: outstandingOf(b), notes: b.notes ?? '', createdAt: iso(b.createdAt)!,
+    inputTaxCredit: b.inputTaxCredit ?? 0, freightCostAdded: b.freightCostAdded ?? 0, freightNote: b.freightNote ?? '', paid: b.paid ?? 0, debitNotes: b.debitNotes ?? 0, outstanding: outstandingOf(b), notes: b.notes ?? '', createdAt: iso(b.createdAt)!,
   };
 }
 
@@ -81,10 +82,35 @@ export async function createBill(user: AuthUser, input: any, audit: Audit) {
     const totals = sumLines(lines);
     const billDate = new Date(input.billDate);
     const grandTotal = totals.total + (input.freight ?? 0) + (input.otherCharges ?? 0) + (input.roundOff ?? 0);
+
+    // Freight the vendor charges on the same bill is part of what the goods cost. It is shared across the billed lines by value and added to the cost of the
+    // pieces still in stock (pieces already sold keep the cost they were sold at). If a receipt already carried freight, it is not added a second time.
+    const freight = input.freight ?? 0;
+    let freightCostAdded = 0; let freightNote = ''; const freightAllocation: any[] = [];
+    if (freight > 0) {
+      if (input.addFreightToCost === false) freightNote = 'Freight is payable but was not added to item cost, as chosen.';
+      else if (grns.some((g) => (g.freight ?? 0) > 0)) freightNote = 'A receipt on this bill already carried freight in its cost, so the bill freight was not added again.';
+      else {
+        const shares = allocateProportionally(freight, lines.map((l) => l.taxable));
+        const byVariant = new Map<string, { share: number; qty: number }>();
+        lines.forEach((l, i) => { const k = String(l.variantId); const cur = byVariant.get(k) ?? { share: 0, qty: 0 }; cur.share += shares[i]!; cur.qty += l.acceptedQty; byVariant.set(k, cur); });
+        for (const [variantId, { share, qty }] of byVariant) {
+          const v: any = await Variant.findById(variantId, { baseCost: 1 }).session(session).lean();
+          const onHand = await totalOnHand(variantId, session);
+          if (!v || onHand <= 0 || qty <= 0 || share <= 0) continue; // nothing in stock to carry the cost
+          const carried = Math.round((share * Math.min(onHand, qty)) / qty); // the share that belongs to pieces still on hand
+          const costAfter = (v.baseCost ?? 0) + Math.round(carried / onHand);
+          await Variant.updateOne({ _id: variantId }, { $set: { baseCost: costAfter } }, { session });
+          freightCostAdded += carried;
+          freightAllocation.push({ variantId, share, carried, costBefore: v.baseCost ?? 0, costAfter, onHand });
+        }
+        if (freightCostAdded < freight) freightNote = 'Part of the freight belongs to pieces already sold, so it is a cost of those sales and not added to stock cost.';
+      }
+    }
     const [bill] = await PurchaseBill.create([{
       billNumber: await nextNumber('PB', { date: billDate, session }), vendorBillNo: input.vendorBillNo, vendorBillKey: input.vendorBillNo.trim().toLowerCase(), vendorId: input.vendorId,
       billDate, dueDate: new Date(billDate.getTime() + termDays(vendor.paymentTerms) * DAY), paymentTerms: vendor.paymentTerms, grnIds: grns.map((g) => g._id), grnNumbers: grns.map((g) => g.grnNumber),
-      lines, totals, freight: input.freight ?? 0, otherCharges: input.otherCharges ?? 0, roundOff: input.roundOff ?? 0, grandTotal, gstMode: mode.gstMode, supply: mode.supply,
+      lines, totals, freight, freightCostAdded, freightNote, freightAllocation, otherCharges: input.otherCharges ?? 0, roundOff: input.roundOff ?? 0, grandTotal, gstMode: mode.gstMode, supply: mode.supply,
       // Input tax credit is kept only while GST is on. With GST off the full amount is cost and no credit exists.
       inputTaxCredit: mode.gstOn ? totals.tax : 0, notes: input.notes ?? '', createdBy: user.id,
     }], { session });

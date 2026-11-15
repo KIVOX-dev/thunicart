@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError, newIdempotencyKey } from '../api/http';
-import { grnDto, grnList, type Grn } from './types';
+import { grnDto, type Grn } from './types';
+import { toGrn } from './purchase-api';
 import { useScanFeedback } from './use-scan-feedback';
 
 const KEY = ['grns'] as const;
 
 export function useGrns(status: string) {
+  void status; // every receipt in the API is a finished receipt
   return useInfiniteQuery({
     queryKey: [...KEY, 'list', status], initialPageParam: 1,
-    queryFn: async ({ pageParam }) => grnList.parse(await api.get('/purchase/grns', { status, page: pageParam, pageSize: 20 })),
+    queryFn: async ({ pageParam }) => { const r = await api.get<{ items: unknown[]; total: number; nextPage: number | null }>('/grn', { page: pageParam, pageSize: 20 }); return { ...r, items: r.items.map(toGrn) }; },
     getNextPageParam: (l) => l.nextPage ?? undefined,
   });
 }

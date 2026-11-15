@@ -46,7 +46,7 @@ export function refreshSession(): Promise<boolean> {
   return refreshing;
 }
 
-export interface RequestOptions { body?: unknown; query?: Record<string, string | number | boolean | undefined | null>; idempotencyKey?: string; skipRefresh?: boolean; text?: boolean; blob?: boolean }
+export interface RequestOptions { body?: unknown; query?: Record<string, string | number | boolean | undefined | null>; idempotencyKey?: string; ifMatch?: number; skipRefresh?: boolean; text?: boolean; blob?: boolean }
 
 export async function request<T>(method: string, path: string, opts: RequestOptions = {}): Promise<T> {
   const url = new URL(`${BASE}${API_PREFIX}${path}`, window.location.origin);
@@ -56,6 +56,7 @@ export async function request<T>(method: string, path: string, opts: RequestOpti
     if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
     if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
     if (opts.idempotencyKey) headers['Idempotency-Key'] = opts.idempotencyKey;
+    if (opts.ifMatch !== undefined) headers['If-Match'] = String(opts.ifMatch);
     return fetch(url, { method, headers, credentials: 'include', body: opts.body === undefined ? undefined : JSON.stringify(opts.body) });
   };
   let res: Response;
@@ -77,7 +78,7 @@ export async function request<T>(method: string, path: string, opts: RequestOpti
 export const api = {
   get: <T>(path: string, query?: RequestOptions['query']) => request<T>('GET', path, { query }),
   post: <T>(path: string, body?: unknown, o?: RequestOptions) => request<T>('POST', path, { ...o, body: body ?? {} }),
-  put: <T>(path: string, body: unknown) => request<T>('PUT', path, { body }),
+  put: <T>(path: string, body: unknown, o?: Pick<RequestOptions, 'ifMatch'>) => request<T>('PUT', path, { body, ...o }),
   patch: <T>(path: string, body: unknown) => request<T>('PATCH', path, { body }),
   delete: <T>(path: string) => request<T>('DELETE', path),
 };

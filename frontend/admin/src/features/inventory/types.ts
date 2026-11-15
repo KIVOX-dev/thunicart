@@ -16,7 +16,7 @@ export const totalsDto = z.object({ subtotal: z.number().int(), tax: z.number().
 export const poLine = z.object({ id: z.string(), ...lineBase, orderedQty: z.number().int(), receivedQty: z.number().int(), unitCost: z.number().int(), taxRate: z.number().nullable() });
 export const poDto = z.object({
   id: z.string(), number: z.string(), vendorId: z.string(), vendorName: z.string(), status: z.enum(PO_STATUSES), date: z.string(), expectedDate: z.string(), notes: z.string(),
-  lines: z.array(poLine), totals: totalsDto, pieces: z.number().int(), receivedPieces: z.number().int(),
+  lines: z.array(poLine), totals: totalsDto, pieces: z.number().int(), receivedPieces: z.number().int(), version: z.number().int().optional(),
 });
 export type Po = z.infer<typeof poDto>;
 export const poBody = z.object({

@@ -312,9 +312,10 @@ describe('several sizes in one row: the size is chosen at billing, stock is one 
     expect(noSize.status).toBe(400);
     const wrong = await h.post('/pos/bills', { storeId: fx.shop.id, lines: [{ variantId: v.id, qty: 1, size: '3XL' }] });
     expect(wrong.status).toBe(400);
-    const d = await h.post('/pos/bills', { storeId: fx.shop.id, lines: [{ variantId: v.id, qty: 2, size: 'xl' }] });
+    const d = await h.post('/pos/bills', { storeId: fx.shop.id, lines: [{ variantId: v.id, qty: 2, size: 'xl', color: 'Blue' }] });
     expect(d.status).toBe(201);
     expect(d.body.lines[0].size).toBe('XL');
+    expect(d.body.lines[0].description).toMatch(/XL Blue$/);
     const r = await fin(d.body.id, [{ mode: 'cash', amount: d.body.grandTotal }]);
     expect(r.status).toBe(200);
     expect(r.body.lines[0].size).toBe('XL');

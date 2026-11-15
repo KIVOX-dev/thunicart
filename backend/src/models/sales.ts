@@ -71,3 +71,19 @@ export const SalesReturn = defineModel('SalesReturn', 'sales_returns', {
   isCancellation: { type: Boolean, default: false },
   createdBy: { ...oid('User') },
 }, [[{ creditNoteNumber: 1 }, { unique: true }], [{ invoiceId: 1 }], [{ createdAt: -1 }]], { minimize: false });
+
+/** A credit given to a customer without returning goods (a price correction, a late discount, goodwill). It takes a credit note number from the same series as return credit notes. */
+export const CreditMemo = defineModel('CreditMemo', 'credit_memos', {
+  creditNoteNumber: { type: String, required: true },
+  customerId: { ...oid('Customer') },
+  customer: { type: Object, default: {} },
+  invoiceId: { ...oid('SalesBill') },
+  invoiceNumber: String,
+  reason: String, note: String,
+  gstMode: { type: String, default: 'off' },
+  gstRate: { type: Number, default: null },
+  amount: money, taxable: money, cgst: money, sgst: money, igst: money,
+  settle: { type: String, enum: ['wallet', 'refund', 'reduce_due'], required: true },
+  refundMode: String,
+  createdBy: { ...oid('User') },
+}, [[{ creditNoteNumber: 1 }, { unique: true }], [{ customerId: 1, createdAt: -1 }], [{ invoiceId: 1 }], [{ createdAt: -1 }]], { minimize: false });

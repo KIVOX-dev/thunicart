@@ -2,6 +2,7 @@ import type { ListQuery } from '@thunikart/shared';
 import { Grn, PurchaseOrder, Variant } from '../../models';
 import { badRequest, businessRule, forbidden, notFound } from '../../lib/errors';
 import { withTransaction } from '../../lib/transaction';
+import { nextBatchNumber, noteBatchRef, prepareBatchSeries } from '../../lib/batchNumber';
 import { nextNumber } from '../../lib/numberSeries';
 import { allocateProportionally, divRoundHalfUp } from '../../lib/money';
 import { sumLines } from '../../lib/purchaseTax';
@@ -52,6 +53,7 @@ export async function listGrns(q: ListQuery & { vendorId?: string; grnStatus?: s
  * GRN number, GRN document, GRN ledger rows, balances, weighted average cost, bin, and the PO update all save together or not at all.
  */
 export async function createGrn(user: AuthUser, input: any, audit: Audit) {
+  await prepareBatchSeries();
   const id = await withTransaction(async (session) => {
     const po: any = input.poId ? await PurchaseOrder.findById(input.poId).session(session) : null;
     if (input.poId) {
@@ -98,11 +100,14 @@ export async function createGrn(user: AuthUser, input: any, audit: Audit) {
     // Freight (ex GST) is shared across the accepted lines by value and becomes part of the landed cost.
     const share = allocateProportionally(input.freight ?? 0, built.map((b) => b.taxable));
     const grnNumber = await nextNumber('GRN', { date, session });
+    // Every receipt gets a batch number automatically for the lines that do not carry one. A number typed by the person is kept and the series moves past it.
+    for (const b of built) await noteBatchRef(b.l.batchRef);
+    const autoBatch = built.some((b) => !b.l.batchRef) ? await nextBatchNumber({ date, session }) : null;
     const lines = built.map((b, i) => ({
       poLineId: b.poLine?._id, variantId: b.l.variantId, itemCode: b.c.v.itemCode, description: describe(b.c), orderedQty: b.poLine ? b.poLine.qty : null,
       receivedQty: b.l.receivedQty, rejectedQty: b.l.rejectedQty, acceptedQty: b.accepted, qty: b.accepted, unitCost: b.unitCost, discountPercent: b.discountPercent, gstRate: b.gstRate,
       gross: b.gross, discount: b.discount, taxable: b.taxable, cgst: b.cgst, sgst: b.sgst, igst: b.igst, total: b.total,
-      landedUnitCost: b.accepted > 0 ? divRoundHalfUp(b.taxable + share[i]!, b.accepted) : b.unitCost, batchRef: b.l.batchRef, binLocation: b.l.binLocation,
+      landedUnitCost: b.accepted > 0 ? divRoundHalfUp(b.taxable + share[i]!, b.accepted) : b.unitCost, batchRef: b.l.batchRef ?? autoBatch ?? undefined, binLocation: b.l.binLocation,
     }));
     const [grn] = await Grn.create([{
       grnNumber, status: 'open', poId: po?._id, vendorId, storeId, vendorInvoiceNo: input.vendorInvoiceNo, vendorInvoiceDate: new Date(input.vendorInvoiceDate), date, lines,

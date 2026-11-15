@@ -13,6 +13,7 @@ import { uploadRoutes } from './modules/uploads/uploads.routes';
 import { purchaseRoutes } from './modules/purchase/purchase.routes';
 import { stockRoutes } from './modules/stock/stock.routes';
 import { salesRoutes } from './modules/sales/sales.routes';
+import { creditMemoRoutes } from './modules/sales/creditMemo.routes';
 import { reportsRoutes } from './modules/reports/reports.routes';
 import { storeRoutes } from './modules/store/store.routes';
 import { adminRoutes } from './modules/admin/admin.routes';
@@ -34,6 +35,7 @@ export const allRoutes = [
   ...purchaseRoutes,
   ...stockRoutes,
   ...salesRoutes,
+  ...creditMemoRoutes,
   ...reportsRoutes,
   ...storeRoutes,
   ...adminRoutes,

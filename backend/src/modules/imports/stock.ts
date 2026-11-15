@@ -153,7 +153,7 @@ export async function planStock(rows: StockRow[], post: boolean): Promise<Plan> 
 
 // ---------- applying (inside a transaction) ----------
 export interface ApplyCtx {
-  batchId: string; userId: string; session: ClientSession; post: boolean; storeId?: string; asOf: Date;
+  batchId: string; userId: string; session: ClientSession; post: boolean; storeId?: string; asOf: Date; autoBatchRef?: string;
   prepared: Prepared;
 }
 
@@ -187,9 +187,11 @@ export async function applyStockUnits(units: Unit[], ctx: ApplyCtx): Promise<App
     });
   };
 
+  /** The batch number of a row: the one on the sheet, or the automatic one for this import when the row brings in stock. */
+  const refOf = (r: StockRow) => r.batchRef || (ctx.post && r.qty > 0 ? ctx.autoBatchRef : undefined) || undefined;
   const postOpening = async (variantId: string, r: StockRow) => {
     if (!ctx.post || r.qty <= 0 || !ctx.storeId) return;
-    const [led] = await StockLedger.create([{ variantId, storeId: ctx.storeId, type: 'OPENING', qty: r.qty, unitCost: r.baseCost, docType: 'IMPORT', docNumber: ctx.batchId, userId: ctx.userId, at: ctx.asOf, note: r.batchRef ? `Batch ${r.batchRef}` : undefined }], s);
+    const [led] = await StockLedger.create([{ variantId, storeId: ctx.storeId, type: 'OPENING', qty: r.qty, unitCost: r.baseCost, docType: 'IMPORT', docNumber: ctx.batchId, userId: ctx.userId, at: ctx.asOf, note: refOf(r) ? `Batch ${refOf(r)}` : undefined }], s);
     effects.push({ batchId: ctx.batchId, coll: 'stock_ledger', docId: String(led!._id), action: 'created' });
     const bal: any = await StockBalance.findOneAndUpdate({ variantId, storeId: ctx.storeId }, { $inc: { onHand: r.qty } }, { upsert: true, new: true, includeResultMetadata: true, ...s });
     if (!bal.lastErrorObject?.updatedExisting) effects.push({ batchId: ctx.batchId, coll: 'stock_balances', docId: String(bal.value._id), action: 'created' });
@@ -205,7 +207,7 @@ export async function applyStockUnits(units: Unit[], ctx: ApplyCtx): Promise<App
       const set: any = { mrp: r.mrp, sellingPrice: r.selling, priceMissing: r.priceMissing };
       if (r.size) set.size = r.size;
       if (r.color) set.color = r.color;
-      if (r.batchRef) set.batchRef = r.batchRef;
+      if (refOf(r)) set.batchRef = refOf(r);
       if (r.bin) set.binLocation = r.bin;
       if (!u.hasHistory) set.baseCost = r.baseCost; // a cost with stock history is a weighted average: never overwritten by an import
       await Variant.updateOne({ _id: ex._id }, { $set: set }, s);
@@ -245,7 +247,7 @@ export async function applyStockUnits(units: Unit[], ctx: ApplyCtx): Promise<App
     }
     const docs = u.rows.map((r) => ({
       itemId, itemCode: r.code, sku: r.code, barcode: r.barcode || r.code, size: r.size || undefined, color: r.color || undefined, mrp: r.mrp, sellingPrice: r.selling,
-      offerPrice: null, baseCost: r.baseCost, reorderLevel: r.reorderLevel, binLocation: r.bin || undefined, batchRef: r.batchRef || undefined, active: true,
+      offerPrice: null, baseCost: r.baseCost, reorderLevel: r.reorderLevel, binLocation: r.bin || undefined, batchRef: refOf(r), active: true,
       priceMissing: r.priceMissing, importBatchId: ctx.batchId,
     }));
     const created: any[] = await Variant.insertMany(docs, s);

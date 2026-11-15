@@ -70,6 +70,7 @@ export const PurchaseBill = defineModel('PurchaseBill', 'purchase_bills', {
   lines: [{ variantId: { ...oid('Variant') }, itemCode: String, description: String, acceptedQty: Number, ...taxLine }],
   totals,
   freight: { ...paise }, otherCharges: { ...paise }, roundOff: { type: Number, default: 0 }, grandTotal: { ...paise },
+  freightCostAdded: { ...paise }, freightNote: { type: String, default: '' }, freightAllocation: { type: [Object], default: [] },
   gstMode: { type: String, enum: ['on', 'off'], default: 'off' },
   supply: { type: String, enum: ['intra', 'inter'], default: null },
   inputTaxCredit: { ...paise },

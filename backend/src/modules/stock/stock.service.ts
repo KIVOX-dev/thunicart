@@ -1,3 +1,4 @@
+import { nextBatchNumber, prepareBatchSeries } from '../../lib/batchNumber';
 import argon2 from 'argon2';
 import mongoose from 'mongoose';
 import type { ListQuery } from '@thunikart/shared';
@@ -70,6 +71,7 @@ export async function listLedger(q: ListQuery & { variantId?: string; storeId?: 
 
 // ---------- adjustments ----------
 export async function createAdjustment(user: AuthUser, input: any, audit: Audit) {
+  await prepareBatchSeries();
   const out = await withTransaction(async (session) => {
     const store: any = await Store.findById(input.storeId).session(session).lean();
     if (!store || !store.active) throw badRequest('Store not found', [{ path: 'storeId', message: 'Choose an active store' }]);
@@ -78,11 +80,13 @@ export async function createAdjustment(user: AuthUser, input: any, audit: Audit)
     if (new Set(ids).size !== ids.length) throw badRequest('A variant is listed twice', [{ path: 'lines', message: 'Combine duplicate variants into one line' }]);
     const vs: any[] = await Variant.find({ _id: { $in: ids } }).session(session).lean(); const vm = new Map(vs.map((v) => [String(v._id), v]));
     const docNumber = await nextNumber('ADJ', { session });
+    const autoBatch = input.lines.some((l: any) => l.qty > 0) ? await nextBatchNumber({ session }) : null; // stock added gets a batch number
     const lines = [];
     for (const [i, l] of input.lines.entries()) {
       const v = vm.get(l.variantId);
       if (!v) throw badRequest('Variant not found', [{ path: `lines.${i}.variantId`, message: 'Choose an existing variant' }]);
-      const r = await postStock({ variantId: l.variantId, storeId: input.storeId, type: 'ADJUSTMENT', qty: l.qty, unitCost: v.baseCost ?? 0, docType: 'ADJUSTMENT', docNumber, userId: user.id, note: [input.reason, l.note].filter(Boolean).join(': '), allowNegative: settings.allowNegativeStock }, session);
+      const r = await postStock({ variantId: l.variantId, storeId: input.storeId, type: 'ADJUSTMENT', qty: l.qty, unitCost: v.baseCost ?? 0, docType: 'ADJUSTMENT', docNumber, userId: user.id, note: [input.reason, l.note, l.qty > 0 && autoBatch ? `Batch ${autoBatch}` : ''].filter(Boolean).join(': '), allowNegative: settings.allowNegativeStock }, session);
+      if (l.qty > 0 && autoBatch) await Variant.updateOne({ _id: l.variantId }, { $set: { batchRef: autoBatch } }, { session });
       lines.push({ variantId: l.variantId, itemCode: v.itemCode, qty: l.qty, unitCost: v.baseCost ?? 0, onHandAfter: r.onHandAfter });
     }
     return { docNumber, storeId: input.storeId, reason: input.reason, lines };

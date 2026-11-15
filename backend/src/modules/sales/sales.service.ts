@@ -70,7 +70,7 @@ async function prepareLines(lines: any[], date: Date, gstOn: boolean, session?: 
     let rate: number | null = null;
     if (item?.hsn) rate = (await resolveGstRate({ hsn: item.hsn, unitPricePaise: unitPrice, date, override: item.gstRateOverride }, session))?.rate ?? null;
     if (gstOn && rate === null) throw badRequest(`GST rate is not known for ${v.itemCode}`, [{ path: `lines.${i}.variantId`, message: item?.hsn ? `No GST rate rule covers HSN ${item.hsn}` : 'The item has no HSN' }]);
-    out.push({ variantId: l.variantId, itemCode: v.itemCode, description: [item?.printName || item?.name, size].filter(Boolean).join(' '), hsn: item?.hsn ?? '', size, qty: l.qty, mrp: v.mrp ?? 0, unitPrice, lineDiscount: discountToPaise(l.discount, l.qty * unitPrice), discountInput: l.discount ?? null, rate, unitCostAtSale: v.baseCost ?? 0 });
+    out.push({ variantId: l.variantId, itemCode: v.itemCode, description: [item?.printName || item?.name, size, typeof l.color === 'string' ? l.color.trim() : ''].filter(Boolean).join(' '), hsn: item?.hsn ?? '', size, qty: l.qty, mrp: v.mrp ?? 0, unitPrice, lineDiscount: discountToPaise(l.discount, l.qty * unitPrice), discountInput: l.discount ?? null, rate, unitCostAtSale: v.baseCost ?? 0 });
   }
   return out;
 }

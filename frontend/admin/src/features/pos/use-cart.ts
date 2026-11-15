@@ -42,7 +42,7 @@ export function apiBill(c: CartState, storeId: string) {
   const walk = w && (w.name.trim() || w.mobile) ? { name: w.name.trim() || 'Walk-in Customer', mobile: w.mobile } : undefined;
   return {
     storeId,
-    lines: c.lines.map((l) => ({ variantId: l.variantId, qty: l.qty, ...(l.sizes?.length ? { size: l.size } : {}), ...(l.discValue ? { discount: discIn(l.discType, l.discValue) } : {}) })),
+    lines: c.lines.map((l) => ({ variantId: l.variantId, qty: l.qty, ...(l.sizes?.length ? { size: l.size } : {}), ...(l.color ? { color: l.color } : {}), ...(l.discValue ? { discount: discIn(l.discType, l.discValue) } : {}) })),
     ...(c.billDiscValue ? { billDiscount: discIn(c.billDiscType, c.billDiscValue) } : {}),
     ...(c.customer ? { customerId: c.customer.id } : walk ? { customer: walk } : {}),
   };
@@ -154,6 +154,7 @@ export function useCart(storageKey: string = STORE_KEY) {
     setLineDiscount: (variantId: string, discType: 'amount' | 'percent', discValue: string) => patch((c) => ({ ...c, lines: c.lines.map((l) => (l.variantId === variantId ? { ...l, discType, discValue } : l)), approverToken: null })),
     setBillDiscount: (billDiscType: 'amount' | 'percent', billDiscValue: string) => patch((c) => ({ ...c, billDiscType, billDiscValue, approverToken: null })),
     setSize: (variantId: string, size: string) => patch((c) => ({ ...c, lines: c.lines.map((l) => (l.variantId === variantId ? { ...l, size } : l)) })),
+    setColor: (variantId: string, color: string) => patch((c) => ({ ...c, lines: c.lines.map((l) => (l.variantId === variantId ? { ...l, color } : l)) })),
     setWalkIn: (walkIn: { name: string; mobile: string }) => patch((c) => ({ ...c, walkIn })),
     setCustomer: (customer: Customer | null) => patch((c) => ({ ...c, customer })),
     setApprover: (approverToken: string | null) => patch((c) => ({ ...c, approverToken })),

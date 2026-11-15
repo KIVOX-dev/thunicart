@@ -6,7 +6,7 @@ export { Vendor, Customer, LoyaltyLedger, WalletLedger } from './parties';
 export { ImportBatch, ImportEffect, ReviewItem, ImportMapping, LabelTemplate } from './imports';
 export { PurchaseOrder, Grn, PurchaseBill, PurchaseReturn, VendorPayment } from './purchase';
 export { AppSettings, StockAudit, StockTransfer, TransferDiscrepancy } from './stockops';
-export { SalesBill, Shift, SalesReturn } from './sales';
+export { SalesBill, Shift, SalesReturn, CreditMemo } from './sales';
 export { ExpenseCategory, Expense, Receipt, PaymentVoucher, ExportJob } from './accounts';
 export { CustomerOtp, StoreSession, Address, Wishlist, Cart, Coupon, CouponUse, StoreSettings, Order, WebhookEvent, Banner, CmsPage, BlogPost } from './store';
 export { BackupRun, JobRun } from './ops';
