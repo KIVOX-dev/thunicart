@@ -53,13 +53,13 @@ const refresh = (qc: ReturnType<typeof useQueryClient>) => Promise.all(['bills',
 
 export function useBillForm(onDone: (b: Bill) => void) {
   const qc = useQueryClient();
-  const form = useForm<z.input<typeof billBody>>({ resolver: zodResolver(billBody), defaultValues: { grnId: '', vendorBillNo: '', date: new Date().toISOString().slice(0, 10), dueDate: new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10) } });
+  const form = useForm<z.input<typeof billBody>>({ resolver: zodResolver(billBody), defaultValues: { grnId: '', vendorBillNo: '', freight: '', addFreightToCost: true, date: new Date().toISOString().slice(0, 10), dueDate: new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10) } });
   const [banner, setBanner] = useState<Banner>(null);
   const [key] = useState(newIdempotencyKey);
   const m = useMutation({
     mutationFn: async (v: z.output<typeof billBody>) => {
       const g = await api.get<{ vendorId: string }>(`/grn/${v.grnId}`);
-      return toBill(await api.post('/purchase-bills', { vendorId: g.vendorId, vendorBillNo: v.vendorBillNo, billDate: new Date(`${v.date}T00:00:00.000Z`).toISOString(), grnIds: [v.grnId] }, { idempotencyKey: key }));
+      return toBill(await api.post('/purchase-bills', { vendorId: g.vendorId, vendorBillNo: v.vendorBillNo, billDate: new Date(`${v.date}T00:00:00.000Z`).toISOString(), grnIds: [v.grnId], freight: rupeesToPaise(v.freight || '0'), addFreightToCost: v.addFreightToCost }, { idempotencyKey: key }));
     },
     onSuccess: () => refresh(qc),
   });

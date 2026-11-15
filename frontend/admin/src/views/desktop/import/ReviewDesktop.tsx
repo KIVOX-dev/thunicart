@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { formatPaise } from '@thunikart/shared';
 import { Badge, Button, EmptyState, Input, ListSkeleton, Modal, Select, Table, TBody, Td, Th, THead, Tabs, Tr, useToast } from '@thunikart/ui';
 import { ErrorBanner, QueryError } from '../../../components/ErrorBanner';
@@ -79,7 +79,9 @@ function Row({ r }: { r: ReviewRow }) {
 }
 
 function QueueTab() {
-  const [issue, setIssue] = useState('');
+  const [sp, setSp] = useSearchParams();
+  const issue = sp.get('issue') ?? '';
+  const setIssue = (v: string) => setSp((p) => { const n = new URLSearchParams(p); if (v) n.set('issue', v); else n.delete('issue'); return n; }, { replace: true });
   const [category, setCategory] = useState('');
   const [q, setQ] = useState('');
   const [sizeModal, setSizeModal] = useState(false);
@@ -135,13 +137,17 @@ function QualityTab() {
   if (q.isError) return <QueryError error={q.error} onRetry={() => q.refetch()} />;
   const d = q.data;
   if (d.total === 0) return <EmptyState title="No items yet" body="Import stock to see the data quality report." />;
-  const clean = d.total - d.byCategory.reduce((a, c) => a + c.issues, 0);
+  const clean = Math.max(0, d.total - d.flagged);
   return (
     <div className="flex flex-col gap-6">
       <dl className="grid grid-cols-5 gap-3">
-        <div className="rounded border-2 border-navy-100 p-3"><dt className="text-xs text-muted">Items</dt><dd className="mt-1 text-lg font-semibold">{d.total.toLocaleString('en-IN')}</dd></div>
-        <div className="rounded border-2 border-navy-100 p-3"><dt className="text-xs text-muted">Clean items</dt><dd className="mt-1 text-lg font-semibold">{clean.toLocaleString('en-IN')}</dd></div>
-        {Object.entries(d.byIssue).map(([k, v]) => <div key={k} className="rounded border border-warning bg-warning-bg p-3"><dt className="text-xs">{label(k)}</dt><dd className="mt-1 text-lg font-semibold">{v.toLocaleString('en-IN')}</dd></div>)}
+        <div className="rounded border-2 border-navy-100 p-3"><dt className="text-xs text-muted">Items and sizes</dt><dd className="mt-1 text-lg font-semibold">{d.total.toLocaleString('en-IN')}</dd></div>
+        <div className="rounded border-2 border-navy-100 p-3"><dt className="text-xs text-muted">Without problems</dt><dd className="mt-1 text-lg font-semibold">{clean.toLocaleString('en-IN')}</dd></div>
+        {Object.entries(d.byIssue).map(([k, v]) => (
+          <Link key={k} to={`/import/review?tab=queue&issue=${k}`} aria-label={`Show the ${v} rows with: ${label(k)}`} className="rounded border border-warning bg-warning-bg p-3 transition hover:shadow-soft focus-visible:outline focus-visible:outline-2">
+            <dt className="text-xs">{label(k)}</dt><dd className="mt-1 text-lg font-semibold">{v.toLocaleString('en-IN')}</dd><span className="mt-1 block text-xs text-muted">Show these rows</span>
+          </Link>
+        ))}
       </dl>
       <Table caption="Data quality by category">
         <THead><Tr><Th>Category</Th><Th className="text-right">Items</Th><Th className="text-right">With problems</Th><Th><span className="sr-only">Actions</span></Th></Tr></THead>
@@ -156,7 +162,9 @@ function QualityTab() {
 }
 
 export function ReviewDesktop() {
-  const [tab, setTab] = useState('queue');
+  const [sp, setSp] = useSearchParams();
+  const tab = sp.get('tab') ?? 'queue';
+  const setTab = (t: string) => setSp({ tab: t }, { replace: true });
   return (
     <div>
       <PageHeader title="Review queue" description="Fix items that came in with missing or odd data." actions={<Link to="/import"><Button>Import stock</Button></Link>} />

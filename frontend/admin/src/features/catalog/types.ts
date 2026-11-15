@@ -220,4 +220,4 @@ export const reviewRow = z.object({
   sizes: z.array(z.string()).default([]),
 });
 export type ReviewRow = z.infer<typeof reviewRow>;
-export const dataQuality = z.object({ total: z.number().int(), byIssue: z.record(z.string(), z.number().int()), byCategory: z.array(z.object({ category: z.string(), items: z.number().int(), issues: z.number().int() })) });
+export const dataQuality = z.object({ total: z.number().int(), flagged: z.number().int(), byIssue: z.record(z.string(), z.number().int()), byCategory: z.array(z.object({ category: z.string(), items: z.number().int(), issues: z.number().int() })) });

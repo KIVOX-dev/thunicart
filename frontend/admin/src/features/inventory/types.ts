@@ -42,7 +42,13 @@ export const billDto = z.object({
   totals: totalsDto, paid: z.number().int(), balance: z.number().int(), status: z.enum(['unpaid', 'part-paid', 'paid']),
 });
 export type Bill = z.infer<typeof billDto>;
-export const billBody = z.object({ grnId: z.string().min(1, 'Choose a receipt'), vendorBillNo: z.string().trim().min(1, 'Vendor bill number is required').max(40), date: z.string().min(1, 'Bill date is required'), dueDate: z.string().min(1, 'Due date is required') });
+export const billBody = z.object({
+  grnId: z.string().min(1, 'Choose a receipt'), vendorBillNo: z.string().trim().min(1, 'Vendor bill number is required').max(40), date: z.string().min(1, 'Bill date is required'), dueDate: z.string().min(1, 'Due date is required'),
+  /** Freight the vendor charges on this bill, in rupees. */
+  freight: z.string().regex(/^\d*(\.\d{1,2})?$/, 'Enter an amount like 500 or 500.50').default(''),
+  /** Add the freight to the cost of the goods in stock. */
+  addFreightToCost: z.boolean().default(true),
+});
 
 export const returnDto = z.object({
   id: z.string(), number: z.string(), vendorId: z.string(), vendorName: z.string(), reason: z.string(), date: z.string(), totals: totalsDto,

@@ -124,7 +124,8 @@ export async function dataQuality(batchId?: string) {
   const hsns: any[] = await Item.aggregate([{ $match: { hsn: { $nin: [null, ''] } } }, { $group: { _id: { $substrBytes: ['$hsn', 0, 4] }, items: { $sum: 1 } } }]);
   const rated = new Set<string>((await GstRate.distinct('hsnCode')).map((c: string) => c.slice(0, 4)));
   const hsnWithoutRate = hsns.filter((h) => checkHsn(String(h._id).padEnd(4, '0')).ok && !rated.has(String(h._id))).map((h) => ({ hsn: String(h._id), items: h.items })).sort((a, b) => b.items - a.items);
-  return { generatedAt: new Date().toISOString(), summary, rows: rows.map(reviewDto), hsnWithoutRate };
+  const [totalVariants, flagged] = await Promise.all([Variant.countDocuments(), ReviewItem.countDocuments(f)]);
+  return { generatedAt: new Date().toISOString(), summary, rows: rows.map(reviewDto), hsnWithoutRate, totalVariants, flagged };
 }
 
 export function dataQualityCsv(rep: Awaited<ReturnType<typeof dataQuality>>) {

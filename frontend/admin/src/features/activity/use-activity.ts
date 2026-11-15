@@ -10,7 +10,7 @@ export function useActivity(filters: { entity?: string }) {
   return useInfiniteQuery({
     queryKey: ['activity', filters],
     initialPageParam: 1,
-    queryFn: async ({ pageParam }) => page.parse(await api.get('/activity', { page: pageParam, pageSize: 20, entity: filters.entity })),
+    queryFn: async ({ pageParam }) => page.parse(await api.get('/activity-log', { page: pageParam, pageSize: 20, entity: filters.entity })),
     getNextPageParam: (last) => last.nextPage ?? undefined,
   });
 }

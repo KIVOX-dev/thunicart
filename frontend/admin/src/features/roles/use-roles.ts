@@ -13,10 +13,10 @@ export type Catalog = z.infer<typeof permissionCatalog>;
 const KEY = ['roles'] as const;
 
 export function useRoles() {
-  return useQuery({ queryKey: KEY, queryFn: async () => (await api.get<unknown[]>('/roles')).map((r) => roleDto.parse(r)) });
+  return useQuery({ queryKey: KEY, queryFn: async () => (await api.get<{ items: unknown[] }>('/roles')).items.map((r) => roleDto.parse(r)) });
 }
 export function usePermissionCatalog() {
-  return useQuery({ queryKey: ['permission-catalog'], staleTime: Infinity, queryFn: async () => permissionCatalog.parse(await api.get('/roles/permission-catalog')) });
+  return useQuery({ queryKey: ['permission-catalog'], staleTime: Infinity, queryFn: async () => permissionCatalog.parse(await api.get('/permissions')) });
 }
 
 export const ACTION_LABELS: Record<string, string> = { view: 'View', create: 'Create', edit: 'Edit', delete: 'Delete', approve: 'Approve', export: 'Export' };

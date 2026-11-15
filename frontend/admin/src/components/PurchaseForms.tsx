@@ -1,5 +1,5 @@
 import { formatPaise } from '@thunikart/shared';
-import { Button, Field, Input, ListSkeleton, Select } from '@thunikart/ui';
+import { Button, Checkbox, Field, Input, ListSkeleton, Select } from '@thunikart/ui';
 import { useVendors } from '../features/catalog/use-parties';
 import { PAY_MODES, RETURN_REASONS } from '../features/inventory/types';
 import { useGrns } from '../features/inventory/use-grn';
@@ -23,6 +23,9 @@ export function BillForm({ onDone }: { onDone: () => void }) {
       <Field label="Vendor bill number" required error={e.vendorBillNo?.message}>{(p) => <Input {...p} {...register('vendorBillNo')} />}</Field>
       <Field label="Bill date" required error={e.date?.message}>{(p) => <Input {...p} type="date" {...register('date')} />}</Field>
       <Field label="Due date" required error={e.dueDate?.message}>{(p) => <Input {...p} type="date" {...register('dueDate')} />}</Field>
+      <Field label="Freight on this bill (₹)" hint="Leave empty when the vendor charges no freight" error={e.freight?.message}>{(p) => <Input {...p} inputMode="decimal" placeholder="0.00" {...register('freight')} />}</Field>
+      <Checkbox label="Add the freight to the cost of these goods" {...register('addFreightToCost')} />
+      <p className="-mt-2 text-xs text-muted">The freight is shared across the items on the bill by value and added to the cost of the pieces still in stock. Turn this off if the freight was already entered when the goods were received.</p>
       {free.length === 0 && <p className="text-xs text-muted">All finished receipts already have a bill.</p>}
       <Button type="submit" variant="primary" loading={saving}>Add bill</Button>
     </form>

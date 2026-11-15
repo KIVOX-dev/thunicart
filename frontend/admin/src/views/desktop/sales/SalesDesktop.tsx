@@ -4,6 +4,7 @@ import { formatDate, formatPaise } from '@thunikart/shared';
 import { Badge, Button, EmptyState, Input, ListSkeleton, Table, TBody, Td, Th, THead, Tabs, Tr } from '@thunikart/ui';
 import { QueryError } from '../../../components/ErrorBanner';
 import { PageHeader } from '../../../components/PageHeader';
+import { CreditMemoPanel } from '../../../components/pos/CreditMemoPanel';
 import { HeldPanel } from '../../../components/pos/HeldPanel';
 import { InvoiceViewer } from '../../../components/pos/InvoiceViewer';
 import { ReturnPanel } from '../../../components/pos/ReturnPanel';
@@ -56,7 +57,7 @@ export function SalesDesktop() {
       <PageHeader title="Bills and returns" description="Reprint bills, take returns and exchanges, resume held bills and close the day." actions={<>{can('pos.view') && <Link to="/billing"><Button variant="primary">New bill</Button></Link>}{can('pos.create') && <Link to="/billing/b2b"><Button>Counter invoice (B2B)</Button></Link>}</>} />
       <Tabs value={sp.get('tab') ?? 'bills'} onChange={(t) => setSp({ tab: t }, { replace: true })} items={[
         { key: 'bills', label: 'Bills', panel: <BillsTab /> }, { key: 'returns', label: 'Returns and exchanges', panel: <ReturnPanel /> },
-        { key: 'credit', label: 'Credit notes', panel: <CreditNotesTab /> }, { key: 'held', label: 'Held bills', panel: <HeldPanel /> }, { key: 'day', label: 'Day close', panel: <ShiftPanel /> },
+        { key: 'credit', label: 'Credit notes', panel: <CreditNotesTab /> }, { key: 'memo', label: 'Credit memos', panel: <CreditMemoPanel /> }, { key: 'held', label: 'Held bills', panel: <HeldPanel /> }, { key: 'day', label: 'Day close', panel: <ShiftPanel /> },
       ]} />
     </div>
   );

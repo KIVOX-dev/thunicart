@@ -7,16 +7,23 @@ export interface LedgerFilters { q: string; storeId: string; type: string; from:
 export const EMPTY_LEDGER: LedgerFilters = { q: '', storeId: '', type: '', from: '', to: '' };
 
 interface ApiLedger { id: string; at: string; type: string; variantId: string; itemCode: string | null; storeId: string; storeName: string | null; qty: number; docNumber: string | null; note: string | null }
+const LEDGER_PAGE_SIZE = 30;
+async function fetchLedgerPage(f: LedgerFilters, page: number) {
+    const r = await api.get<{ items: ApiLedger[]; total: number; nextPage: number | null }>('/stock/ledger', { q: f.q || undefined, storeId: f.storeId || undefined, type: f.type || undefined, from: f.from || undefined, to: f.to || undefined, page, pageSize: 30 });
+      // The API has no running balance and no item name on a movement, so those columns show the movement itself.
+      return ledgerList.parse({ ...r, items: r.items.map((x) => ({ id: x.id, at: x.at, variantId: x.variantId, itemId: x.variantId, code: x.itemCode ?? '', name: x.itemCode ?? '', size: '', storeId: x.storeId, storeName: x.storeName ?? '', type: x.type, qty: x.qty, balance: 0, ref: x.docNumber ?? '', note: x.note ?? '' })) });
+}
 export function useLedger(f: LedgerFilters) {
   return useInfiniteQuery({
     queryKey: ['ledger', f], initialPageParam: 1,
-    queryFn: async ({ pageParam }) => {
-      const r = await api.get<{ items: ApiLedger[]; total: number; nextPage: number | null }>('/stock/ledger', { q: f.q || undefined, storeId: f.storeId || undefined, type: f.type || undefined, from: f.from || undefined, to: f.to || undefined, page: pageParam, pageSize: 30 });
-      // The API has no running balance and no item name on a movement, so those columns show the movement itself.
-      return ledgerList.parse({ ...r, items: r.items.map((x) => ({ id: x.id, at: x.at, variantId: x.variantId, itemId: x.variantId, code: x.itemCode ?? '', name: x.itemCode ?? '', size: '', storeId: x.storeId, storeName: x.storeName ?? '', type: x.type, qty: x.qty, balance: 0, ref: x.docNumber ?? '', note: x.note ?? '' })) });
-    },
+    queryFn: ({ pageParam }) => fetchLedgerPage(f, pageParam),
     getNextPageParam: (l) => l.nextPage ?? undefined,
   });
+}
+/** The same list one numbered page at a time, for the desktop screen. */
+export const LEDGER_PAGE = LEDGER_PAGE_SIZE;
+export function useLedgerPage(f: LedgerFilters, page: number) {
+  return useQuery({ queryKey: ['ledger', 'page', f, page], placeholderData: (prev) => prev, queryFn: () => fetchLedgerPage(f, page) });
 }
 export interface StockRow { variantId: string; itemId: string; itemCode: string; name: string; size: string | null; storeId: string | null; storeName: string | null; onHand: number; reserved: number; available: number; reorderLevel: number; stockStatus: 'In Stock' | 'Low Stock' | 'Out of Stock' }
 export interface StockFilters { q: string; storeId: string; stockStatus: string }

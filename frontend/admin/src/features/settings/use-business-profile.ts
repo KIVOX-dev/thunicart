@@ -29,7 +29,7 @@ export const GST_GO_LIVE_CHANGES = [
 ];
 
 export function useBusinessProfile() {
-  return useQuery({ queryKey: PROFILE_KEY, queryFn: async () => businessProfileDto.parse(await api.get('/settings/business-profile')) });
+  return useQuery({ queryKey: PROFILE_KEY, queryFn: async () => businessProfileDto.parse(await api.get('/settings/business')) });
 }
 
 type Pending = { kind: 'golive' | 'clear'; body: z.input<typeof businessProfileBody> } | null;
@@ -49,7 +49,7 @@ export function useBusinessProfileForm(profile: BusinessProfile) {
     },
   });
   const save = useMutation({
-    mutationFn: (body: z.input<typeof businessProfileBody>) => api.put('/settings/business-profile', body),
+    mutationFn: (body: z.input<typeof businessProfileBody>) => api.put('/settings/business', body),
     onSuccess: async () => {
       // GST wording and menus follow the API, so refresh the cached status without a page reload.
       await Promise.all([qc.invalidateQueries({ queryKey: PROFILE_KEY }), qc.invalidateQueries({ queryKey: ME_KEY })]);

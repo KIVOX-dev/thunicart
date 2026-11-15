@@ -87,4 +87,6 @@ export const dataQualityResponse = z.object({
   summary: z.record(z.string(), z.number().int()),
   rows: z.array(reviewItemDto),
   hsnWithoutRate: z.array(z.object({ hsn: z.string(), items: z.number().int() })),
+  /** All sizes in stock, and how many of them still have a problem to review, so the report can say how many are clean. */
+  totalVariants: z.number().int(), flagged: z.number().int(),
 });

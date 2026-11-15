@@ -25,10 +25,10 @@ export function useReviewQueue(f: ReviewFilters) {
 }
 export function useDataQuality() {
   return useQuery({ queryKey: ['data-quality'], queryFn: async () => {
-    const r = await api.get<{ summary: Record<string, number>; rows: ApiReview[] }>('/imports/data-quality');
+    const r = await api.get<{ summary: Record<string, number>; rows: ApiReview[]; totalVariants: number; flagged: number }>('/imports/data-quality');
     const byCat = new Map<string, { items: number; issues: number }>();
     for (const x of r.rows) { const c = byCat.get(x.category ?? 'No category') ?? { items: 0, issues: 0 }; c.items += 1; c.issues += x.reasons.length; byCat.set(x.category ?? 'No category', c); }
-    return dataQuality.parse({ total: r.rows.length, byIssue: r.summary, byCategory: [...byCat].map(([category, v]) => ({ category, ...v })) });
+    return dataQuality.parse({ total: r.totalVariants, flagged: r.flagged, byIssue: r.summary, byCategory: [...byCat].map(([category, v]) => ({ category, ...v })) });
   } });
 }
 const refresh = (qc: ReturnType<typeof useQueryClient>) => Promise.all([qc.invalidateQueries({ queryKey: KEY }), qc.invalidateQueries({ queryKey: ['data-quality'] }), qc.invalidateQueries({ queryKey: ['items'] })]);

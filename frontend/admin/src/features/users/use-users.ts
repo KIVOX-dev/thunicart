@@ -49,7 +49,7 @@ export function useEditUserForm(user: User, onDone: () => void) {
   });
   const [banner, setBanner] = useState<Banner>(null);
   const m = useMutation({
-    mutationFn: (v: z.input<typeof editSchema>) => api.patch(`/users/${user.id}`, { ...v, mobile: v.mobile ?? null }),
+    mutationFn: (v: z.input<typeof editSchema>) => api.put(`/users/${user.id}`, { ...v, mobile: v.mobile ?? null }),
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
   });
   const submit = form.handleSubmit(async (v) => {

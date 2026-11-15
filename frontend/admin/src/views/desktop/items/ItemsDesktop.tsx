@@ -3,11 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { formatPaise } from '@thunikart/shared';
 import { Badge, Button, Checkbox, EmptyState, Field, Input, ListSkeleton, Modal, Select, Table, TBody, Td, Th, THead, Tr, useToast } from '@thunikart/ui';
 import { QueryError } from '../../../components/ErrorBanner';
+import { Pager } from '../../../components/Pager';
 import { PageHeader } from '../../../components/PageHeader';
 import { statusTone } from '../../../components/StockCard';
 import { useCan } from '../../../features/auth/permissions';
 import { ISSUE_LABELS, STOCK_STATUSES } from '../../../features/catalog/types';
-import { priceSpan, useBulkItems, useFacets, useItemFilters, useItems } from '../../../features/catalog/use-items';
+import { priceSpan, useBulkItems, useFacets, useItemFilters, useItemsPage, ITEMS_PAGE_SIZE } from '../../../features/catalog/use-items';
 
 const COLUMNS = [
   { key: 'code', label: 'Code' }, { key: 'name', label: 'Name' }, { key: 'category', label: 'Category' }, { key: 'brand', label: 'Brand' },
@@ -29,15 +30,18 @@ export function ItemsDesktop() {
   const nav = useNavigate();
   const { toast } = useToast();
   const { filters, set, reset, activeCount } = useItemFilters();
-  const items = useItems(filters);
+  const [page, setPage] = useState(1);
+  const filterKey = JSON.stringify(filters);
+  useEffect(() => { setPage(1); }, [filterKey]);
+  const items = useItemsPage(filters, page);
   const facets = useFacets().data;
   const bulk = useBulkItems();
   const [cols, toggleCol] = useColumnChoice();
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [cat, setCat] = useState<string | null>(null);
   const [showCols, setShowCols] = useState(false);
-  const rows = items.data?.pages.flatMap((p) => p.items) ?? [];
-  const first = items.data?.pages[0];
+  const rows = items.data?.items ?? [];
+  const first = items.data;
   const has = (k: ColKey) => cols.includes(k);
   const allPicked = rows.length > 0 && rows.every((r) => picked.has(r.id));
   const doBulk = async (action: 'activate' | 'deactivate' | 'set-category', category?: string) => {
@@ -103,10 +107,8 @@ export function ItemsDesktop() {
               })}
             </TBody>
           </Table>
-          <div className="mt-3 flex items-center gap-3 text-sm text-muted">
-            <span>Showing {rows.length} of {first?.total}</span>
-            {items.hasNextPage && <Button onClick={() => items.fetchNextPage()} loading={items.isFetchingNextPage}>Load more</Button>}
-          </div>
+          <p className="mt-3 text-sm text-muted">Showing {rows.length} of {first?.total}</p>
+          <Pager page={page} total={first?.total ?? 0} pageSize={ITEMS_PAGE_SIZE} onPage={setPage} />
         </>
       )}
       <Modal open={cat !== null} onClose={() => setCat(null)} title="Set category" footer={<><Button onClick={() => setCat(null)}>Cancel</Button><Button variant="primary" disabled={!cat?.trim()} onClick={async () => { await doBulk('set-category', cat!); setCat(null); }}>Apply to {picked.size} items</Button></>}>

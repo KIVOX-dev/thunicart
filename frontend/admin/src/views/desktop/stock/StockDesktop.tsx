@@ -13,7 +13,7 @@ import { useVendors } from '../../../features/catalog/use-parties';
 import { LEDGER_LABEL, LEDGER_TYPES } from '../../../features/inventory/types';
 import { useCreateFromReorder } from '../../../features/inventory/use-purchase-orders';
 import { Pager } from '../../../components/Pager';
-import { EMPTY_LEDGER, STOCK_PAGE_SIZE, useLedger, useReorder, useStockRows, type StockFilters } from '../../../features/inventory/use-stock';
+import { EMPTY_LEDGER, LEDGER_PAGE, STOCK_PAGE_SIZE, useLedgerPage, useReorder, useStockRows, type StockFilters } from '../../../features/inventory/use-stock';
 import { LookupDesktop } from './LookupDesktop';
 
 function ByItemTab() {
@@ -50,10 +50,12 @@ function ByItemTab() {
 }
 
 function LedgerTab() {
-  const [f, setF] = useState(EMPTY_LEDGER);
+  const [f, setFilters] = useState(EMPTY_LEDGER);
+  const [page, setPage] = useState(1);
+  const setF = (next: typeof EMPTY_LEDGER) => { setFilters(next); setPage(1); };
   const stores = useFacets().data?.stores ?? [];
-  const q = useLedger(f);
-  const data = q.data?.pages.flatMap((p) => p.items) ?? [];
+  const q = useLedgerPage(f, page);
+  const data = q.data?.items ?? [];
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-end gap-3">
@@ -69,7 +71,7 @@ function LedgerTab() {
             <THead><Tr><Th>When</Th><Th>Item</Th><Th>Size</Th><Th>Store</Th><Th>Movement</Th><Th className="text-right">Change</Th><Th className="text-right">Balance</Th><Th>Reference</Th></Tr></THead>
             <TBody>{data.map((e) => <Tr key={e.id}><Td className="whitespace-nowrap">{formatDate(e.at)}</Td><Td><span className="font-medium">{e.name}</span><span className="block font-mono text-xs text-muted">{e.code}</span></Td><Td>{e.size}</Td><Td>{e.storeName}</Td><Td>{LEDGER_LABEL[e.type] ?? e.type}</Td><Td className={`text-right font-semibold ${e.qty < 0 ? 'text-danger' : ''}`}>{e.qty > 0 ? `+${e.qty}` : e.qty}</Td><Td className="text-right">{e.balance}</Td><Td>{e.ref}{e.note && <span className="block text-xs text-muted">{e.note}</span>}</Td></Tr>)}</TBody>
           </Table>
-          {q.hasNextPage && <div className="mt-3"><Button onClick={() => q.fetchNextPage()} loading={q.isFetchingNextPage}>Load more</Button></div>}
+          <Pager page={page} total={q.data?.total ?? 0} pageSize={LEDGER_PAGE} onPage={setPage} />
         </>
       )}
     </div>

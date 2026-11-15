@@ -39,22 +39,28 @@ async function loadItem(id: string): Promise<Item> {
 
 /** Item list. The API's list has no sizes or prices, so each page's sizes are fetched alongside it. Category and brand are chosen by name on screen and by id in the API. */
 const SORTABLE = new Set(['name', 'createdAt', 'hsn']);
+export const ITEMS_PAGE_SIZE = 25;
+async function fetchItemsPage(filters: ItemFilters, page: number) {
+  const idOf = async (path: string, name: string) => (name ? (await api.get<{ items: { id: string; name: string }[] }>(path, { pageSize: 100 })).items.find((x) => x.name === name)?.id ?? 'none' : undefined);
+  const [category, brand] = await Promise.all([idOf('/categories', filters.category), idOf('/brands', filters.brand)]);
+  const r = await api.get<{ items: ApiItem[]; total: number; nextPage: number | null }>('/items', {
+    q: filters.q || undefined, category, brand, active: filters.active || undefined, sort: SORTABLE.has(filters.sort) ? filters.sort : 'name', page, pageSize: ITEMS_PAGE_SIZE,
+  });
+  const full = await Promise.all(r.items.map(async (it) => buildItem(it, (await api.get<{ items: ApiVariant[] }>(`/items/${it.id}/variants`)).items, () => ({}))));
+  const shown = filters.stockStatus ? full.filter((i) => i.stockStatus === filters.stockStatus) : full;
+  return { items: shown, total: r.total, nextPage: r.nextPage, pieces: full.reduce((a, i) => a + i.totalStock, 0) };
+}
 export function useItems(filters: ItemFilters) {
   return useInfiniteQuery({
     queryKey: [...KEY, 'list', filters],
     initialPageParam: 1,
-    queryFn: async ({ pageParam }) => {
-      const idOf = async (path: string, name: string) => (name ? (await api.get<{ items: { id: string; name: string }[] }>(path, { pageSize: 100 })).items.find((x) => x.name === name)?.id ?? 'none' : undefined);
-      const [category, brand] = await Promise.all([idOf('/categories', filters.category), idOf('/brands', filters.brand)]);
-      const r = await api.get<{ items: ApiItem[]; total: number; nextPage: number | null }>('/items', {
-        q: filters.q || undefined, category, brand, active: filters.active || undefined, sort: SORTABLE.has(filters.sort) ? filters.sort : 'name', page: pageParam, pageSize: 25,
-      });
-      const full = await Promise.all(r.items.map(async (it) => buildItem(it, (await api.get<{ items: ApiVariant[] }>(`/items/${it.id}/variants`)).items, () => ({}))));
-      const shown = filters.stockStatus ? full.filter((i) => i.stockStatus === filters.stockStatus) : full;
-      return { items: shown, total: r.total, nextPage: r.nextPage, pieces: full.reduce((a, i) => a + i.totalStock, 0) };
-    },
+    queryFn: ({ pageParam }) => fetchItemsPage(filters, pageParam),
     getNextPageParam: (l) => l.nextPage ?? undefined,
   });
+}
+/** The same list one numbered page at a time, for the desktop screen. */
+export function useItemsPage(filters: ItemFilters, page: number) {
+  return useQuery({ queryKey: [...KEY, 'page', filters, page], placeholderData: (prev) => prev, queryFn: () => fetchItemsPage(filters, page) });
 }
 export function useItem(id: string | undefined) {
   return useQuery({ queryKey: [...KEY, id], enabled: !!id, queryFn: () => loadItem(id!) });
