@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- these functions turn the API's documents into the shapes the screens use; each result is checked by its zod schema (parse) before the screen sees it */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError, newIdempotencyKey } from '../api/http';

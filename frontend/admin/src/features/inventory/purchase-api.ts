@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- these functions turn the API's documents into the shapes the screens use; each result is checked by its zod schema (parse) before the screen sees it */
 import { poDto, grnDto, billDto, returnDto, paymentDto, type Po } from './types';
 
 /* The purchase screens and the API name things differently. These functions turn the API's documents into the shapes the screens use. */
@@ -22,6 +23,7 @@ export function toGrn(r: any) {
   return grnDto.parse({
     id: r.id, number: r.grnNumber, poId: r.poId ?? null, poNumber: r.poNumber ?? null, vendorId: r.vendorId, vendorName: r.vendorName, storeId: r.storeId, storeName: r.storeName,
     status: 'finished', lines, createdAt: r.createdAt, finishedAt: r.createdAt, lastLineId: null, pieces: lines.reduce((a: number, l: any) => a + l.receivedQty, 0),
+    batch: (r.lines ?? []).find((l: any) => l.batchRef)?.batchRef ?? '', invoiceNo: r.vendorInvoiceNo ?? '', freight: r.freight ?? 0,
   });
 }
 

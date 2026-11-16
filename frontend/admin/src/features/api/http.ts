@@ -6,7 +6,8 @@ import { API_PREFIX } from '@thunikart/shared';
  * (see docs/api-requests.md). Behaviour follows the prompt: quiet refresh on 401, Idempotency-Key, error shapes.
  */
 const RAW = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
-export const MOCK_MODE = !RAW || RAW.includes('REPLACE_ME');
+// Demo mode (fake data) is for local development only. A production build always talks to the real API, on the same address when no API address is set (the host forwards /api/v1).
+export const MOCK_MODE = !import.meta.env.PROD && (!RAW || RAW.includes('REPLACE_ME'));
 const BASE = MOCK_MODE ? '' : RAW.replace(/\/$/, '');
 
 export interface FieldIssue { path: string; message: string }

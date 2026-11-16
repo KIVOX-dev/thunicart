@@ -32,6 +32,8 @@ export const grnLine = z.object({ id: z.string(), ...lineBase, orderedQty: z.num
 export const grnDto = z.object({
   id: z.string(), number: z.string(), poId: z.string().nullable(), poNumber: z.string().nullable(), vendorId: z.string(), vendorName: z.string(), storeId: z.string(), storeName: z.string(),
   status: z.enum(['draft', 'finished']), lines: z.array(grnLine), createdAt: z.string(), finishedAt: z.string().nullable(), lastLineId: z.string().nullable(), pieces: z.number().int(),
+  /** The batch number given to this delivery, the vendor's invoice number, and the freight (paise) added to the cost of the goods. */
+  batch: z.string().optional(), invoiceNo: z.string().optional(), freight: z.number().int().optional(),
 });
 export type Grn = z.infer<typeof grnDto>;
 export type GrnLine = z.infer<typeof grnLine>;
