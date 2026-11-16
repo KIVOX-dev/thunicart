@@ -1876,6 +1876,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/credit-memos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Credit memos given to customers, newest first */
+        get: operations["getApiV1CreditMemos"];
+        put?: never;
+        /** Give a customer a credit without goods coming back (price correction, late discount, goodwill). Takes the next credit note number. The amount goes to the wallet, is paid back now, or is taken off what they owe on an invoice. */
+        post: operations["postApiV1CreditMemos"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/credit-memos/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One credit memo */
+        get: operations["getApiV1CreditMemosId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reports/stock": {
         parameters: {
             query?: never;
@@ -7187,7 +7222,7 @@ export interface operations {
                     name: string;
                     widthMm: number;
                     heightMm: number;
-                    fields: ("barcode" | "name" | "size" | "color" | "mrp" | "itemCode")[];
+                    fields: ("barcode" | "name" | "size" | "color" | "mrp" | "itemCode" | "qr" | "batch")[];
                     /** @default false */
                     isDefault?: boolean;
                 };
@@ -7337,7 +7372,7 @@ export interface operations {
                     name?: string;
                     widthMm?: number;
                     heightMm?: number;
-                    fields?: ("barcode" | "name" | "size" | "color" | "mrp" | "itemCode")[];
+                    fields?: ("barcode" | "name" | "size" | "color" | "mrp" | "itemCode" | "qr" | "batch")[];
                     isDefault?: boolean;
                 };
             };
@@ -10596,6 +10631,8 @@ export interface operations {
                             hsn: string;
                             items: number;
                         }[];
+                        totalVariants: number;
+                        flagged: number;
                     };
                 };
             };
@@ -13168,6 +13205,8 @@ export interface operations {
                             outstanding: number;
                             notes: string;
                             createdAt: string;
+                            freightCostAdded: number;
+                            freightNote: string;
                         }[];
                         total: number;
                         nextPage: number | null;
@@ -13223,6 +13262,8 @@ export interface operations {
                     grnIds: string[];
                     /** @default 0 */
                     freight?: number;
+                    /** @default true */
+                    addFreightToCost?: boolean;
                     /** @default 0 */
                     otherCharges?: number;
                     /** @default 0 */
@@ -13287,6 +13328,8 @@ export interface operations {
                         outstanding: number;
                         notes: string;
                         createdAt: string;
+                        freightCostAdded: number;
+                        freightNote: string;
                     };
                 };
             };
@@ -13411,6 +13454,8 @@ export interface operations {
                         outstanding: number;
                         notes: string;
                         createdAt: string;
+                        freightCostAdded: number;
+                        freightNote: string;
                     };
                 };
             };
@@ -15925,6 +15970,8 @@ export interface operations {
                             type: "amount" | "percent";
                             value: number;
                         };
+                        size?: string;
+                        color?: string;
                     }[];
                     billDiscount?: {
                         /** @enum {string} */
@@ -16321,6 +16368,8 @@ export interface operations {
                             type: "amount" | "percent";
                             value: number;
                         };
+                        size?: string;
+                        color?: string;
                     }[];
                     billDiscount?: {
                         /** @enum {string} */
@@ -16448,6 +16497,8 @@ export interface operations {
                             type: "amount" | "percent";
                             value: number;
                         };
+                        size?: string;
+                        color?: string;
                     }[];
                     billDiscount?: {
                         /** @enum {string} */
@@ -16770,6 +16821,8 @@ export interface operations {
                             type: "amount" | "percent";
                             value: number;
                         };
+                        size?: string;
+                        color?: string;
                     }[];
                     billDiscount?: {
                         /** @enum {string} */
@@ -16975,6 +17028,8 @@ export interface operations {
                                 type: "amount" | "percent";
                                 value: number;
                             };
+                            size?: string;
+                            color?: string;
                         }[];
                         /** @default [] */
                         tenders?: {
@@ -17500,6 +17555,302 @@ export interface operations {
             };
             /** @description Business rule broken */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getApiV1CreditMemos: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                sort?: string;
+                q?: string;
+                from?: string;
+                to?: string;
+                store?: string;
+                category?: string;
+                brand?: string;
+                vendor?: string;
+                status?: string;
+                customerId?: string;
+                invoiceId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: ({
+                            id: string;
+                            creditNoteNumber: string;
+                            customerId: string;
+                            customerName: string;
+                            invoiceNumber: string | null;
+                            reason: string;
+                            amount: number;
+                            taxable: number;
+                            cgst: number;
+                            sgst: number;
+                            igst: number;
+                            /** @enum {string} */
+                            settle: "wallet" | "refund" | "reduce_due";
+                            refundMode: string | null;
+                            /** @enum {string} */
+                            gstMode: "on" | "off";
+                            gstRate: number | null;
+                            createdAt: string;
+                            /** @constant */
+                            currency: "INR";
+                        } & {
+                            [key: string]: unknown;
+                        })[];
+                        total: number;
+                        nextPage: number | null;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    postApiV1CreditMemos: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Unique key (8 to 128 chars) per logical request. A retry with the same key never posts twice. */
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "customerId": "665f0c2a9b1e4c0012ab34cd",
+                 *       "amount": 15000,
+                 *       "reason": "Price correction on invoice",
+                 *       "settle": "wallet"
+                 *     }
+                 */
+                "application/json": {
+                    customerId: string;
+                    invoiceId?: string;
+                    amount: number;
+                    reason: string;
+                    /** @default  */
+                    note?: string;
+                    /**
+                     * @default wallet
+                     * @enum {string}
+                     */
+                    settle?: "wallet" | "refund" | "reduce_due";
+                    /** @enum {string} */
+                    refundMode?: "cash" | "upi" | "card" | "bank_transfer";
+                    gstRate?: number | null;
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        creditNoteNumber: string;
+                        customerId: string;
+                        customerName: string;
+                        invoiceNumber: string | null;
+                        reason: string;
+                        amount: number;
+                        taxable: number;
+                        cgst: number;
+                        sgst: number;
+                        igst: number;
+                        /** @enum {string} */
+                        settle: "wallet" | "refund" | "reduce_due";
+                        refundMode: string | null;
+                        /** @enum {string} */
+                        gstMode: "on" | "off";
+                        gstRate: number | null;
+                        createdAt: string;
+                        /** @constant */
+                        currency: "INR";
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Business rule broken */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getApiV1CreditMemosId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        creditNoteNumber: string;
+                        customerId: string;
+                        customerName: string;
+                        invoiceNumber: string | null;
+                        reason: string;
+                        amount: number;
+                        taxable: number;
+                        cgst: number;
+                        sgst: number;
+                        igst: number;
+                        /** @enum {string} */
+                        settle: "wallet" | "refund" | "reduce_due";
+                        refundMode: string | null;
+                        /** @enum {string} */
+                        gstMode: "on" | "off";
+                        gstRate: number | null;
+                        createdAt: string;
+                        /** @constant */
+                        currency: "INR";
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
