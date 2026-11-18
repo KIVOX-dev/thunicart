@@ -114,17 +114,19 @@ export const billBody = z.object({
   roundOff: z.number().int().min(-50).max(50).default(0),
   notes: z.string().trim().max(1000).default(''),
 });
+/** Where a purchase bill stands: nothing paid yet, part paid (or credited or settled), or fully cleared. */
+export const PAYMENT_STATUSES = ['unpaid', 'partial', 'paid'] as const;
 export const billDto = z.object({
   id: objectId, billNumber: z.string(), vendorBillNo: z.string(), vendorId: objectId, vendorName: z.string(), billDate: z.string(), dueDate: z.string(),
   paymentTerms: z.string(), grnIds: z.array(objectId), grnNumbers: z.array(z.string()),
   lines: z.array(grnLineDto.pick({ variantId: true, itemCode: true, description: true, acceptedQty: true, unitCost: true, discountPercent: true, gstRate: true, taxable: true, cgst: true, sgst: true, igst: true, total: true })),
   totals: totalsDto, freight: paise, otherCharges: paise, roundOff: paise, grandTotal: paise,
   gstMode: gstModeEnum, supply: supplyEnum.nullable(), inputTaxCredit: paise,
-  paid: paise, debitNotes: paise, outstanding: paise, notes: z.string(), createdAt: z.string(),
+  paid: paise, debitNotes: paise, settled: paise, outstanding: paise, paymentStatus: z.enum(PAYMENT_STATUSES), notes: z.string(), createdAt: z.string(),
   /** How much of the bill's freight was added to item cost, and why not when it was not. */
   freightCostAdded: paise, freightNote: z.string(),
 });
-export const billQuery = z.object({ vendorId: objectId.optional(), billStatus: z.enum(['open', 'paid']).optional() });
+export const billQuery = z.object({ vendorId: objectId.optional(), billStatus: z.enum(['open', 'paid']).optional(), paymentStatus: z.enum(PAYMENT_STATUSES).optional() });
 
 // ---------- purchase return and debit note ----------
 export const returnBody = z.object({
@@ -159,7 +161,21 @@ export const paymentDto = z.object({
 export const ageingDto = z.object({ current: paise, d0_30: paise, d31_60: paise, d61_90: paise, over90: paise });
 export const outstandingDto = z.object({
   vendorId: objectId, vendorName: z.string(), paymentTerms: z.string(),
-  billed: paise, debitNotes: paise, paid: paise, outstanding: paise, advance: paise, netPayable: paise, currency,
+  billed: paise, debitNotes: paise, paid: paise, settled: paise, outstanding: paise, advance: paise, netPayable: paise, currency,
   ageing: ageingDto,
-  bills: z.array(z.object({ billId: objectId, billNumber: z.string(), vendorBillNo: z.string(), billDate: z.string(), dueDate: z.string(), total: paise, debitNotes: paise, paid: paise, outstanding: paise, daysOverdue: z.number().int() })),
+  bills: z.array(z.object({ billId: objectId, billNumber: z.string(), vendorBillNo: z.string(), billDate: z.string(), dueDate: z.string(), total: paise, debitNotes: paise, paid: paise, settled: paise, outstanding: paise, daysOverdue: z.number().int() })),
+});
+
+// ---------- vendor settlements ----------
+export const settlementBody = z.object({
+  billId: objectId,
+  date: z.string().datetime(),
+  /** full clears what is left on the bill; partial takes off `amount`. */
+  kind: z.enum(['full', 'partial']),
+  amount: z.number().int().min(1).optional(),
+  reason: z.string().trim().min(3).max(300),
+});
+export const settlementDto = z.object({
+  id: objectId, settlementNumber: z.string(), vendorId: objectId, vendorName: z.string(), billId: objectId, billNumber: z.string(), date: z.string(),
+  kind: z.enum(['full', 'partial']), amount: paise, reason: z.string(), currency, createdAt: z.string(),
 });

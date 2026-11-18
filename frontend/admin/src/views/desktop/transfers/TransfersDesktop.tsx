@@ -3,13 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { formatDate } from '@thunikart/shared';
 import { Badge, Button, EmptyState, ListSkeleton, Modal, Table, TBody, Td, Th, THead, Tr } from '@thunikart/ui';
 import { QueryError } from '../../../components/ErrorBanner';
-import { PageHeader } from '../../../components/PageHeader';
 import { TransferRequestForm } from '../../../components/TransferRequestForm';
 import { useCan } from '../../../features/auth/permissions';
 import { TRANSFER_LABEL, transferTone } from '../../../features/inventory/types';
 import { useTransfers } from '../../../features/inventory/use-transfers';
 
-export function TransfersDesktop() {
+export function TransfersPanel() {
   const can = useCan();
   const nav = useNavigate();
   const q = useTransfers();
@@ -17,7 +16,7 @@ export function TransfersDesktop() {
   const data = q.data?.pages.flatMap((p) => p.items) ?? [];
   return (
     <div>
-      <PageHeader title="Transfers" description="Move stock between the warehouse and the shop." actions={can('stock.create') ? <Button variant="primary" onClick={() => setOpen(true)}>Request transfer</Button> : undefined} />
+      <div className="mb-3 flex items-center justify-between gap-3"><p className="text-sm text-muted">Move stock between the warehouse and the shop.</p>{can('stock.create') && <Button variant="primary" onClick={() => setOpen(true)}>Request transfer</Button>}</div>
       {q.isPending ? <ListSkeleton label="Loading transfers" /> : q.isError ? <QueryError error={q.error} onRetry={() => q.refetch()} /> : data.length === 0 ? <EmptyState title="No transfers yet" body="Request a transfer, dispatch it, then scan to receive at the other store." /> : (
         <>
           <Table caption="Transfers">

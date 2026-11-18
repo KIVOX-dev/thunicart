@@ -5,10 +5,12 @@ export const ExpenseCategory = defineModel('ExpenseCategory', 'expense_categorie
 }, [[{ slug: 1 }, { unique: true }]]);
 
 export const Expense = defineModel('Expense', 'expenses', {
+  /** A charge is a cost that is not an operating expense: bank, card and payment gateway fees, delivery charges, penalties. */
+  kind: { type: String, enum: ['expense', 'charge'], default: 'expense' },
   category: { type: String, required: true }, payee: { type: String, default: '' }, date: { type: Date, required: true },
   mode: { type: String, enum: ['cash', 'bank', 'upi', 'cheque', 'card'], required: true }, amount: { ...paise }, notes: { type: String, default: '' },
   receiptKey: { type: String, default: null }, storeId: { ...oid('Store') }, createdBy: { ...oid('User') },
-}, [[{ date: -1 }], [{ category: 1, date: -1 }]]);
+}, [[{ date: -1 }], [{ category: 1, date: -1 }], [{ kind: 1, date: -1 }]]);
 
 /** Money received from a customer (B2B on credit, advance). Reduces what they owe. */
 export const Receipt = defineModel('Receipt', 'customer_receipts', {

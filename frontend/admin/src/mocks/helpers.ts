@@ -24,7 +24,7 @@ export function can(u: MockUser, key: string) {
 }
 export function log(u: MockUser | null, method: string, path: string, entity: string, action: string, entityId: string | null, before: unknown, after: unknown) {
   const d = getDb();
-  d.activity.unshift({ id: nextId(), at: new Date().toISOString(), userId: u?.id ?? null, userName: u?.name ?? null, method, path, status: 200, entity, entityId, action, before, after, ip: '127.0.0.1', requestId: requestId() });
+  d.activity.unshift({ id: nextId(), at: new Date().toISOString(), userId: u?.id ?? null, userName: u?.name ?? null, userRole: u ? roleOf(u.roleId)?.name ?? null : null, module: moduleOf(path, entity), method, path, status: 200, entity, entityId, action, before, after, ip: '127.0.0.1', requestId: requestId() });
   d.activity.length = Math.min(d.activity.length, 300);
 }
 
@@ -39,3 +39,6 @@ export function guarded(perm: string | null, fn: (ctx: { user: MockUser; request
   };
 }
 
+
+const MODULES_BY_PATH: Array<[RegExp, string]> = [[/^\/(users|roles)/, 'Users'], [/^\/(settings|number-series)/, 'Settings'], [/^\/(items|imports)/, 'Items and Review Queue'], [/^\/(vendors)/, 'Vendors'], [/^\/customers/, 'Customers'], [/^\/(accounts|expenses)/, 'Accounts']];
+const moduleOf = (path: string, entity: string): string | null => MODULES_BY_PATH.find(([re]) => re.test(path))?.[1] ?? (entity ? null : null);

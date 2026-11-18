@@ -124,9 +124,9 @@ export const REPORTS: Record<string, { title: string; run: Fn }> = {
       const rows: any[] = []; const today = Date.now();
       for (const v of (await Vendor.find(q.vendor ? { _id: q.vendor } : {}).lean()) as any[]) {
         const bills: any[] = await PurchaseBill.find({ vendorId: v._id }).lean(); const adv = ((await VendorPayment.find({ vendorId: v._id }).lean()) as any[]).reduce((a, p) => a + p.amount - p.allocations.reduce((x: number, y: any) => x + y.amount, 0), 0);
-        const out = bills.reduce((a, b) => a + Math.max(0, b.grandTotal - b.paid - b.debitNotes), 0); if (!out && !adv) continue;
-        const overdue = bills.filter((b) => b.grandTotal - b.paid - b.debitNotes > 0 && new Date(b.dueDate).getTime() < today).reduce((a, b) => a + (b.grandTotal - b.paid - b.debitNotes), 0);
-        rows.push({ party: 'Vendor', name: v.name, billed: bills.reduce((a, b) => a + b.grandTotal, 0), settled: bills.reduce((a, b) => a + b.paid + b.debitNotes, 0), outstanding: out - adv, overdue });
+        const out = bills.reduce((a, b) => a + Math.max(0, b.grandTotal - b.paid - b.debitNotes - (b.settled ?? 0)), 0); if (!out && !adv) continue;
+        const overdue = bills.filter((b) => b.grandTotal - b.paid - b.debitNotes - (b.settled ?? 0) > 0 && new Date(b.dueDate).getTime() < today).reduce((a, b) => a + (b.grandTotal - b.paid - b.debitNotes - (b.settled ?? 0)), 0);
+        rows.push({ party: 'Vendor', name: v.name, billed: bills.reduce((a, b) => a + b.grandTotal, 0), settled: bills.reduce((a, b) => a + b.paid + b.debitNotes + (b.settled ?? 0), 0), outstanding: out - adv, overdue });
       }
       if (!q.vendor) for (const c of (await Customer.find({ accountGroup: 'B2B Trade' }).lean()) as any[]) {
         const o = await customerOutstanding(String(c._id)); if (!o.outstanding) continue; rows.push({ party: 'Customer', name: c.name, billed: o.billed, settled: o.settled, outstanding: o.outstanding, overdue: o.overdue });

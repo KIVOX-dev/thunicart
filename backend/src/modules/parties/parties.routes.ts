@@ -1,5 +1,6 @@
+import { z } from 'zod';
 import {
-  customerBody, customerDto as customerSchema, customerQuery, customerUpdateBody, idParam, listQuery, listResponse, mobileQuery, okResponse,
+  customerBody, customerDto as customerSchema, customerMergeBody, customerQuery, duplicateGroupDto, customerUpdateBody, idParam, listQuery, listResponse, mobileQuery, okResponse,
   vendorBody, vendorDto as vendorSchema, vendorQuery, vendorUpdateBody,
 } from '@thunikart/shared';
 import { Customer, LoyaltyLedger, Vendor, WalletLedger } from '../../models';
@@ -33,11 +34,21 @@ const customers = [
       const f: any = {};
       if (query.q) { const r = new RegExp(escapeRegex(query.q), 'i'); f.$or = [{ name: r }, { mobile: r }, { customerId: r }, { email: r }, { gstin: r }]; }
       if (query.accountGroup) f.accountGroup = query.accountGroup;
+      if (query.source === 'online') f.accountGroup = 'E-commerce B2C';
+      if (query.source === 'offline') f.accountGroup = { $ne: 'E-commerce B2C' };
       if (query.active) f.active = query.active === 'true';
       const res = await paginate(Customer, f, query, parseSort(query.sort, ['name', 'customerId', 'createdAt'], { name: 1 }), (c) => c);
       const bal = await svc.balancesFor(res.items.map((c: any) => String(c._id)));
       return { ...res, items: res.items.map((c: any) => svc.customerDto(c, bal)) };
     },
+  }),
+  defineRoute({
+    method: 'GET', path: '/customers/duplicates', summary: 'Customers who share a phone number (written differently) or an email, online and offline together', tags: ['Parties'], permission: 'customers.edit',
+    response: z.array(duplicateGroupDto), handler: async () => svc.findDuplicates(),
+  }),
+  defineRoute({
+    method: 'POST', path: '/customers/merge', summary: 'Merge a duplicate customer into the one to keep. Bills, ledgers and orders move across.', tags: ['Parties'], permission: 'customers.delete',
+    body: customerMergeBody, response: z.looseObject({ ok: z.literal(true) }), errors: [400, 404], handler: async ({ body, audit }) => svc.mergeCustomers(body.keepId, body.mergeId, audit),
   }),
   defineRoute({
     method: 'GET', path: '/customers/:id', summary: 'One customer with loyalty and wallet balances (ledgers)', tags: ['Parties'], permission: 'customers.view',

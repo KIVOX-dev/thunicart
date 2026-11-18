@@ -31,7 +31,7 @@ export function toBill(r: any) {
   const outstanding = r.outstanding ?? 0; const paid = r.paid ?? 0;
   return billDto.parse({
     id: r.id, number: r.billNumber, vendorBillNo: r.vendorBillNo, vendorId: r.vendorId, vendorName: r.vendorName, grnId: r.grnIds?.[0] ?? null, grnNumber: r.grnNumbers?.[0] ?? null,
-    date: day(r.billDate), dueDate: day(r.dueDate), totals: sub(r.totals, r.grandTotal), paid, balance: outstanding, status: outstanding <= 0 ? 'paid' : paid > 0 ? 'part-paid' : 'unpaid',
+    date: day(r.billDate), dueDate: day(r.dueDate), totals: sub(r.totals, r.grandTotal), paid, balance: outstanding, status: r.paymentStatus ? ({ partial: 'part-paid' } as Record<string, string>)[r.paymentStatus] ?? r.paymentStatus : outstanding <= 0 ? 'paid' : paid > 0 || (r.settled ?? 0) > 0 ? 'part-paid' : 'unpaid',
   });
 }
 

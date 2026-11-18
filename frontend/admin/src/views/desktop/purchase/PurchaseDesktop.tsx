@@ -3,11 +3,12 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { formatDate, formatPaise } from '@thunikart/shared';
 import { Badge, Button, EmptyState, Input, ListSkeleton, Modal, Select, Table, TBody, Td, Th, THead, Tabs, Tr, useToast } from '@thunikart/ui';
 import { QueryError } from '../../../components/ErrorBanner';
+import { ExportButton } from '../../../components/ExportButton';
 import { PageHeader } from '../../../components/PageHeader';
-import { BillForm, PaymentForm, ReturnForm } from '../../../components/PurchaseForms';
+import { BillForm, PaymentForm } from '../../../components/PurchaseForms';
 import { useCan, useGstMode } from '../../../features/auth/permissions';
 import { PO_STATUSES, PO_STATUS_LABEL, poTone } from '../../../features/inventory/types';
-import { useAgeing, useBills, usePayments, useReturns } from '../../../features/inventory/use-billing';
+import { useAgeing, useBills, usePayments } from '../../../features/inventory/use-billing';
 import { useGrns, useStartGrn } from '../../../features/inventory/use-grn';
 import { usePos, useReceivablePos } from '../../../features/inventory/use-purchase-orders';
 
@@ -80,12 +81,16 @@ function BillsTab() {
   const can = useCan();
   const gst = useGstMode();
   const { toast } = useToast();
-  const list = useBills();
+  const [paymentStatus, setPaymentStatus] = useState<'' | 'unpaid' | 'partial' | 'paid'>('');
+  const list = useBills({ paymentStatus });
   const [open, setOpen] = useState(false);
   const data = rows(list.data);
   return (
     <div>
-      {can('purchase.create') && <div className="mb-3 flex justify-end"><Button variant="primary" onClick={() => setOpen(true)}>Add bill</Button></div>}
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <Select aria-label="Payment status" className="w-48" value={paymentStatus} onChange={(e) => setPaymentStatus(e.target.value as typeof paymentStatus)}><option value="">All payment statuses</option><option value="unpaid">Unpaid</option><option value="partial">Partially paid</option><option value="paid">Paid</option></Select>
+        {can('purchase.create') && <Button variant="primary" onClick={() => setOpen(true)}>Add bill</Button>}
+      </div>
       {list.isPending ? <ListSkeleton label="Loading bills" /> : list.isError ? <QueryError error={list.error} onRetry={() => list.refetch()} /> : data.length === 0 ? <EmptyState title="No purchase bills" body="Add a bill after a receipt is finished." /> : (
         <Table caption="Purchase bills">
           <THead><Tr><Th>Bill</Th><Th>Vendor bill no.</Th><Th>Vendor</Th><Th>Date</Th><Th>Due</Th>{gst === 'on' && <Th className="text-right">GST</Th>}<Th className="text-right">Total</Th><Th className="text-right">Balance</Th><Th>Status</Th></Tr></THead>
@@ -93,27 +98,6 @@ function BillsTab() {
         </Table>
       )}
       <Modal open={open} onClose={() => setOpen(false)} title="Add purchase bill"><BillForm onDone={() => { setOpen(false); toast('Bill added', 'success'); }} /></Modal>
-    </div>
-  );
-}
-
-function ReturnsTab() {
-  const can = useCan();
-  const gst = useGstMode();
-  const { toast } = useToast();
-  const list = useReturns();
-  const [open, setOpen] = useState(false);
-  const data = rows(list.data);
-  return (
-    <div>
-      {can('purchase.create') && <div className="mb-3 flex justify-end"><Button variant="primary" onClick={() => setOpen(true)}>New return</Button></div>}
-      {list.isPending ? <ListSkeleton label="Loading returns" /> : list.isError ? <QueryError error={list.error} onRetry={() => list.refetch()} /> : data.length === 0 ? <EmptyState title="No purchase returns" body="Return damaged or wrong goods to a vendor. A debit note is created." /> : (
-        <Table caption="Purchase returns (debit notes)">
-          <THead><Tr><Th>Debit note</Th><Th>Vendor</Th><Th>Reason</Th><Th>Date</Th><Th className="text-right">Pieces</Th>{gst === 'on' && <Th className="text-right">GST</Th>}<Th className="text-right">Total</Th></Tr></THead>
-          <TBody>{data.map((r) => <Tr key={r.id}><Td className="font-medium">{r.number}</Td><Td>{r.vendorName}</Td><Td>{r.reason}</Td><Td>{formatDate(r.date)}</Td><Td className="text-right">{r.lines.reduce((a, l) => a + l.qty, 0)}</Td>{gst === 'on' && <Td className="text-right">{r.totals.tax !== null ? formatPaise(r.totals.tax) : ''}</Td>}<Td className="text-right">{formatPaise(r.totals.total)}</Td></Tr>)}</TBody>
-        </Table>
-      )}
-      <Modal open={open} onClose={() => setOpen(false)} title="New purchase return"><ReturnForm onDone={() => { setOpen(false); toast('Return created. Stock updated.', 'success'); }} /></Modal>
     </div>
   );
 }
@@ -157,10 +141,10 @@ export function PurchaseDesktop() {
   const tab = sp.get('tab') ?? 'orders';
   return (
     <div>
-      <PageHeader title="Purchase" description="Orders, receiving, bills, returns and what you owe vendors." />
+      <PageHeader title="Purchase and payment" description="Orders, receiving, bills, payments and what you owe vendors." actions={<ExportButton dataset="purchases" />} />
       <Tabs value={tab} onChange={(t) => setSp({ tab: t }, { replace: true })} items={[
         { key: 'orders', label: 'Orders', panel: <OrdersTab /> }, { key: 'receipts', label: 'Receipts', panel: <ReceiptsTab /> }, { key: 'bills', label: 'Bills', panel: <BillsTab /> },
-        { key: 'returns', label: 'Returns', panel: <ReturnsTab /> }, { key: 'payments', label: 'Payments', panel: <PaymentsTab /> }, { key: 'ageing', label: 'Vendor ageing', panel: <AgeingTab /> },
+        { key: 'payments', label: 'Payments', panel: <PaymentsTab /> }, { key: 'ageing', label: 'Vendor ageing', panel: <AgeingTab /> },
       ]} />
     </div>
   );

@@ -1,13 +1,14 @@
 import { Suspense, useState } from 'react';
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Search, Store } from 'lucide-react';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, Search, Store } from 'lucide-react';
 import { ListSkeleton } from '@thunikart/ui';
 import { Logo } from '../components/Logo';
 import { ProfileMenu } from '../components/ProfileMenu';
 import { useCan, useGstMode } from '../features/auth/permissions';
 import { useFacets } from '../features/catalog/use-items';
 import { useShopId } from '../features/pos/use-pos-data';
-import { useCurrentModule, useMenuGroups, useVisibleModules } from './use-nav';
+import { isEntryActive, useCurrentModule, useMenu, useVisibleModules } from './use-nav';
+import type { MenuEntry } from './modules';
 
 function GoTo() {
   const modules = useVisibleModules();
@@ -45,8 +46,22 @@ function Breadcrumbs() {
   );
 }
 
+const linkCls = (active: boolean) => `tk-press flex min-h-10 items-center gap-3 rounded-full px-3 text-sm ${active ? 'bg-orange font-bold text-navy shadow-soft' : 'font-medium text-white hover:bg-white/15'}`;
+
+function MenuLink({ entry, n }: { entry: MenuEntry; n?: number }) {
+  const { pathname } = useLocation();
+  const active = isEntryActive(entry, pathname);
+  return (
+    <li>
+      <Link to={entry.path} aria-current={active ? 'page' : undefined} className={linkCls(active)}>
+        <entry.icon aria-hidden size={16} />{entry.label}{n !== undefined && <span aria-hidden className="sr-only">{n}</span>}
+      </Link>
+    </li>
+  );
+}
+
 export function DesktopShell() {
-  const groups = useMenuGroups();
+  const { main, more } = useMenu();
   const gst = useGstMode();
   const shopId = useShopId().data;
   const shopName = useFacets().data?.stores.find((x) => x.id === shopId)?.name ?? 'Store';
@@ -57,21 +72,16 @@ export function DesktopShell() {
       <aside aria-label="Main menu" className="sticky top-0 m-3 mr-0 flex h-[calc(100vh-1.5rem)] w-64 shrink-0 flex-col overflow-y-auto rounded-2xl bg-navy text-white shadow-lift">
         <Link to="/" className="block px-3 py-4" aria-label="Thunikart home"><Logo variant="sidebar" tile className="w-full" /></Link>
         <nav className="flex-1 px-2 pb-4">
-          {can('pos.view') && <Link to="/billing" className="tk-press mb-4 flex min-h-11 items-center justify-center gap-2 rounded-full bg-orange px-4 text-sm font-extrabold text-navy shadow-soft hover:bg-teal">Open billing counter</Link>}
-          {groups.map((g) => (
-            <div key={g.group} className="mb-3">
-              <p className="tk-eyebrow px-3 pb-1 pt-2 text-teal">{g.group}</p>
-              <ul>
-                {g.items.map((m) => (
-                  <li key={m.key}>
-                    <NavLink to={m.path} className={({ isActive }) => `tk-press flex min-h-10 items-center gap-3 rounded-full px-3 text-sm ${isActive ? 'bg-orange font-bold text-navy shadow-soft' : 'font-medium text-white hover:bg-white/15'}`}>
-                      <m.icon aria-hidden size={16} />{m.label}
-                    </NavLink>
-                  </li>
-                ))}
-              </ul>
+          {can('reports.view') && (
+            <NavLink to="/dashboard" className={({ isActive }) => `${linkCls(isActive)} mb-2`}><LayoutDashboard aria-hidden size={16} />Dashboard</NavLink>
+          )}
+          <ul aria-label="Admin menu">{main.map((e) => <MenuLink key={e.key} entry={e} />)}</ul>
+          {more.length > 0 && (
+            <div className="mt-3">
+              <p className="tk-eyebrow px-3 pb-1 pt-2 text-teal">Catalogue and stock</p>
+              <ul>{more.map((e) => <MenuLink key={e.key} entry={e} />)}</ul>
             </div>
-          ))}
+          )}
         </nav>
         <p className="m-3 rounded-full bg-white/10 px-4 py-2 text-center text-xs font-semibold text-white">{gst === 'on' ? 'GST is on' : 'GST is off'}</p>
       </aside>

@@ -3,4 +3,4 @@ export interface Receipt { id: string; number: string; customerId: string; custo
 export interface Job { id: string; kind: 'report' | 'export'; title: string; format: string; path: string; progress: number; status: 'running' | 'done'; by: string; dataset: string }
 export interface ExportRecord { id: string; dataset: string; format: string; by: string; at: string; path: string }
 export interface AccountsState { expenses: Expense[]; receipts: Receipt[]; jobs: Job[]; exportsHistory: ExportRecord[]; monthlyEmail: boolean }
-export const seedAccounts = (): { acc: AccountsState } => ({ acc: { expenses: [], receipts: [], jobs: [], exportsHistory: [], monthlyEmail: false } });
+export const seedAccounts = (): { acc: AccountsState } => ({ acc: { expenses: [], receipts: [], jobs: [], exportsHistory: [] } });

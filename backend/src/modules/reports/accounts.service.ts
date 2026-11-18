@@ -33,7 +33,7 @@ export async function daybook(q: RQ) {
   for (const r of await returnsIn(q)) for (const x of r.refunds ?? []) if (cashModes.has(x.mode)) rows.push({ date: r.createdAt, type: 'Refund', ref: r.creditNoteNumber, mode: x.mode, in: 0, out: x.amount });
   for (const r of (await Receipt.find(d ? { date: d } : {}).lean()) as any[]) rows.push({ date: r.date, type: 'Receipt', ref: r.receiptNumber, mode: r.mode, in: r.amount, out: 0 });
   for (const p of (await VendorPayment.find(d ? { date: d } : {}).lean()) as any[]) rows.push({ date: p.date, type: 'Vendor payment', ref: p.paymentNumber, mode: p.mode, in: 0, out: p.amount });
-  for (const e of (await Expense.find(d ? { date: d } : {}).lean()) as any[]) rows.push({ date: e.date, type: `Expense: ${e.category}`, ref: e.payee, mode: e.mode, in: 0, out: e.amount });
+  for (const e of (await Expense.find(d ? { date: d } : {}).lean()) as any[]) rows.push({ date: e.date, type: `${e.kind === 'charge' ? 'Charge' : 'Expense'}: ${e.category}`, ref: e.payee, mode: e.mode, in: 0, out: e.amount });
   for (const v of (await PaymentVoucher.find(d ? { date: d } : {}).lean()) as any[]) rows.push({ date: v.date, type: 'Payment', ref: v.voucherNumber, mode: v.mode, in: 0, out: v.amount });
   rows.sort((a, b) => +new Date(a.date) - +new Date(b.date));
   const byMode: Record<string, { in: number; out: number; net: number }> = {};
@@ -52,7 +52,7 @@ export async function dashboard() {
   const low = bals.filter((b) => { const m = meta.get(String(b._id)); return m && m.reorderLevel > 0 && b.on - b.res <= m.reorderLevel; }).length;
   const nm = await REPORTS['non-moving']!.run({ days: 60 });
   const weekEnd = new Date(Date.now() + 7 * DAY); const bills: any[] = await PurchaseBill.find({ dueDate: { $lte: weekEnd } }).lean();
-  const payables = bills.reduce((a, b) => a + Math.max(0, b.grandTotal - b.paid - b.debitNotes), 0);
+  const payables = bills.reduce((a, b) => a + Math.max(0, b.grandTotal - b.paid - b.debitNotes - (b.settled ?? 0)), 0);
   let receivables = 0; for (const c of (await Customer.find({ accountGroup: 'B2B Trade' }).lean()) as any[]) receivables += (await customerOutstanding(String(c._id))).overdue;
   const series: any[] = []; for (let i = 29; i >= 0; i--) { const day = ist(new Date(Date.now() - i * DAY)); series.push({ date: day, sales: 0 }); }
   for (const b of await invoicesIn({ from: new Date(Date.now() - 30 * DAY).toISOString() })) { const s = series.find((x) => x.date === ist(b.finalizedAt)); if (s) s.sales += b.grandTotal; }

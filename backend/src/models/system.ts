@@ -15,6 +15,9 @@ export const ActivityLog = defineModel('ActivityLog', 'activity_log', {
   at: { type: Date, default: Date.now },
   userId: { ...oid('User') },
   userName: { type: String, default: null },
+  /** Role name and module of the actor and the thing changed. Older rows are backfilled by migration 20261118000000. */
+  userRole: { type: String, default: null },
+  module: { type: String, default: null },
   method: String,
   path: String,
   status: Number,
@@ -28,6 +31,7 @@ export const ActivityLog = defineModel('ActivityLog', 'activity_log', {
 }, [
   [{ at: -1 }],
   [{ userId: 1, at: -1 }],
+  [{ module: 1, at: -1 }],
   [{ entity: 1, entityId: 1, at: -1 }],
 ], { minimize: false, timestamps: false });
 

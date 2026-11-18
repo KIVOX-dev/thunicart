@@ -6,6 +6,8 @@ export const activityDto = z.object({
   at: z.string(),
   userId: objectId.nullable(),
   userName: z.string().nullable(),
+  userRole: z.string().nullable(),
+  module: z.string().nullable(),
   method: z.string(),
   path: z.string(),
   status: z.number().int(),
@@ -19,6 +21,8 @@ export const activityDto = z.object({
 });
 export const activityQuery = z.object({
   userId: objectId.optional(),
+  module: z.string().optional(),
+  role: z.string().optional(),
   entity: z.string().optional(),
   method: z.string().optional(),
 });

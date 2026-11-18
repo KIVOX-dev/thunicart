@@ -48,14 +48,14 @@ test.describe('roles and permissions', () => {
   test('Admin creates Store Manager and a user with it (desktop matrix)', async ({ page, isMobile }) => {
     test.skip(isMobile, 'The permission matrix is desktop first. Mobile shows a notice, tested below.');
     await login(page, 'admin@thunikart.test');
-    await page.goto('/settings/roles');
+    await page.goto('/settings/users?tab=permissions');
     await page.getByRole('button', { name: 'Create role' }).click();
     const roleDlg = page.getByRole('dialog', { name: 'Create role' });
     await roleDlg.getByLabel('Role name').fill('Store Manager');
     await roleDlg.getByRole('button', { name: 'Create role' }).click();
     await expect(page.getByRole('heading', { name: /Store Manager/ })).toBeVisible();
     await page.getByRole('checkbox', { name: 'Items and labels: View' }).check();
-    await page.getByRole('checkbox', { name: 'Stock and transfers: View' }).check();
+    await page.getByRole('checkbox', { name: 'Stock audit and return transfers: View' }).check();
     await page.getByRole('button', { name: 'Save permissions' }).click();
     await expect(page.getByText('Saved permissions for Store Manager')).toBeVisible();
 
@@ -74,7 +74,7 @@ test.describe('roles and permissions', () => {
   test('mobile shows a desktop notice for the permission matrix', async ({ page, isMobile }) => {
     test.skip(!isMobile);
     await login(page, 'admin@thunikart.test');
-    await page.goto('/settings/roles');
+    await page.goto('/settings/users?tab=permissions');
     await expect(page.getByRole('button', { name: 'Switch to desktop view' })).toBeVisible();
     await expect(page.getByText('Store Manager')).toHaveCount(0);
     await expectNoSidewaysScroll(page);
@@ -100,9 +100,9 @@ test.describe('roles and permissions', () => {
     if (isMobile) await page.getByRole('link', { name: 'More' }).click();
     const menu = isMobile ? page.getByRole('main') : page.getByRole('complementary', { name: 'Main menu' });
     await expect(menu.getByRole('link', { name: 'Items and labels' })).toBeVisible();
-    await expect(menu.getByRole('link', { name: 'Stock and transfers' })).toBeVisible();
+    await expect(menu.getByRole('link', { name: 'Stock levels' })).toBeVisible();
     await expect(menu.getByRole('link', { name: 'Users', exact: true })).toHaveCount(0);
-    await expect(menu.getByRole('link', { name: 'Roles and permissions' })).toHaveCount(0);
+    await expect(menu.getByRole('link', { name: 'Roles' })).toHaveCount(0);
     await expect(menu.getByRole('link', { name: 'Business profile' })).toHaveCount(0);
 
     // Hiding is a convenience only: opening the page by URL shows the friendly 403 page.

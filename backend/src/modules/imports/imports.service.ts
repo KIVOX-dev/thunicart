@@ -9,12 +9,13 @@ import { iso } from '../../lib/list';
 import type { AuthUser } from '../../middleware/auth';
 import type { AuditEntry } from '../../middleware/audit';
 import { FIELDS, autoMap, suggestMapping, type Target } from './targets';
-import { applyStockUnits, planStock, prepareStockRows, type Prepared, type Unit } from './stock';
+import { applyStockUnits, planStock, prepareStockRows, type Prepared, type StockRow, type Unit } from './stock';
 import { applyParties, planParties, preparePartyRows, type PartyPrepared } from './partiesImport';
 
 type Audit = (e: AuditEntry) => void;
 export const IMPORT_BUCKET = 'backups' as const; // private bucket: import files can hold real stock and customer data
-const BATCH_UNITS = 60;
+/** Products saved per transaction. A slow link to the database needs fewer (set IMPORT_BATCH_UNITS), because a transaction must finish within a minute. */
+const BATCH_UNITS = Math.max(1, Number(process.env.IMPORT_BATCH_UNITS) || 60);
 const TARGET_PERMS: Record<Target, string[]> = { items: ['items.create'], opening_stock: ['items.create', 'stock.edit'], vendors: ['vendors.create'], customers: ['customers.create'] };
 
 export function requireTargetPermission(user: AuthUser, target: Target) {
@@ -102,12 +103,24 @@ export async function setMapping(id: string, input: any, audit: Audit) {
 // ---------- shared: read, clean, plan ----------
 interface Ready { kind: 'stock' | 'parties'; stock?: Prepared; parties?: PartyPrepared; units: Unit[] | any[]; plan: any; totalRows: number }
 
+/**
+ * An interrupted import is resumed by planning the work again, so the rows this import has already saved must be left out.
+ * Otherwise the saved variants would show up as "existing" and shift every position, and the import could take far longer than needed.
+ */
+async function rowsLeft(b: any, rows: StockRow[]): Promise<StockRow[]> {
+  const done = new Set((await ImportEffect.distinct('docId', { batchId: String(b._id), coll: 'variants' })).map(String));
+  if (!done.size) return rows;
+  const vs: any[] = await Variant.find({ itemCode: { $in: rows.map((r) => r.code) } }, { itemCode: 1 }).lean();
+  const skip = new Set(vs.filter((v) => done.has(String(v._id))).map((v) => v.itemCode as string));
+  return rows.filter((r) => !skip.has(r.code));
+}
+
 async function prepare(b: any): Promise<Ready> {
   if (!b.sheet || !Object.keys(b.mapping ?? {}).length) throw badRequest('Choose the sheet and map the columns first', [{ path: 'mapping', message: 'Mapping is missing' }]);
   const { rows } = readSheetRows(readWorkbook(await fileOf(b)).wb, b.sheet, b.headerRow);
   if (b.target === 'items' || b.target === 'opening_stock') {
     const stock = prepareStockRows(rows, b.mapping);
-    const plan = await planStock(stock.rows, b.target === 'opening_stock');
+    const plan = await planStock(await rowsLeft(b, stock.rows), b.target === 'opening_stock');
     return { kind: 'stock', stock, units: plan.units, plan, totalRows: rows.length };
   }
   const parties = await preparePartyRows(b.target, rows, b.mapping);
@@ -199,9 +212,10 @@ export async function commitImport(id: string, user: AuthUser, maxSeconds: numbe
       }
     }
     if (first) { b.status = 'committing'; b.result = { new: 0, updated: 0, failed: 0, reviewFlagged: 0, pieces: 0, costValue: 0, failures: [] }; b.markModified('result'); await b.save(); }
-    const total = r.units.length;
+    const total = r.units.length; // what is left to do
+    const grandTotal = Math.max(b.progress?.total ?? 0, total); // the whole import, as first planned
     const deadline = Date.now() + maxSeconds * 1000;
-    let i = b.progress?.processed ?? 0;
+    let i = 0; // the plan only holds what is left, so every call starts at its beginning
     const post = b.target === 'opening_stock';
     const storeId = post ? (b.options?.storeId ?? (await defaultStoreId())) : undefined;
     const asOf = b.options?.asOf ? new Date(`${String(b.options.asOf).slice(0, 10)}T00:00:00+05:30`) : new Date();
@@ -225,7 +239,7 @@ export async function commitImport(id: string, user: AuthUser, maxSeconds: numbe
       const inc: any = {};
       for (const x of res) for (const k of ['new', 'updated', 'reviewFlagged', 'pieces', 'costValue'] as const) inc[`result.${k}`] = (inc[`result.${k}`] ?? 0) + x[k];
       i += slice.length;
-      await ImportBatch.updateOne({ _id: id }, { $inc: inc, $set: { 'progress.processed': i, 'progress.total': total, lockUntil: new Date(Date.now() + 35_000) } });
+      await ImportBatch.updateOne({ _id: id }, { $inc: inc, $set: { 'progress.processed': grandTotal - (total - i), 'progress.total': grandTotal, lockUntil: new Date(Date.now() + 35_000) } });
     }
     const done = i >= total;
     if (done) {

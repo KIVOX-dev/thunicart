@@ -1,11 +1,9 @@
-import { useEffect, useState } from 'react';
-import { Badge, Button, Checkbox, Field, Input, ListSkeleton, Modal, Table, TBody, Td, Th, THead, Tr, useToast } from '@thunikart/ui';
-import { ErrorBanner, QueryError } from '../../../components/ErrorBanner';
-import { PageHeader } from '../../../components/PageHeader';
-import { useCan } from '../../../features/auth/permissions';
-import { ACTION_LABELS, useCreateRoleForm, usePermissionCatalog, usePermissionMatrix, useRoles, type Role } from '../../../features/roles/use-roles';
+import { Badge, Button, Checkbox, Field, Input, ListSkeleton, Table, TBody, Td, Th, THead, Tr, useToast } from '@thunikart/ui';
+import { ErrorBanner, QueryError } from '../ErrorBanner';
+import { useCan } from '../../features/auth/permissions';
+import { ACTION_LABELS, useCreateRoleForm, usePermissionCatalog, usePermissionMatrix, type Role } from '../../features/roles/use-roles';
 
-function CreateRoleForm({ onCreated }: { onCreated: (r: Role) => void }) {
+export function CreateRoleForm({ onCreated }: { onCreated: (r: Role) => void }) {
   const catalog = usePermissionCatalog();
   const { form, submit, banner, saving } = useCreateRoleForm(catalog.data, onCreated);
   const { register, formState: { errors } } = form;
@@ -20,7 +18,7 @@ function CreateRoleForm({ onCreated }: { onCreated: (r: Role) => void }) {
   );
 }
 
-function Matrix({ role }: { role: Role }) {
+export function Matrix({ role }: { role: Role }) {
   const catalog = usePermissionCatalog();
   const canEdit = useCan()('roles.edit') && !role.isAdmin;
   const m = usePermissionMatrix(role, catalog.data);
@@ -73,38 +71,6 @@ function Matrix({ role }: { role: Role }) {
           ))}
         </TBody>
       </Table>
-    </div>
-  );
-}
-
-export function RolesDesktop() {
-  const roles = useRoles();
-  const can = useCan();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
-  const { toast } = useToast();
-  useEffect(() => { if (!selectedId && roles.data?.[0]) setSelectedId(roles.data[0].id); }, [roles.data, selectedId]);
-  const selected = roles.data?.find((r) => r.id === selectedId);
-  return (
-    <div>
-      <PageHeader title="Roles and permissions" description="Choose what each role can do. The menu and buttons follow these permissions." actions={can('roles.create') ? <Button variant="primary" onClick={() => setCreating(true)}>Create role</Button> : undefined} />
-      {roles.isPending ? <ListSkeleton label="Loading roles" /> : roles.isError ? <QueryError error={roles.error} onRetry={() => roles.refetch()} /> : (
-        <div className="grid grid-cols-[16rem_1fr] gap-6">
-          <nav aria-label="Roles"><ul className="flex flex-col gap-1">
-            {roles.data.map((r) => (
-              <li key={r.id}>
-                <button type="button" onClick={() => setSelectedId(r.id)} aria-current={r.id === selectedId ? 'true' : undefined} className={`flex min-h-11 w-full items-center justify-between rounded border px-3 text-left text-sm ${r.id === selectedId ? 'border-navy bg-mist font-semibold' : 'border-line hover:bg-mist'}`}>
-                  <span>{r.name}</span><span className="text-xs text-muted">{r.userCount ?? 0} users</span>
-                </button>
-              </li>
-            ))}
-          </ul></nav>
-          <section aria-label="Permission matrix">{selected && <Matrix key={selected.id} role={selected} />}</section>
-        </div>
-      )}
-      <Modal open={creating} onClose={() => setCreating(false)} title="Create role">
-        <CreateRoleForm onCreated={(r) => { setCreating(false); setSelectedId(r.id); toast(`Role ${r.name} created. Now choose its permissions.`, 'success'); }} />
-      </Modal>
     </div>
   );
 }

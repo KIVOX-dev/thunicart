@@ -14,10 +14,10 @@ type Page<T> = { items: T[]; total: number; nextPage: number | null };
 
 type Banner = { message: string; requestId?: string } | null;
 
-export function useBills(opts: { vendorId?: string; open?: boolean } = {}) {
+export function useBills(opts: { vendorId?: string; open?: boolean; paymentStatus?: 'unpaid' | 'partial' | 'paid' | '' } = {}) {
   return useInfiniteQuery({
     queryKey: ['bills', opts], initialPageParam: 1,
-    queryFn: async ({ pageParam }) => { const r = await api.get<Page<unknown>>('/purchase-bills', { vendorId: opts.vendorId, billStatus: opts.open ? 'open' : undefined, page: pageParam, pageSize: 50 }); return { ...r, items: r.items.map(toBill) }; },
+    queryFn: async ({ pageParam }) => { const r = await api.get<Page<unknown>>('/purchase-bills', { vendorId: opts.vendorId, billStatus: opts.open ? 'open' : undefined, paymentStatus: opts.paymentStatus || undefined, page: pageParam, pageSize: 50 }); return { ...r, items: r.items.map(toBill) }; },
     getNextPageParam: (l) => l.nextPage ?? undefined,
   });
 }
@@ -49,7 +49,7 @@ export function useAgeing() {
     },
   });
 }
-const refresh = (qc: ReturnType<typeof useQueryClient>) => Promise.all(['bills', 'returns', 'payments', 'ageing', 'vendors', 'items', 'ledger', 'grns'].map((k) => qc.invalidateQueries({ queryKey: [k] })));
+const refresh = (qc: ReturnType<typeof useQueryClient>) => Promise.all(['bills', 'returns', 'payments', 'ageing', 'vendors', 'items', 'ledger', 'grns', 'vendor-outstanding', 'settlements'].map((k) => qc.invalidateQueries({ queryKey: [k] })));
 
 export function useBillForm(onDone: (b: Bill) => void) {
   const qc = useQueryClient();
@@ -115,4 +115,12 @@ export function usePaymentForm(vendorId: string, onDone: () => void) {
     try { await m.mutateAsync({ vendorId, mode, reference, settlements }); onDone(); } catch (e) { setBanner(applyFieldIssues(e).banner); }
   };
   return { open, loading: bills.isPending, mode, setMode, reference, setReference, amounts, setAmount: (id: string, v: string) => setAmounts((a) => ({ ...a, [id]: v })), banner, saving: m.isPending, submit, selected: Object.values(amounts).filter((v) => Number(v) > 0).length };
+}
+
+/** What we owe one vendor, from bills less payments, debit notes (returns) and settlements. */
+export function useVendorOutstanding(vendorId: string) {
+  return useQuery({
+    queryKey: ['vendor-outstanding', vendorId], enabled: !!vendorId,
+    queryFn: () => api.get<{ billed: number; paid: number; debitNotes: number; settled: number; outstanding: number; advance: number; netPayable: number }>(`/vendors/${vendorId}/outstanding`),
+  });
 }

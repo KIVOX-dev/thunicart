@@ -1,39 +1,13 @@
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { formatDate, formatPaise } from '@thunikart/shared';
-import { Button, EmptyState, ListSkeleton, Modal, Select, Table, TBody, Td, Th, THead, Tabs, Tr, useToast } from '@thunikart/ui';
+import { Button, EmptyState, ListSkeleton, Modal, Table, TBody, Td, Th, THead, Tabs, Tr, useToast } from '@thunikart/ui';
 import { QueryError } from '../../../components/ErrorBanner';
 import { PageHeader } from '../../../components/PageHeader';
-import { ExpenseForm, ReceiptForm } from '../../../components/reports/AccountForms';
+import { CashEntries, Settlements, VendorOutstanding } from '../../../components/accounts/CashPanels';
+import { ReceiptForm } from '../../../components/reports/AccountForms';
 import { useCan } from '../../../features/auth/permissions';
-import { EXPENSE_CATEGORIES } from '../../../features/reports/types';
-import { useExpenses, useReceipts, useReceivables } from '../../../features/reports/use-reports';
-
-function ExpensesTab() {
-  const can = useCan();
-  const { toast } = useToast();
-  const [cat, setCat] = useState('');
-  const [open, setOpen] = useState(false);
-  const q = useExpenses(cat);
-  const data = q.data?.pages.flatMap((p) => p.items) ?? [];
-  return (
-    <div>
-      <div className="mb-3 flex items-center gap-3">
-        <Select aria-label="Category" className="w-48" value={cat} onChange={(e) => setCat(e.target.value)}><option value="">All categories</option>{EXPENSE_CATEGORIES.map((c) => <option key={c}>{c}</option>)}</Select>
-        <span className="text-sm text-muted">This month: <strong data-testid="expense-month">{formatPaise(q.data?.pages[0]?.monthTotal ?? 0)}</strong></span>
-        {can('accounts.create') && <Button variant="primary" className="ml-auto" onClick={() => setOpen(true)}>Add expense</Button>}
-      </div>
-      {q.isPending ? <ListSkeleton label="Loading expenses" /> : q.isError ? <QueryError error={q.error} onRetry={() => q.refetch()} /> : data.length === 0 ? <EmptyState title="No expenses yet" body="Add rent, salaries and other costs with a photo of the receipt." /> : (
-        <>
-          <Table caption="Expenses"><THead><Tr><Th>Date</Th><Th>Category</Th><Th>Note</Th><Th>Receipt</Th><Th>Entered by</Th><Th className="text-right">Amount</Th></Tr></THead>
-            <TBody>{data.map((e) => <Tr key={e.id}><Td>{formatDate(e.date)}</Td><Td>{e.category}</Td><Td>{e.note}</Td><Td>{e.receiptKey ? 'Attached' : '–'}</Td><Td>{e.by}</Td><Td className="text-right">{formatPaise(e.amount)}</Td></Tr>)}</TBody></Table>
-          {q.hasNextPage && <div className="mt-3"><Button onClick={() => q.fetchNextPage()} loading={q.isFetchingNextPage}>Load more</Button></div>}
-        </>
-      )}
-      <Modal open={open} onClose={() => setOpen(false)} title="Add expense"><ExpenseForm onDone={() => { setOpen(false); toast('Expense saved', 'success'); }} /></Modal>
-    </div>
-  );
-}
+import { useReceipts, useReceivables } from '../../../features/reports/use-reports';
 
 function ReceiptsTab() {
   const can = useCan();
@@ -57,7 +31,7 @@ function OutstandingTab() {
   const q = useReceivables();
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-muted">What customers owe, by how late it is. Vendor payments and vendor ageing are in <Link to="/purchase?tab=ageing" className="underline">Purchase</Link>.</p>
+      <p className="text-sm text-muted">What customers owe, by how late it is. What we owe vendors is under Outstanding to vendors; ageing by vendor is in <Link to="/purchase?tab=ageing" className="underline">Purchase and payment</Link>.</p>
       {q.isPending ? <ListSkeleton label="Loading receivables" /> : q.isError ? <QueryError error={q.error} onRetry={() => q.refetch()} /> : q.data.length === 0 ? <EmptyState title="Nobody owes anything" /> : (
         <Table caption="Customer receivables"><THead><Tr><Th>Customer</Th><Th className="text-right">Not due</Th><Th className="text-right">1 to 30 days</Th><Th className="text-right">31 to 60</Th><Th className="text-right">61 to 90</Th><Th className="text-right">Over 90</Th><Th className="text-right">Total owed</Th></Tr></THead>
           <TBody>{q.data.map((r) => <Tr key={r.customerId}><Td className="font-medium">{r.customerName}<span className="block text-xs text-muted">{r.mobile}</span></Td>{[r.current, r.d1to30, r.d31to60, r.d61to90, r.d90plus].map((v, i) => <Td key={i} className="text-right">{v ? formatPaise(v) : '–'}</Td>)}<Td className="text-right font-semibold">{formatPaise(r.total)}</Td></Tr>)}</TBody></Table>
@@ -70,9 +44,14 @@ export function AccountsDesktop() {
   const [sp, setSp] = useSearchParams();
   return (
     <div>
-      <PageHeader title="Accounts" description="Expenses, customer receipts and what is owed." />
+      <PageHeader title="Accounts" description="Cashflow: what goes out as expenses and charges, what we owe vendors, and settlements." />
       <Tabs value={sp.get('tab') ?? 'expenses'} onChange={(t) => setSp({ tab: t }, { replace: true })} items={[
-        { key: 'expenses', label: 'Expenses', panel: <ExpensesTab /> }, { key: 'receipts', label: 'Customer receipts', panel: <ReceiptsTab /> }, { key: 'outstanding', label: 'Outstanding and ageing', panel: <OutstandingTab /> },
+        { key: 'expenses', label: 'Expenses', panel: <CashEntries kind="expense" /> },
+        { key: 'charges', label: 'Charges', panel: <CashEntries kind="charge" /> },
+        { key: 'vendors', label: 'Outstanding to vendors', panel: <VendorOutstanding /> },
+        { key: 'settlements', label: 'Settlements', panel: <Settlements /> },
+        { key: 'receipts', label: 'Customer receipts', panel: <ReceiptsTab /> },
+        { key: 'outstanding', label: 'Customers owe', panel: <OutstandingTab /> },
       ]} />
     </div>
   );

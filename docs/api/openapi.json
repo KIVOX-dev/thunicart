@@ -3717,6 +3717,22 @@
             }
           },
           {
+            "name": "module",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "entity",
             "in": "query",
             "required": false,
@@ -3765,6 +3781,18 @@
                             ]
                           },
                           "userName": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "userRole": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "module": {
                             "type": [
                               "string",
                               "null"
@@ -3830,6 +3858,8 @@
                           "at",
                           "userId",
                           "userName",
+                          "userRole",
+                          "module",
                           "method",
                           "path",
                           "status",
@@ -14947,6 +14977,13 @@
                     "country": {
                       "type": "string"
                     },
+                    "source": {
+                      "type": "string",
+                      "enum": [
+                        "online",
+                        "offline"
+                      ]
+                    },
                     "loyaltyPoints": {
                       "type": "integer",
                       "minimum": -9007199254740991,
@@ -14978,6 +15015,7 @@
                     "id",
                     "customerId",
                     "country",
+                    "source",
                     "loyaltyPoints",
                     "walletBalance",
                     "currency"
@@ -15163,6 +15201,18 @@
                 "false"
               ]
             }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "online",
+                "offline"
+              ]
+            }
           }
         ],
         "responses": {
@@ -15274,6 +15324,13 @@
                           "country": {
                             "type": "string"
                           },
+                          "source": {
+                            "type": "string",
+                            "enum": [
+                              "online",
+                              "offline"
+                            ]
+                          },
                           "loyaltyPoints": {
                             "type": "integer",
                             "minimum": -9007199254740991,
@@ -15305,6 +15362,7 @@
                           "id",
                           "customerId",
                           "country",
+                          "source",
                           "loyaltyPoints",
                           "walletBalance",
                           "currency"
@@ -15502,6 +15560,13 @@
                     "country": {
                       "type": "string"
                     },
+                    "source": {
+                      "type": "string",
+                      "enum": [
+                        "online",
+                        "offline"
+                      ]
+                    },
                     "loyaltyPoints": {
                       "type": "integer",
                       "minimum": -9007199254740991,
@@ -15533,6 +15598,7 @@
                     "id",
                     "customerId",
                     "country",
+                    "source",
                     "loyaltyPoints",
                     "walletBalance",
                     "currency"
@@ -15713,6 +15779,219 @@
         }
       }
     },
+    "/api/v1/customers/duplicates": {
+      "get": {
+        "summary": "Customers who share a phone number (written differently) or an email, online and offline together",
+        "tags": [
+          "Parties"
+        ],
+        "operationId": "getApiV1CustomersDuplicates",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "by": {
+                        "type": "string",
+                        "enum": [
+                          "mobile",
+                          "email"
+                        ]
+                      },
+                      "value": {
+                        "type": "string"
+                      },
+                      "customers": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-f\\d]{24}$"
+                            },
+                            "customerId": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "mobile": {
+                              "type": "string"
+                            },
+                            "email": {
+                              "type": "string"
+                            },
+                            "source": {
+                              "type": "string",
+                              "enum": [
+                                "online",
+                                "offline"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "customerId",
+                            "name",
+                            "mobile",
+                            "email",
+                            "source"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "by",
+                      "value",
+                      "customers"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "customers.edit",
+        "x-idempotency": "none",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/customers/merge": {
+      "post": {
+        "summary": "Merge a duplicate customer into the one to keep. Bills, ledgers and orders move across.",
+        "tags": [
+          "Parties"
+        ],
+        "operationId": "postApiV1CustomersMerge",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ],
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "customers.delete",
+        "x-idempotency": "none",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "keepId": {
+                    "type": "string",
+                    "pattern": "^[a-f\\d]{24}$"
+                  },
+                  "mergeId": {
+                    "type": "string",
+                    "pattern": "^[a-f\\d]{24}$"
+                  }
+                },
+                "required": [
+                  "keepId",
+                  "mergeId"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/customers/{id}": {
       "get": {
         "summary": "One customer with loyalty and wallet balances (ledgers)",
@@ -15835,6 +16114,13 @@
                     "country": {
                       "type": "string"
                     },
+                    "source": {
+                      "type": "string",
+                      "enum": [
+                        "online",
+                        "offline"
+                      ]
+                    },
                     "loyaltyPoints": {
                       "type": "integer",
                       "minimum": -9007199254740991,
@@ -15866,6 +16152,7 @@
                     "id",
                     "customerId",
                     "country",
+                    "source",
                     "loyaltyPoints",
                     "walletBalance",
                     "currency"
@@ -16045,6 +16332,13 @@
                     "country": {
                       "type": "string"
                     },
+                    "source": {
+                      "type": "string",
+                      "enum": [
+                        "online",
+                        "offline"
+                      ]
+                    },
                     "loyaltyPoints": {
                       "type": "integer",
                       "minimum": -9007199254740991,
@@ -16076,6 +16370,7 @@
                     "id",
                     "customerId",
                     "country",
+                    "source",
                     "loyaltyPoints",
                     "walletBalance",
                     "currency"
@@ -24557,6 +24852,19 @@
                 "paid"
               ]
             }
+          },
+          {
+            "name": "paymentStatus",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "unpaid",
+                "partial",
+                "paid"
+              ]
+            }
           }
         ],
         "responses": {
@@ -24793,10 +25101,23 @@
                             "minimum": -9007199254740991,
                             "maximum": 9007199254740991
                           },
+                          "settled": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
                           "outstanding": {
                             "type": "integer",
                             "minimum": -9007199254740991,
                             "maximum": 9007199254740991
+                          },
+                          "paymentStatus": {
+                            "type": "string",
+                            "enum": [
+                              "unpaid",
+                              "partial",
+                              "paid"
+                            ]
                           },
                           "notes": {
                             "type": "string"
@@ -24835,7 +25156,9 @@
                           "inputTaxCredit",
                           "paid",
                           "debitNotes",
+                          "settled",
                           "outstanding",
+                          "paymentStatus",
                           "notes",
                           "createdAt",
                           "freightCostAdded",
@@ -25159,10 +25482,23 @@
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991
                     },
+                    "settled": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
                     "outstanding": {
                       "type": "integer",
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991
+                    },
+                    "paymentStatus": {
+                      "type": "string",
+                      "enum": [
+                        "unpaid",
+                        "partial",
+                        "paid"
+                      ]
                     },
                     "notes": {
                       "type": "string"
@@ -25201,7 +25537,9 @@
                     "inputTaxCredit",
                     "paid",
                     "debitNotes",
+                    "settled",
                     "outstanding",
+                    "paymentStatus",
                     "notes",
                     "createdAt",
                     "freightCostAdded",
@@ -25597,10 +25935,23 @@
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991
                     },
+                    "settled": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
                     "outstanding": {
                       "type": "integer",
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991
+                    },
+                    "paymentStatus": {
+                      "type": "string",
+                      "enum": [
+                        "unpaid",
+                        "partial",
+                        "paid"
+                      ]
                     },
                     "notes": {
                       "type": "string"
@@ -25639,7 +25990,9 @@
                     "inputTaxCredit",
                     "paid",
                     "debitNotes",
+                    "settled",
                     "outstanding",
+                    "paymentStatus",
                     "notes",
                     "createdAt",
                     "freightCostAdded",
@@ -27308,6 +27661,469 @@
         }
       }
     },
+    "/api/v1/vendor-settlements": {
+      "get": {
+        "summary": "Vendor outstanding that was marked as settled (not paid in cash)",
+        "tags": [
+          "Purchase"
+        ],
+        "operationId": "getApiV1VendorSettlements",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "store",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "brand",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "vendor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "vendorId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f\\d]{24}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "pattern": "^[a-f\\d]{24}$"
+                          },
+                          "settlementNumber": {
+                            "type": "string"
+                          },
+                          "vendorId": {
+                            "type": "string",
+                            "pattern": "^[a-f\\d]{24}$"
+                          },
+                          "vendorName": {
+                            "type": "string"
+                          },
+                          "billId": {
+                            "type": "string",
+                            "pattern": "^[a-f\\d]{24}$"
+                          },
+                          "billNumber": {
+                            "type": "string"
+                          },
+                          "date": {
+                            "type": "string"
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "full",
+                              "partial"
+                            ]
+                          },
+                          "amount": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "reason": {
+                            "type": "string"
+                          },
+                          "currency": {
+                            "type": "string",
+                            "const": "INR"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "settlementNumber",
+                          "vendorId",
+                          "vendorName",
+                          "billId",
+                          "billNumber",
+                          "date",
+                          "kind",
+                          "amount",
+                          "reason",
+                          "currency",
+                          "createdAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "nextPage": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "total",
+                    "nextPage"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "accounts.view",
+        "x-idempotency": "none",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Mark vendor outstanding on one bill as settled, fully or partly, with a reason. No cash moves.",
+        "tags": [
+          "Purchase"
+        ],
+        "operationId": "postApiV1VendorSettlements",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "description": "Unique key (8 to 128 chars) per logical request. A retry with the same key never posts twice.",
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 128
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-f\\d]{24}$"
+                    },
+                    "settlementNumber": {
+                      "type": "string"
+                    },
+                    "vendorId": {
+                      "type": "string",
+                      "pattern": "^[a-f\\d]{24}$"
+                    },
+                    "vendorName": {
+                      "type": "string"
+                    },
+                    "billId": {
+                      "type": "string",
+                      "pattern": "^[a-f\\d]{24}$"
+                    },
+                    "billNumber": {
+                      "type": "string"
+                    },
+                    "date": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "full",
+                        "partial"
+                      ]
+                    },
+                    "amount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "reason": {
+                      "type": "string"
+                    },
+                    "currency": {
+                      "type": "string",
+                      "const": "INR"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "settlementNumber",
+                    "vendorId",
+                    "vendorName",
+                    "billId",
+                    "billNumber",
+                    "date",
+                    "kind",
+                    "amount",
+                    "reason",
+                    "currency",
+                    "createdAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Business rule broken",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "accounts.approve",
+        "x-idempotency": "required",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "billId": {
+                    "type": "string",
+                    "pattern": "^[a-f\\d]{24}$"
+                  },
+                  "date": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "full",
+                      "partial"
+                    ]
+                  },
+                  "amount": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 300
+                  }
+                },
+                "required": [
+                  "billId",
+                  "date",
+                  "kind",
+                  "reason"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/vendors/{id}/outstanding": {
       "get": {
         "summary": "What we owe a vendor (bills - debit notes - payments) with ageing from the due date",
@@ -27355,6 +28171,11 @@
                       "maximum": 9007199254740991
                     },
                     "paid": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "settled": {
                       "type": "integer",
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991
@@ -27452,6 +28273,11 @@
                             "minimum": -9007199254740991,
                             "maximum": 9007199254740991
                           },
+                          "settled": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
                           "outstanding": {
                             "type": "integer",
                             "minimum": -9007199254740991,
@@ -27472,6 +28298,7 @@
                           "total",
                           "debitNotes",
                           "paid",
+                          "settled",
                           "outstanding",
                           "daysOverdue"
                         ],
@@ -27486,6 +28313,7 @@
                     "billed",
                     "debitNotes",
                     "paid",
+                    "settled",
                     "outstanding",
                     "advance",
                     "netPayable",
@@ -40321,6 +41149,18 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "expense",
+                "charge"
+              ]
+            }
           }
         ],
         "responses": {
@@ -40336,6 +41176,14 @@
                       "items": {
                         "type": "object",
                         "properties": {
+                          "kind": {
+                            "default": "expense",
+                            "type": "string",
+                            "enum": [
+                              "expense",
+                              "charge"
+                            ]
+                          },
                           "category": {
                             "type": "string",
                             "minLength": 1,
@@ -40391,6 +41239,7 @@
                           }
                         },
                         "required": [
+                          "kind",
                           "category",
                           "payee",
                           "date",
@@ -40498,6 +41347,14 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "kind": {
+                      "default": "expense",
+                      "type": "string",
+                      "enum": [
+                        "expense",
+                        "charge"
+                      ]
+                    },
                     "category": {
                       "type": "string",
                       "minLength": 1,
@@ -40553,6 +41410,7 @@
                     }
                   },
                   "required": [
+                    "kind",
                     "category",
                     "payee",
                     "date",
@@ -40633,6 +41491,14 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "kind": {
+                    "default": "expense",
+                    "type": "string",
+                    "enum": [
+                      "expense",
+                      "charge"
+                    ]
+                  },
                   "category": {
                     "type": "string",
                     "minLength": 1,
@@ -40722,6 +41588,14 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "kind": {
+                      "default": "expense",
+                      "type": "string",
+                      "enum": [
+                        "expense",
+                        "charge"
+                      ]
+                    },
                     "category": {
                       "type": "string",
                       "minLength": 1,
@@ -40777,6 +41651,7 @@
                     }
                   },
                   "required": [
+                    "kind",
                     "category",
                     "payee",
                     "date",
@@ -40866,6 +41741,14 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "kind": {
+                      "default": "expense",
+                      "type": "string",
+                      "enum": [
+                        "expense",
+                        "charge"
+                      ]
+                    },
                     "category": {
                       "type": "string",
                       "minLength": 1,
@@ -40921,6 +41804,7 @@
                     }
                   },
                   "required": [
+                    "kind",
                     "category",
                     "payee",
                     "date",
@@ -41001,6 +41885,13 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "expense",
+                      "charge"
+                    ]
+                  },
                   "category": {
                     "type": "string",
                     "minLength": 1,

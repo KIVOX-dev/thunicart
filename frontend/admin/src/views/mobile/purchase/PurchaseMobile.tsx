@@ -3,10 +3,10 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { formatDate, formatPaise } from '@thunikart/shared';
 import { Badge, BottomSheet, Button, EmptyState, ListSkeleton, Select, Tabs, useToast } from '@thunikart/ui';
 import { QueryError } from '../../../components/ErrorBanner';
-import { BillForm, PaymentForm, ReturnForm } from '../../../components/PurchaseForms';
+import { BillForm, PaymentForm } from '../../../components/PurchaseForms';
 import { useCan, useGstMode } from '../../../features/auth/permissions';
 import { PO_STATUSES, PO_STATUS_LABEL, poTone } from '../../../features/inventory/types';
-import { useAgeing, useBills, usePayments, useReturns } from '../../../features/inventory/use-billing';
+import { useAgeing, useBills, usePayments } from '../../../features/inventory/use-billing';
 import { useGrns, useStartGrn } from '../../../features/inventory/use-grn';
 import { usePos, useReceivablePos } from '../../../features/inventory/use-purchase-orders';
 
@@ -73,23 +73,6 @@ function BillsTab() {
   );
 }
 
-function ReturnsTab() {
-  const can = useCan();
-  const { toast } = useToast();
-  const list = useReturns();
-  const [open, setOpen] = useState(false);
-  const data = rows(list.data);
-  return (
-    <div className="flex flex-col gap-3 pb-20">
-      {list.isPending ? <ListSkeleton label="Loading returns" /> : list.isError ? <QueryError error={list.error} onRetry={() => list.refetch()} /> : data.length === 0 ? <EmptyState title="No purchase returns" /> : data.map((r) => (
-        <Card key={r.id}><strong className="text-sm">{r.number}</strong><p className="text-sm">{r.vendorName} · {r.reason}</p><p className="text-xs text-muted">{formatDate(r.date)} · {r.lines.reduce((a, l) => a + l.qty, 0)} pieces · {formatPaise(r.totals.total)}</p></Card>
-      ))}
-      {can('purchase.create') && <Sticky><Button variant="primary" size="lg" block className="min-h-12" onClick={() => setOpen(true)}>New return</Button></Sticky>}
-      <BottomSheet open={open} onClose={() => setOpen(false)} title="New purchase return"><ReturnForm onDone={() => { setOpen(false); toast('Return created. Stock updated.', 'success'); }} /></BottomSheet>
-    </div>
-  );
-}
-
 function PaymentsTab() {
   const can = useCan();
   const { toast } = useToast();
@@ -128,7 +111,7 @@ export function PurchaseMobile() {
   return (
     <Tabs value={sp.get('tab') ?? 'orders'} onChange={(t) => setSp({ tab: t }, { replace: true })} items={[
       { key: 'orders', label: 'Orders', panel: <OrdersTab /> }, { key: 'receipts', label: 'Receipts', panel: <ReceiptsTab /> }, { key: 'bills', label: 'Bills', panel: <BillsTab /> },
-      { key: 'returns', label: 'Returns', panel: <ReturnsTab /> }, { key: 'payments', label: 'Pay', panel: <PaymentsTab /> }, { key: 'ageing', label: 'Ageing', panel: <AgeingTab /> },
+      { key: 'payments', label: 'Pay', panel: <PaymentsTab /> }, { key: 'ageing', label: 'Ageing', panel: <AgeingTab /> },
     ]} />
   );
 }

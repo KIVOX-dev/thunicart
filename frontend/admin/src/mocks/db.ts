@@ -8,7 +8,7 @@ import { seedAccounts, type AccountsState } from './accounts-state';
 /** In-memory mock database for MSW mode. Persisted to localStorage so a demo survives reloads. */
 export interface MockRole { id: string; name: string; description: string; isSystem: boolean; isAdmin: boolean; permissions: string[]; createdAt: string; updatedAt: string }
 export interface MockUser { id: string; name: string; email: string; mobile: string | null; roleId: string; active: boolean; password: string; lastLoginAt: string | null; createdAt: string }
-export interface MockActivity { id: string; at: string; userId: string | null; userName: string | null; method: string; path: string; status: number; entity: string | null; entityId: string | null; action: string | null; before: unknown; after: unknown; ip: string | null; requestId: string }
+export interface MockActivity { id: string; at: string; userId: string | null; userName: string | null; userRole: string | null; module: string | null; method: string; path: string; status: number; entity: string | null; entityId: string | null; action: string | null; before: unknown; after: unknown; ip: string | null; requestId: string }
 export interface MockDb {
   seq: number;
   roles: MockRole[];
@@ -29,7 +29,7 @@ export interface MockDb {
   labelTemplates: Array<{ id: string; name: string; widthMm: number; heightMm: number; fields: string[]; fontPx: number }>;
 }
 
-const KEY = 'tk.mock.db.v2';
+const KEY = 'tk.mock.db.v3';
 export const mockId = (n: number) => n.toString(16).padStart(24, '0');
 const now = () => new Date().toISOString();
 
@@ -41,6 +41,7 @@ function seed(): MockDb {
   });
   const roles = [
     role(1, 'Admin', 'Full access. Can create roles and edit permissions.', [...ALL_PERMISSION_KEYS], true),
+    role(5, 'Employee', 'Billing center, customers (view and add), stock audit and customer returns.', perms(['pos.view', 'pos.create', 'sales.view', 'sales.create', 'customers.view', 'customers.create', 'items.view', 'stock.view', 'stock.create', 'stock.edit', 'orders.view'])),
     role(2, 'Sales', 'Counter billing and customers.', perms(['pos.view', 'pos.create', 'sales.view', 'sales.create', 'customers.view', 'customers.create', 'customers.edit', 'items.view', 'stock.view', 'orders.view'])),
     role(3, 'Buyer Purchase', 'Vendors, purchase orders and receiving.', perms(['items.view', 'items.create', 'items.edit', 'items.export', 'vendors.view', 'vendors.create', 'vendors.edit', 'purchase.view', 'purchase.create', 'purchase.edit', 'purchase.approve', 'purchase.export', 'stock.view', 'stock.create', 'stock.edit'])),
     role(4, 'Accounts', 'Payments, expenses, GST and reports.', perms(['accounts.view', 'accounts.create', 'accounts.edit', 'accounts.export', 'gst.view', 'gst.export', 'reports.view', 'reports.export', 'sales.view', 'purchase.view', 'vendors.view', 'customers.view'])),

@@ -59,7 +59,7 @@ function BillingShell() {
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:bg-white focus:p-2">Skip to content</a>
       <header className="sticky top-0 z-40 flex items-center gap-4 rounded-b-3xl bg-navy px-5 py-3 text-white shadow-lift">
         <Link to="/billing" aria-label="Billing home"><Logo variant="mark" tile className="h-9 w-9 !p-0.5" /></Link>
-        <div className="min-w-0"><p className="tk-eyebrow text-teal">Store billing</p><h1 className="truncate text-sm md:hidden">{title}</h1></div>
+        <div className="min-w-0"><p className="tk-eyebrow text-teal">Billing center</p><h1 className="truncate text-sm md:hidden">{title}</h1></div>
         {v === 'desktop' && (
           <nav aria-label="Billing" className="ml-4 flex flex-1 gap-1">
             {all.map((r) => <Link key={r.label} to={r.tab ? `${r.path}?tab=${r.tab}` : r.path} aria-current={isOn(r, loc.pathname, loc.search) ? 'page' : undefined} className={`tk-press flex min-h-10 items-center gap-2 rounded-full px-4 text-sm ${isOn(r, loc.pathname, loc.search) ? 'bg-orange font-bold text-navy shadow-soft' : 'font-medium text-white hover:bg-white/15'}`}><r.icon aria-hidden size={16} />{r.label}</Link>)}
@@ -98,9 +98,9 @@ export function BillingLogin() {
   if (me) return <Navigate to={counterOnly || from.startsWith('/billing') ? from : '/billing'} replace />;
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-navy p-4"><span aria-hidden className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-orange" /><span aria-hidden className="absolute -bottom-24 -right-16 h-72 w-72 rounded-full bg-teal" />
-      <form onSubmit={submit} noValidate aria-label="Billing sign in" className="relative flex w-full max-w-sm flex-col gap-4 rounded-2xl bg-white p-7 shadow-overlay">
+      <form onSubmit={submit} noValidate aria-label="Billing center sign in" className="relative flex w-full max-w-sm flex-col gap-4 rounded-2xl bg-white p-7 shadow-overlay">
         <Logo variant="primary" className="mx-auto w-40" />
-        <h1 className="text-center text-2xl">Store billing sign in</h1>
+        <h1 className="text-center text-2xl">Billing center sign in</h1>
         <p className="text-center text-xs text-muted">For shop employees. Billing only.</p>
         {banner && <ErrorBanner {...banner} />}
         <Field label="Employee email" required error={errors.email?.message}>{(p) => <Input {...p} type="email" autoComplete="username" autoFocus className="min-h-12" {...register('email')} />}</Field>

@@ -26,7 +26,7 @@ export async function runSeed(opts: SeedOptions): Promise<SeedResult> {
   void MODULES; void ACTIONS;
 
   // Roles with default permissions (only for roles created now)
-  for (const name of ['Admin', 'Sales', 'Buyer Purchase', 'Accounts']) {
+  for (const name of ['Admin', 'Employee', 'Sales', 'Buyer Purchase', 'Accounts']) {
     const nameKey = name.toLowerCase();
     const existing = await Role.findOne({ nameKey }).lean();
     if (existing) continue;
@@ -72,6 +72,10 @@ export async function runSeed(opts: SeedOptions): Promise<SeedResult> {
     await ImportMapping.updateOne({ target, name: m.name }, { $setOnInsert: { target, name: m.name, headers: Object.values(m.mapping), mapping: m.mapping, options: m.options ?? {}, builtin: true } }, { upsert: true });
   }
   await LabelTemplate.updateOne({ name: '50 x 25 mm' }, { $setOnInsert: { name: '50 x 25 mm', widthMm: 50, heightMm: 25, fields: ['barcode', 'name', 'size', 'color', 'mrp', 'itemCode'], isDefault: true } }, { upsert: true });
+  // 4 inch (100 mm wide) thermal roll labels. Not the default: pick them in Barcode labels.
+  for (const t of [{ name: '4 inch thermal 100 x 50 mm', widthMm: 100, heightMm: 50 }, { name: '4 inch thermal 100 x 25 mm', widthMm: 100, heightMm: 25 }]) {
+    await LabelTemplate.updateOne({ name: t.name }, { $setOnInsert: { ...t, fields: ['barcode', 'name', 'size', 'color', 'mrp', 'itemCode'], isDefault: false } }, { upsert: true });
+  }
 
   for (const name of ['Rent', 'Salary', 'Electricity', 'Transport', 'Packaging', 'Marketing', 'Other']) {
     await ExpenseCategory.updateOne({ slug: name.toLowerCase() }, { $setOnInsert: { name, slug: name.toLowerCase(), active: true } }, { upsert: true });

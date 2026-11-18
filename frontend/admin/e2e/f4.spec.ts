@@ -209,39 +209,7 @@ test.describe('downloads', () => {
     expect(out.name).toBe('sales-register.xlsx');
     expect(head(out.bytes, 2)).toBe('PK');
   });
-
-  test('the export center gives a zip of everything, per dataset files, history and a monthly email switch', async ({ page }) => {
-    test.setTimeout(120_000);
-    await loadApp(page);
-    await seedSales(page);
-    await login(page, 'admin@thunikart.test');
-    await page.goto('/exports');
-    await page.getByRole('button', { name: /^Download everything/ }).click();
-    const job = page.getByTestId('export-job');
-    await expect(job).toContainText('Ready', { timeout: 15_000 });
-    const zip = await saved(page, async () => { await job.getByRole('button', { name: /Download Everything/ }).click(); });
-    expect(zip.name).toBe('thunikart-everything.zip');
-    expect(head(zip.bytes, 2)).toBe('PK');
-    const names = zip.bytes.toString('latin1');
-    for (const n of ['items.xlsx', 'vendors.xlsx', 'customers.xlsx', 'sales.xlsx', 'purchases.xlsx', 'stock.xlsx', 'expenses.xlsx']) expect(names).toContain(n);
-
-    await page.getByRole('button', { name: 'Export Items as CSV' }).click();
-    await expect(page.getByTestId('export-job')).toContainText('Ready', { timeout: 15_000 });
-    const csv = await saved(page, async () => { await page.getByTestId('export-job').getByRole('button', { name: /Download Items/ }).click(); });
-    expect(csv.name).toBe('items.csv');
-    expect(csv.bytes.toString('utf8')).toContain('Dash Kurti');
-
-    await expect(page.getByTestId('export-history')).toContainText('Admin User');
-    await expect(page.getByTestId('export-history')).toContainText('Everything');
-    const mail = page.getByRole('checkbox', { name: /Email me everything/ });
-    const saved1 = page.waitForResponse((r) => r.url().includes('/exports/settings') && r.request().method() === 'PUT');
-    await mail.check();
-    await saved1;
-    await page.reload();
-    await expect(page.getByRole('checkbox', { name: /Email me everything/ })).toBeChecked();
-    await expectNoSidewaysScroll(page);
-  });
-});
+})
 
 test.describe('GST on', () => {
   test('GST reports and tax columns appear, warnings show before export, and downloads carry the tax columns', async ({ page }) => {
@@ -299,15 +267,15 @@ test.describe('permissions and layout', () => {
     await expect(page).toHaveURL(/\/billing$/);
   });
 
-  test('Accounts can open reports and the export center', async ({ page }) => {
+  test('Accounts can open reports, and Export center is gone (lists keep their own Export button)', async ({ page }) => {
     await login(page, 'accounts@thunikart.test');
     await page.goto('/reports');
     await expect(page.getByRole('link', { name: /Sales register/ })).toBeVisible();
-    await page.goto('/exports');
-    await expect(page.getByRole('button', { name: /^Download everything/ })).toBeVisible();
+    await page.goto('/vendors');
+    await expect(page.getByRole('button', { name: /Export/ })).toBeVisible();
   });
 
-  for (const path of ['/dashboard', '/accounts', '/accounts?tab=receipts', '/accounts?tab=outstanding', '/reports', '/reports/sales-register', '/reports/customer-ageing', '/exports']) {
+  for (const path of ['/dashboard', '/accounts', '/accounts?tab=receipts', '/accounts?tab=outstanding', '/reports', '/reports/sales-register', '/reports/customer-ageing']) {
     test(`${path} has no sideways scroll`, async ({ page }) => {
       await login(page, 'admin@thunikart.test');
       await page.goto(path);

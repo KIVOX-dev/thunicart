@@ -7,7 +7,11 @@ export const REPORT_FORMATS = ['json', 'xlsx', 'csv', 'pdf'] as const;
 
 export const expenseCategoryBody = z.object({ name: z.string().trim().min(2).max(40), active: z.boolean().default(true) });
 export const expenseCategoryDto = z.object({ id: objectId, name: z.string(), slug: z.string(), active: z.boolean() });
+/** An expense is an operating cost. A charge is a bank, card or gateway fee, a delivery charge or a penalty. */
+export const EXPENSE_KINDS = ['expense', 'charge'] as const;
+export const expenseKindQuery = z.object({ kind: z.enum(EXPENSE_KINDS).optional() });
 export const expenseBody = z.object({
+  kind: z.enum(EXPENSE_KINDS).default('expense'),
   category: z.string().trim().min(1).max(40), payee: z.string().trim().max(80).default(''), date: z.string().datetime(), mode: z.enum(MONEY_MODES),
   amount: z.number().int().min(1), notes: z.string().trim().max(300).default(''), receiptKey: z.string().max(300).nullable().optional(), storeId: objectId.optional(),
 });

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import {
-  billBody, billDto, billQuery, grnBody, grnDto, idParam, listQuery, listResponse, objectId, okResponse, outstandingDto, paymentBody, paymentDto,
+  billBody, billDto, billQuery, grnBody, grnDto, idParam, listQuery, listResponse, objectId, okResponse, outstandingDto, paymentBody, paymentDto, settlementBody, settlementDto,
   poBody, poDto, poQuery, poUpdateBody, returnBody, returnDto,
 } from '@thunikart/shared';
 import { defineRoute } from '../../lib/route';
@@ -105,6 +105,15 @@ export const purchaseRoutes = [
     method: 'POST', path: '/vendor-payments', summary: 'Record a payment to a vendor (cash, bank, UPI or cheque). Part payment and advance are allowed.', tags: ['Purchase'], permission: 'accounts.create',
     body: paymentBody, response: paymentDto, status: 201, idempotency: 'required', errors: [400, 409, 422],
     handler: async ({ user, body, audit }) => bill.createPayment(user, body, audit),
+  }),
+  defineRoute({
+    method: 'GET', path: '/vendor-settlements', summary: 'Vendor outstanding that was marked as settled (not paid in cash)', tags: ['Purchase'], permission: 'accounts.view',
+    query: listQuery.extend(vendorFilter.shape), response: listResponse(settlementDto), handler: async ({ query }) => bill.listSettlements(query),
+  }),
+  defineRoute({
+    method: 'POST', path: '/vendor-settlements', summary: 'Mark vendor outstanding on one bill as settled, fully or partly, with a reason. No cash moves.', tags: ['Purchase'], permission: 'accounts.approve',
+    body: settlementBody, response: settlementDto, status: 201, idempotency: 'required', errors: [400, 404, 422],
+    handler: async ({ user, body, audit }) => bill.createSettlement(user, body, audit),
   }),
   defineRoute({
     method: 'GET', path: '/vendors/:id/outstanding', summary: 'What we owe a vendor (bills - debit notes - payments) with ageing from the due date', tags: ['Purchase'], permission: 'purchase.view',

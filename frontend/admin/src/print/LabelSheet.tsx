@@ -39,7 +39,8 @@ export function Label({ line, t }: { line: LabelLine; t: LabelTemplate }) {
 export function PrintableLabels({ lines, t }: { lines: LabelLine[]; t: LabelTemplate }) {
   return (
     <div className="print-area" aria-hidden>
-      <style>{`@media print { @page { size: ${t.widthMm}mm ${t.heightMm}mm; margin: 0; } }`}</style>
+      {/* @page must be at the top level: browsers ignore it inside @media, which printed one tiny label on an A4 page. */}
+      <style>{`@page { size: ${t.widthMm}mm ${t.heightMm}mm; margin: 0; } @media print { html, body { margin: 0 !important; padding: 0 !important; width: ${t.widthMm}mm; } }`}</style>
       {lines.flatMap((l) => Array.from({ length: l.copies }, (_, n) => <Label key={`${l.key}-${n}`} line={l} t={t} />))}
     </div>
   );

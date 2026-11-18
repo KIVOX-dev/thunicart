@@ -4,6 +4,7 @@ import { formatDate } from '@thunikart/shared';
 import { Badge, Button, Checkbox, EmptyState, Input, ListSkeleton, Modal, Select, Table, TBody, Td, Th, THead, Tabs, Tr, useToast } from '@thunikart/ui';
 import { AdjustPanel } from '../../../components/AdjustPanel';
 import { QueryError } from '../../../components/ErrorBanner';
+import { ExportButton } from '../../../components/ExportButton';
 import { PageHeader } from '../../../components/PageHeader';
 import { statusTone } from '../../../components/StockCard';
 import { useCan } from '../../../features/auth/permissions';
@@ -117,7 +118,7 @@ export function StockDesktop() {
   const [sp, setSp] = useSearchParams();
   return (
     <div>
-      <PageHeader title="Stock" description="Look up, review, adjust and reorder stock." />
+      <PageHeader title="Stock levels" description="Look up, review, adjust and reorder stock." actions={<ExportButton dataset="stock" />} />
       <Tabs value={sp.get('tab') ?? 'lookup'} onChange={(t) => setSp({ tab: t }, { replace: true })} items={[
         { key: 'lookup', label: 'Lookup', panel: <LookupDesktop /> }, { key: 'items', label: 'By item', panel: <ByItemTab /> }, { key: 'ledger', label: 'Ledger', panel: <LedgerTab /> },
         { key: 'adjust', label: 'Adjust', panel: <AdjustTab /> }, { key: 'reorder', label: 'Reorder', panel: <ReorderTab /> },

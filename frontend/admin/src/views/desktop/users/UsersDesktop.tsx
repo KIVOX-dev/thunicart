@@ -1,15 +1,18 @@
 import { useState } from 'react';
-import { Badge, Button, EmptyState, Input, ListSkeleton, Modal, Table, TBody, Td, Th, THead, Tr, useToast } from '@thunikart/ui';
+import { useSearchParams } from 'react-router-dom';
+import { Badge, Button, EmptyState, Input, ListSkeleton, Modal, Table, TBody, Td, Th, THead, Tabs, Tr, useToast } from '@thunikart/ui';
 import { formatDate } from '@thunikart/shared';
 import { QueryError } from '../../../components/ErrorBanner';
 import { PageHeader } from '../../../components/PageHeader';
+import { PermissionsPanel } from '../../../components/roles/PermissionsPanel';
+import { RolesPanel } from '../../../components/roles/RolesPanel';
 import { CreateUserForm, EditUserForm, ResetPasswordForm } from '../../../components/UserForms';
 import { useCan } from '../../../features/auth/permissions';
 import { useUsers, type User } from '../../../features/users/use-users';
 
 type Dialog = { kind: 'create' } | { kind: 'edit'; user: User } | { kind: 'reset'; user: User } | null;
 
-export function UsersDesktop() {
+function UsersTab() {
   const can = useCan();
   const [q, setQ] = useState('');
   const [dialog, setDialog] = useState<Dialog>(null);
@@ -19,8 +22,10 @@ export function UsersDesktop() {
   const close = (msg: string) => { setDialog(null); toast(msg, 'success'); };
   return (
     <div>
-      <PageHeader title="Users" description="Staff who can sign in." actions={can('users.create') ? <Button variant="primary" onClick={() => setDialog({ kind: 'create' })}>Add user</Button> : undefined} />
-      <div className="mb-3 w-72"><Input aria-label="Search users" placeholder="Search name or email" value={q} onChange={(e) => setQ(e.target.value)} /></div>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="w-72"><Input aria-label="Search users" placeholder="Search name or email" value={q} onChange={(e) => setQ(e.target.value)} /></div>
+        {can('users.create') && <Button variant="primary" onClick={() => setDialog({ kind: 'create' })}>Add user</Button>}
+      </div>
       {users.isPending ? <ListSkeleton label="Loading users" /> : users.isError ? <QueryError error={users.error} onRetry={() => users.refetch()} /> : rows.length === 0 ? (
         <EmptyState title="No users found" body={q ? 'Try a different search.' : 'Add the first user.'} />
       ) : (
@@ -46,6 +51,27 @@ export function UsersDesktop() {
       <Modal open={dialog?.kind === 'create'} onClose={() => setDialog(null)} title="Add user"><CreateUserForm onDone={() => close('User added')} /></Modal>
       <Modal open={dialog?.kind === 'edit'} onClose={() => setDialog(null)} title="Edit user">{dialog?.kind === 'edit' && <EditUserForm user={dialog.user} onDone={() => close('User saved')} />}</Modal>
       <Modal open={dialog?.kind === 'reset'} onClose={() => setDialog(null)} title="Reset password">{dialog?.kind === 'reset' && <ResetPasswordForm user={dialog.user} onDone={() => close('Password reset')} />}</Modal>
+    </div>
+  );
+}
+
+/** Users, Roles and Permissions in one place. Admin sees everything; an Employee only gets what their role ticks here. */
+export function UsersDesktop() {
+  const [sp, setSp] = useSearchParams();
+  const can = useCan();
+  const roleId = sp.get('role') ?? '';
+  const go = (tab: string, role = roleId) => setSp(role ? { tab, role } : { tab }, { replace: true });
+  const items = [
+    { key: 'users', label: 'Users', panel: <UsersTab /> },
+    ...(can('roles.view') ? [
+      { key: 'roles', label: 'Roles', panel: <RolesPanel onOpenPermissions={(id) => go('permissions', id)} /> },
+      { key: 'permissions', label: 'Permissions', panel: <PermissionsPanel roleId={roleId} onRole={(id) => go('permissions', id)} /> },
+    ] : []),
+  ];
+  return (
+    <div>
+      <PageHeader title="Users" description="Staff who can sign in, the roles they hold and what each role may do." />
+      <Tabs value={sp.get('tab') ?? 'users'} onChange={(t) => go(t)} items={items} />
     </div>
   );
 }

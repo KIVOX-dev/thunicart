@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { listResponse, passwordRule, resetPasswordBody, userCreateBody, userDto, userUpdateBody } from '@thunikart/shared';
@@ -66,4 +66,23 @@ export function useResetPasswordForm(user: User, onDone: () => void) {
     try { await m.mutateAsync(v); onDone(); } catch (e) { setBanner(applyApiError(form, e)); }
   });
   return { form, submit, banner, saving: m.isPending };
+}
+
+/** Every user in one list (there are only a handful of staff). Used to pick people for a role. */
+export function useAllUsers() {
+  return useQuery({ queryKey: [...KEY, 'all'], queryFn: async () => page.parse(await api.get('/users', { page: 1, pageSize: 100 })).items });
+}
+
+/** Move users to a role, one request each. The API checks every one. */
+export function useAssignRole() {
+  const qc = useQueryClient();
+  const [error, setError] = useState<string | null>(null);
+  const m = useMutation({
+    mutationFn: async ({ ids, roleId }: { ids: string[]; roleId: string }) => { for (const id of ids) await api.put(`/users/${id}`, { roleId }); },
+    onSuccess: () => Promise.all([KEY, ['roles']].map((k) => qc.invalidateQueries({ queryKey: k as unknown as string[] }))),
+  });
+  return {
+    error, saving: m.isPending,
+    run: async (ids: string[], roleId: string) => { setError(null); try { await m.mutateAsync({ ids, roleId }); return true; } catch (e) { setError(e instanceof Error ? e.message : 'Could not assign these users.'); return false; } },
+  };
 }

@@ -73,7 +73,7 @@ const itemOut = (d: any) => ({
 async function fullItem(app: FastifyInstance, req: FastifyRequest, id: string) {
   const r = await real(app, req, 'GET', `/items/${id}`); return r.status === 200 ? itemOut(r.json) : null;
 }
-const customerOut = (c: any) => ({ id: c.id, code: c.customerId ?? '', accountGroup: c.accountGroup ?? '', name: c.name, email: c.email ?? '', mobile: c.mobile ?? '', address: c.address ?? '', city: c.city ?? '', stateCode: c.stateCode ?? '', gstin: c.gstin ?? '', pan: c.pan ?? '', glAccount: c.glAccount ?? '', outstanding: c.outstanding ?? 0, loyaltyPoints: c.loyaltyPoints ?? 0, walletBalance: c.walletBalance ?? 0 });
+const customerOut = (c: any) => ({ id: c.id, source: c.source ?? (c.accountGroup === 'E-commerce B2C' ? 'online' : 'offline'), code: c.customerId ?? '', accountGroup: c.accountGroup ?? '', name: c.name, email: c.email ?? '', mobile: c.mobile ?? '', address: c.address ?? '', city: c.city ?? '', stateCode: c.stateCode ?? '', gstin: c.gstin ?? '', pan: c.pan ?? '', glAccount: c.glAccount ?? '', outstanding: c.outstanding ?? 0, loyaltyPoints: c.loyaltyPoints ?? 0, walletBalance: c.walletBalance ?? 0 });
 
 export function registerPosCompat(app: FastifyInstance, P: string) {
   type H = (req: FastifyRequest, reply: FastifyReply) => Promise<unknown>;
@@ -163,7 +163,7 @@ export function registerPosCompat(app: FastifyInstance, P: string) {
 
   // ---- customers ----
   get('/customers', async (req, reply) => {
-    const x = q(req); const qs = new URLSearchParams(); for (const k of ['q', 'page', 'pageSize']) if (x[k]) qs.set(k, x[k]!);
+    const x = q(req); const qs = new URLSearchParams(); for (const k of ['q', 'page', 'pageSize', 'source']) if (x[k]) qs.set(k, x[k]!);
     const r = await real(app, req, 'GET', `/customers?${qs}`);
     return ok(r) ? reply.send({ items: r.json.items.map(customerOut), total: r.json.total, nextPage: r.json.nextPage }) : fail(reply, r);
   });

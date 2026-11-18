@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { formatPaise } from '@thunikart/shared';
-import { BottomSheet, Button, EmptyState, Input, ListSkeleton, useToast } from '@thunikart/ui';
+import { Badge, BottomSheet, Button, EmptyState, Input, ListSkeleton, Select, useToast } from '@thunikart/ui';
+import { DuplicateCustomers } from '../../../components/DuplicateCustomers';
+import { ExportButton } from '../../../components/ExportButton';
 import { QueryError } from '../../../components/ErrorBanner';
 import { LedgerPanel } from '../../../components/LedgerPanel';
 import { CustomerForm } from '../../../components/PartyForms';
 import { useCan } from '../../../features/auth/permissions';
-import type { Customer } from '../../../features/catalog/types';
-import { useCustomers } from '../../../features/catalog/use-parties';
+import type { Customer, CustomerSource } from '../../../features/catalog/types';
+import { sourceOf, useCustomers } from '../../../features/catalog/use-parties';
 
 export function CustomersMobile() {
   const can = useCan();
@@ -14,17 +16,21 @@ export function CustomersMobile() {
   const [q, setQ] = useState('');
   const [edit, setEdit] = useState<{ customer?: Customer } | null>(null);
   const [view, setView] = useState<Customer | null>(null);
-  const list = useCustomers(q);
+  const [source, setSource] = useState<CustomerSource | ''>('');
+  const [dupes, setDupes] = useState(false);
+  const list = useCustomers(q, source);
   const rows = list.data?.pages.flatMap((p) => p.items) ?? [];
   return (
     <div className="flex flex-col gap-3 pb-20">
       <Input aria-label="Search customers" placeholder="Search name or mobile" value={q} onChange={(e) => setQ(e.target.value)} className="min-h-12" />
+      <Select aria-label="Source" className="min-h-12" value={source} onChange={(e) => setSource(e.target.value as CustomerSource | '')}><option value="">All customers</option><option value="online">Online</option><option value="offline">Offline</option></Select>
+      <div className="flex gap-2"><ExportButton dataset="customers" sheet />{can('customers.edit') && <Button className="min-h-12" onClick={() => setDupes(true)}>Find duplicates</Button>}</div>
       {list.isPending ? <ListSkeleton label="Loading customers" /> : list.isError ? <QueryError error={list.error} onRetry={() => list.refetch()} /> : rows.length === 0 ? <EmptyState title="No customers found" /> : (
         <ul className="flex flex-col gap-3">
           {rows.map((c) => (
             <li key={c.id} className="rounded border-2 border-navy-100 p-3">
               <button type="button" onClick={() => setView(c)} className="block min-h-11 w-full text-left" aria-label={`Ledgers for ${c.name}`}>
-                <strong className="text-sm">{c.name}</strong>
+                <strong className="text-sm">{c.name}</strong> <Badge tone={sourceOf(c) === 'online' ? 'success' : 'neutral'}>{sourceOf(c) === 'online' ? 'Online' : 'Offline'}</Badge>
                 <span className="block text-xs text-muted">{c.accountGroup} · {c.mobile}</span>
                 <span className="text-sm">Loyalty {c.loyaltyPoints} · Wallet {formatPaise(c.walletBalance)}</span>
               </button>
@@ -38,6 +44,7 @@ export function CustomersMobile() {
       <BottomSheet open={!!edit} onClose={() => setEdit(null)} title={edit?.customer ? 'Edit customer' : 'Add customer'}>
         {edit && <CustomerForm key={edit.customer?.id ?? 'new'} customer={edit.customer} onDone={() => { setEdit(null); toast('Customer saved', 'success'); }} />}
       </BottomSheet>
+      <BottomSheet open={dupes} onClose={() => setDupes(false)} title="Duplicate customers"><DuplicateCustomers onDone={() => setDupes(false)} /></BottomSheet>
       <BottomSheet open={!!view} onClose={() => setView(null)} title={view ? `${view.name}: ledgers` : ''}>{view && <LedgerPanel customer={view} />}</BottomSheet>
     </div>
   );

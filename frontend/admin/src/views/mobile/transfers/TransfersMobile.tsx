@@ -8,7 +8,7 @@ import { useCan } from '../../../features/auth/permissions';
 import { TRANSFER_LABEL, transferTone } from '../../../features/inventory/types';
 import { useTransfers } from '../../../features/inventory/use-transfers';
 
-export function TransfersMobile() {
+export function TransfersPanelMobile() {
   const can = useCan();
   const nav = useNavigate();
   const q = useTransfers();

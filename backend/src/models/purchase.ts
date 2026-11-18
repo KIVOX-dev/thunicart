@@ -75,6 +75,8 @@ export const PurchaseBill = defineModel('PurchaseBill', 'purchase_bills', {
   supply: { type: String, enum: ['intra', 'inter'], default: null },
   inputTaxCredit: { ...paise },
   paid: { ...paise }, debitNotes: { ...paise },
+  /** Part of the bill the Admin marked as settled without a payment (negotiated discount, write off). Each one is a VendorSettlement. */
+  settled: { ...paise },
   notes: { type: String, default: '' },
   createdBy: { ...oid('User') },
 }, [
@@ -110,3 +112,16 @@ export const VendorPayment = defineModel('VendorPayment', 'vendor_payments', {
   notes: { type: String, default: '' },
   createdBy: { ...oid('User') },
 }, [[{ paymentNumber: 1 }, { unique: true }], [{ vendorId: 1, date: -1 }]]);
+
+/** The Admin marks vendor outstanding as settled, fully or partly, without a cash payment (agreed discount, write off, contra). Cash payments stay in VendorPayment. */
+export const VendorSettlement = defineModel('VendorSettlement', 'vendor_settlements', {
+  settlementNumber: { type: String, required: true },
+  vendorId: { ...oid('Vendor', true) },
+  billId: { ...oid('PurchaseBill', true) },
+  billNumber: String,
+  date: { type: Date, required: true },
+  kind: { type: String, enum: ['full', 'partial'], required: true },
+  amount: { ...paise },
+  reason: { type: String, required: true },
+  createdBy: { ...oid('User') },
+}, [[{ settlementNumber: 1 }, { unique: true }], [{ vendorId: 1, date: -1 }], [{ billId: 1 }]]);

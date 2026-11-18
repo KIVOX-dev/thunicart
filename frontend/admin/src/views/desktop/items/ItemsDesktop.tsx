@@ -4,6 +4,7 @@ import { formatPaise } from '@thunikart/shared';
 import { Badge, Button, Checkbox, EmptyState, Field, Input, ListSkeleton, Modal, Select, Table, TBody, Td, Th, THead, Tr, useToast } from '@thunikart/ui';
 import { QueryError } from '../../../components/ErrorBanner';
 import { Pager } from '../../../components/Pager';
+import { ExportButton } from '../../../components/ExportButton';
 import { PageHeader } from '../../../components/PageHeader';
 import { statusTone } from '../../../components/StockCard';
 import { useCan } from '../../../features/auth/permissions';
@@ -52,6 +53,7 @@ export function ItemsDesktop() {
     <div>
       <PageHeader title="Items" description={first ? `${first.total.toLocaleString('en-IN')} items, ${first.pieces.toLocaleString('en-IN')} pieces in stock` : 'Products, sizes and prices'}
         actions={<>
+          <ExportButton dataset="items" />
           {can('items.create') && <Link to="/import"><Button>Import stock</Button></Link>}
           <Link to="/items/labels"><Button>Print labels</Button></Link>
           {can('items.create') && <Link to="/items/new"><Button variant="primary">Add item</Button></Link>}

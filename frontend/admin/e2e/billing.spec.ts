@@ -19,10 +19,10 @@ test.describe('the store billing counter', () => {
   test('signed out visitors go to the counter sign in, and employees land on the bill screen', async ({ page }) => {
     await page.goto('/billing');
     await expect(page).toHaveURL(/\/billing\/login$/);
-    await expect(page.getByRole('form', { name: 'Billing sign in' })).toBeVisible();
+    await expect(page.getByRole('form', { name: 'Billing center sign in' })).toBeVisible();
     await billingLogin(page);
     await expect(page).toHaveURL(/\/billing$/);
-    await expect(page.getByText('Store billing').first()).toBeVisible();
+    await expect(page.getByText('Billing center').first()).toBeVisible();
     await expectNoSidewaysScroll(page);
   });
 
@@ -37,7 +37,7 @@ test.describe('the store billing counter', () => {
   test('an employee has no admin access: no admin menu, and every admin URL goes back to billing', async ({ page }) => {
     await billingLogin(page);
     await expect(page.getByRole('complementary', { name: 'Main menu' })).toHaveCount(0);
-    for (const path of ['/dashboard', '/items', '/settings/users', '/reports', '/purchase', '/accounts', '/stock', '/settings/business-profile', '/exports']) {
+    for (const path of ['/dashboard', '/items', '/settings/users', '/reports', '/purchase', '/accounts', '/stock', '/settings/business-profile']) {
       await page.goto(path);
       await expect(page).toHaveURL(/\/billing$/);
     }
@@ -101,10 +101,10 @@ test.describe('the store billing counter', () => {
     await login(page, 'admin@thunikart.test');
     if (isMobile) { await expect(page.getByRole('navigation', { name: 'Main tabs' })).toBeVisible(); return; }
     const menu = page.getByRole('complementary', { name: 'Main menu' });
-    await expect(menu.getByRole('link', { name: 'Open billing counter' })).toBeVisible();
+    await expect(menu.getByRole('link', { name: 'Billing center' })).toBeVisible();
     await expect(menu.getByRole('link', { name: 'POS billing' })).toHaveCount(0); // billing was moved out of the admin menu
     await expect(menu.getByRole('link', { name: 'Bills and returns' })).toHaveCount(0);
-    await menu.getByRole('link', { name: 'Open billing counter' }).click();
+    await menu.getByRole('link', { name: 'Billing center' }).click();
     await expect(page).toHaveURL(/\/billing$/);
   });
 

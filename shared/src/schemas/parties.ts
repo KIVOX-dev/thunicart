@@ -41,11 +41,15 @@ export const customerBody = z.object({
   active: z.boolean().default(true),
 });
 export const customerUpdateBody = patchOf(customerBody);
+/** Online: signed up on the website (E-commerce B2C). Offline: added at the counter or imported (walk-in and trade customers). */
+export const CUSTOMER_SOURCES = ['online', 'offline'] as const;
 export const customerDto = customerBody.extend({
-  id: objectId, customerId: z.string(), country: z.string(),
+  id: objectId, customerId: z.string(), country: z.string(), source: z.enum(CUSTOMER_SOURCES),
   /** Ledgers, not editable. */
   loyaltyPoints: z.number().int(), walletBalance: z.number().int(), currency: z.literal('INR'),
 });
 export const mobileQuery = z.object({ mobile: mobile });
 export const vendorQuery = z.object({ active: z.enum(['true', 'false']).optional() });
-export const customerQuery = z.object({ accountGroup: z.enum(ACCOUNT_GROUPS).optional(), active: z.enum(['true', 'false']).optional() });
+export const customerQuery = z.object({ accountGroup: z.enum(ACCOUNT_GROUPS).optional(), active: z.enum(['true', 'false']).optional(), source: z.enum(CUSTOMER_SOURCES).optional() });
+export const customerMergeBody = z.object({ keepId: objectId, mergeId: objectId });
+export const duplicateGroupDto = z.object({ by: z.enum(['mobile', 'email']), value: z.string(), customers: z.array(z.object({ id: objectId, customerId: z.string(), name: z.string(), mobile: z.string(), email: z.string(), source: z.enum(CUSTOMER_SOURCES) })) });

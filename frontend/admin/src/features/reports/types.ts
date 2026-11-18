@@ -23,6 +23,7 @@ export type ReportData = z.infer<typeof reportData>;
 export const jobDto = z.object({ id: z.string(), kind: z.enum(['report', 'export']), title: z.string(), format: z.string(), path: z.string(), progress: z.number(), status: z.enum(['running', 'done']), by: z.string(), dataset: z.string() });
 export type Job = z.infer<typeof jobDto>;
 
+export const CHARGE_CATEGORIES = ['Bank charges', 'Card and gateway fees', 'Delivery charges', 'Penalty and interest', 'Other charges'] as const;
 export const EXPENSE_CATEGORIES = ['Rent', 'Salary', 'Electricity', 'Transport', 'Packing', 'Marketing', 'Repairs', 'Tea and food', 'Other'] as const;
 export const expenseDto = z.object({ id: z.string(), date: z.string(), category: z.string(), amount: z.number().int(), note: z.string(), receiptKey: z.string().nullable(), by: z.string() });
 export type Expense = z.infer<typeof expenseDto>;
@@ -30,5 +31,4 @@ export const expenseList = listEnvelope(expenseDto).extend({ monthTotal: z.numbe
 export const receiptDto = z.object({ id: z.string(), number: z.string(), customerId: z.string(), customerName: z.string(), date: z.string(), amount: z.number().int(), mode: z.string(), reference: z.string() });
 export const receiptList = listEnvelope(receiptDto);
 export const receivableRow = z.object({ customerId: z.string(), customerName: z.string(), mobile: z.string(), current: z.number().int(), d1to30: z.number().int(), d31to60: z.number().int(), d61to90: z.number().int(), d90plus: z.number().int(), total: z.number().int() });
-export const exportRecord = z.object({ id: z.string(), dataset: z.string(), format: z.string(), by: z.string(), at: z.string(), path: z.string() });
 export const FORMATS = [{ key: 'xlsx', label: 'Excel', ext: 'xlsx' }, { key: 'csv', label: 'CSV', ext: 'csv' }, { key: 'pdf', label: 'PDF', ext: 'pdf' }] as const;

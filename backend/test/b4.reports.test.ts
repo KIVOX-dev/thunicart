@@ -114,6 +114,11 @@ describe('reports: stock, margin, outstanding, daybook, dashboard', () => {
     expect(pl.rows.find((r: any) => r.line === 'Operating profit').amount).toBe(m.totals.margin - 100000);
     expect(pl.title).toMatch(/weighted average/);
     expect((await h.get('/expense-categories')).body.items.map((c: any) => c.name)).toContain('Rent');
+    // a charge is kept apart from expenses by kind, and old rows without a kind still count as expenses
+    const ch = await h.post('/expenses', { kind: 'charge', category: 'Bank charges', payee: 'Bank', date: new Date().toISOString(), mode: 'bank', amount: 5000 });
+    expect(ch.body.kind).toBe('charge');
+    expect((await h.get('/expenses?kind=charge')).body.items.every((e: any) => e.kind === 'charge')).toBe(true);
+    expect((await h.get('/expenses?kind=expense')).body.items.some((e: any) => e.kind === 'charge')).toBe(false);
   });
   it('outstanding: a B2B customer owes credit invoices less receipts, and the vendor side is included', async () => {
     const cust = (await h.get('/customers?q=Delhi')).body.items[0];

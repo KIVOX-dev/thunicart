@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import type { z } from 'zod';
 import { api, newIdempotencyKey } from '../api/http';
 import { applyApiError } from '../api/apply-field-errors';
-import { customerBody, customerDto, customerLedgers, listEnvelope, vendorBody, vendorDto, type Customer, type Vendor } from './types';
+import { customerBody, customerDto, customerLedgers, listEnvelope, vendorBody, vendorDto, type Customer, type CustomerSource, type Vendor } from './types';
 
 type Banner = { message: string; requestId?: string } | null;
 
@@ -16,10 +16,10 @@ export function useVendors(q: string) {
     getNextPageParam: (l) => l.nextPage ?? undefined,
   });
 }
-export function useCustomers(q: string) {
+export function useCustomers(q: string, source: CustomerSource | '' = '') {
   return useInfiniteQuery({
-    queryKey: ['customers', q], initialPageParam: 1,
-    queryFn: async ({ pageParam }) => listEnvelope(customerDto).parse(await api.get('/customers', { q, page: pageParam, pageSize: 20 })),
+    queryKey: ['customers', q, source], initialPageParam: 1,
+    queryFn: async ({ pageParam }) => listEnvelope(customerDto).parse(await api.get('/customers', { q, source: source || undefined, page: pageParam, pageSize: 20 })),
     getNextPageParam: (l) => l.nextPage ?? undefined,
   });
 }
@@ -63,4 +63,21 @@ export function useCustomerForm(customer: Customer | undefined, onDone: () => vo
     try { await m.mutateAsync(customerBody.parse(v)); onDone(); } catch (e) { setBanner(applyApiError(form, e)); }
   });
   return { form, submit, banner, saving: m.isPending };
+}
+
+export const sourceOf = (c: Pick<Customer, 'source' | 'accountGroup'>): CustomerSource => c.source ?? (c.accountGroup === 'E-commerce B2C' ? 'online' : 'offline');
+
+interface DuplicateGroup { by: 'mobile' | 'email'; value: string; customers: Array<{ id: string; customerId: string; name: string; mobile: string; email: string; source: CustomerSource }> }
+/** Customers who share a phone number or an email, online and offline together. */
+export function useDuplicateCustomers(enabled: boolean) {
+  return useQuery({ queryKey: ['customers', 'duplicates'], enabled, queryFn: () => api.get<DuplicateGroup[]>('/customers/duplicates') });
+}
+/** Merge one customer record into another: bills, ledgers and orders move to the one that is kept. */
+export function useMergeCustomers() {
+  const qc = useQueryClient();
+  const m = useMutation({
+    mutationFn: (b: { keepId: string; mergeId: string }) => api.post('/customers/merge', b, { idempotencyKey: newIdempotencyKey() }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['customers'] }),
+  });
+  return { merge: m.mutateAsync, saving: m.isPending, error: m.error ? (m.error as { friendly?: string; message: string }).friendly ?? m.error.message : null };
 }

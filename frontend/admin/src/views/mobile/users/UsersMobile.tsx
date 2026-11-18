@@ -1,13 +1,16 @@
 import { useState } from 'react';
-import { Badge, BottomSheet, Button, EmptyState, Input, ListSkeleton, useToast } from '@thunikart/ui';
+import { useSearchParams } from 'react-router-dom';
+import { Badge, BottomSheet, Button, EmptyState, Input, ListSkeleton, Tabs, useToast } from '@thunikart/ui';
 import { QueryError } from '../../../components/ErrorBanner';
+import { PermissionsPanel } from '../../../components/roles/PermissionsPanel';
+import { RolesPanel } from '../../../components/roles/RolesPanel';
 import { CreateUserForm, EditUserForm, ResetPasswordForm } from '../../../components/UserForms';
 import { useCan } from '../../../features/auth/permissions';
 import { useUsers, type User } from '../../../features/users/use-users';
 
 type Dialog = { kind: 'create' } | { kind: 'edit'; user: User } | { kind: 'reset'; user: User } | null;
 
-export function UsersMobile() {
+function UsersTab() {
   const can = useCan();
   const [q, setQ] = useState('');
   const [dialog, setDialog] = useState<Dialog>(null);
@@ -46,4 +49,17 @@ export function UsersMobile() {
       <BottomSheet open={dialog?.kind === 'reset'} onClose={() => setDialog(null)} title="Reset password">{dialog?.kind === 'reset' && <ResetPasswordForm user={dialog.user} onDone={() => close('Password reset')} />}</BottomSheet>
     </div>
   );
+}
+
+export function UsersMobile() {
+  const [sp, setSp] = useSearchParams();
+  const can = useCan();
+  const items = [
+    { key: 'users', label: 'Users', panel: <UsersTab /> },
+    ...(can('roles.view') ? [
+      { key: 'roles', label: 'Roles', panel: <RolesPanel compact onOpenPermissions={() => setSp({ tab: 'permissions' }, { replace: true })} /> },
+      { key: 'permissions', label: 'Permissions', panel: <PermissionsPanel compact roleId="" onRole={() => undefined} /> },
+    ] : []),
+  ];
+  return <Tabs value={sp.get('tab') ?? 'users'} onChange={(t) => setSp({ tab: t }, { replace: true })} items={items} />;
 }

@@ -16,6 +16,10 @@ export const DEFAULT_MATRIX: Record<string, Matrix> = {
   'Buyer Purchase': {
     items: [V, C, E], vendors: [V, C, E], purchase: [V, C, E, D, X], stock: [V, C, E], pos: [V], sales: [V], reports: [V],
   },
+  /** The top level Employee role: counter billing, customers (view and add), stock audit and customer returns. An Admin can change it under Users > Roles. */
+  Employee: {
+    pos: [V, C], sales: [V, C], customers: [V, C], items: [V], stock: [V, C, E], orders: [V],
+  },
   Accounts: {
     items: [V], vendors: [V], customers: [V], purchase: [V], stock: [V], pos: [V], sales: [V, D],
     accounts: ALL, gst: ALL, reports: ALL, orders: [V], cms: [V],
@@ -24,6 +28,7 @@ export const DEFAULT_MATRIX: Record<string, Matrix> = {
 
 export const SYSTEM_ROLE_DESCRIPTIONS: Record<string, string> = {
   Admin: 'Full access. Can create roles and edit permissions.',
+  Employee: 'Billing center, customers (view and add), stock audit and customer returns.',
   Sales: 'Counter billing and customers.',
   'Buyer Purchase': 'Buying, vendors, receiving and stock adjustments.',
   Accounts: 'Accounts, GST, payments and reports.',

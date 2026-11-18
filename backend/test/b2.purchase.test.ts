@@ -301,6 +301,26 @@ describe('vendor payments, outstanding and ageing', () => {
     expect(o).toMatchObject({ billed: 100000, paid: 40000, outstanding: 60000, advance: 25000, netPayable: 35000, currency: 'INR' });
     expect(o.ageing.current).toBe(60000);
   });
+  it('purchase payment status runs unpaid, partial, paid; settling marks outstanding as cleared without a payment', async () => {
+    const b = await mkBill(10, day(3), 'STAT-1'); // Rs 1,000
+    expect((await h.get(`/purchase-bills/${b.id}`)).body).toMatchObject({ paymentStatus: 'unpaid', outstanding: 100000 });
+    await h.post('/vendor-payments', { vendorId: vendor.id, date: day(0), mode: 'upi', amount: 20000, allocations: [{ billId: b.id, amount: 20000 }] });
+    expect((await h.get(`/purchase-bills/${b.id}`)).body.paymentStatus).toBe('partial');
+    expect((await h.get(`/purchase-bills?vendorId=${vendor.id}&paymentStatus=partial`)).body.items.map((x: any) => x.id)).toContain(b.id);
+    expect((await h.get(`/purchase-bills?vendorId=${vendor.id}&paymentStatus=unpaid`)).body.items.map((x: any) => x.id)).not.toContain(b.id);
+    // partial settlement must be below what is left; a full one clears the rest
+    expect((await h.post('/vendor-settlements', { billId: b.id, date: day(0), kind: 'partial', amount: 80000, reason: 'Agreed discount' })).status).toBe(400);
+    const part = await h.post('/vendor-settlements', { billId: b.id, date: day(0), kind: 'partial', amount: 30000, reason: 'Agreed discount' });
+    expect(part.status).toBe(201);
+    expect(part.body).toMatchObject({ amount: 30000, kind: 'partial', settlementNumber: expect.stringMatching(/^VS-/) });
+    expect((await h.get(`/purchase-bills/${b.id}`)).body).toMatchObject({ settled: 30000, outstanding: 50000, paymentStatus: 'partial' });
+    const full = await h.post('/vendor-settlements', { billId: b.id, date: day(0), kind: 'full', reason: 'Balance written off' });
+    expect(full.body.amount).toBe(50000);
+    expect((await h.get(`/purchase-bills/${b.id}`)).body).toMatchObject({ settled: 80000, outstanding: 0, paymentStatus: 'paid' });
+    expect((await h.post('/vendor-settlements', { billId: b.id, date: day(0), kind: 'full', reason: 'Again' })).status).toBe(422);
+    expect((await h.get(`/vendors/${vendor.id}/outstanding`)).body.bills.map((x: any) => x.billId)).not.toContain(b.id);
+    expect((await h.get(`/vendor-settlements?vendorId=${vendor.id}`)).body.items.length).toBe(2);
+  });
   it('cannot pay more than is outstanding, or allocate more than was paid; each bill once', async () => {
     const o = (await h.get(`/vendors/${vendor.id}/outstanding`)).body.bills[0];
     const over = await h.post('/vendor-payments', { vendorId: vendor.id, date: day(0), mode: 'bank', amount: 90000, allocations: [{ billId: o.billId, amount: 90000 }] });

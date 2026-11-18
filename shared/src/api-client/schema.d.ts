@@ -857,6 +857,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/customers/duplicates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Customers who share a phone number (written differently) or an email, online and offline together */
+        get: operations["getApiV1CustomersDuplicates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customers/merge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Merge a duplicate customer into the one to keep. Bills, ledgers and orders move across. */
+        post: operations["postApiV1CustomersMerge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/customers/{id}": {
         parameters: {
             query?: never;
@@ -1320,6 +1354,24 @@ export interface paths {
         put?: never;
         /** Record a payment to a vendor (cash, bank, UPI or cheque). Part payment and advance are allowed. */
         post: operations["postApiV1VendorPayments"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vendor-settlements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Vendor outstanding that was marked as settled (not paid in cash) */
+        get: operations["getApiV1VendorSettlements"];
+        put?: never;
+        /** Mark vendor outstanding on one bill as settled, fully or partly, with a reason. No cash moves. */
+        post: operations["postApiV1VendorSettlements"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5118,6 +5170,8 @@ export interface operations {
                 vendor?: string;
                 status?: string;
                 userId?: string;
+                module?: string;
+                role?: string;
                 entity?: string;
                 method?: string;
             };
@@ -5139,6 +5193,8 @@ export interface operations {
                             at: string;
                             userId: string | null;
                             userName: string | null;
+                            userRole: string | null;
+                            module: string | null;
                             method: string;
                             path: string;
                             status: number;
@@ -9874,6 +9930,8 @@ export interface operations {
                         id: string;
                         customerId: string;
                         country: string;
+                        /** @enum {string} */
+                        source: "online" | "offline";
                         loyaltyPoints: number;
                         walletBalance: number;
                         /** @constant */
@@ -9935,6 +9993,7 @@ export interface operations {
                 status?: string;
                 accountGroup?: "Retail Walk-in" | "E-commerce B2C" | "B2B Trade";
                 active?: "true" | "false";
+                source?: "online" | "offline";
             };
             header?: never;
             path?: never;
@@ -9974,6 +10033,8 @@ export interface operations {
                             id: string;
                             customerId: string;
                             country: string;
+                            /** @enum {string} */
+                            source: "online" | "offline";
                             loyaltyPoints: number;
                             walletBalance: number;
                             /** @constant */
@@ -10091,6 +10152,8 @@ export interface operations {
                         id: string;
                         customerId: string;
                         country: string;
+                        /** @enum {string} */
+                        source: "online" | "offline";
                         loyaltyPoints: number;
                         walletBalance: number;
                         /** @constant */
@@ -10145,6 +10208,125 @@ export interface operations {
             };
         };
     };
+    getApiV1CustomersDuplicates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        by: "mobile" | "email";
+                        value: string;
+                        customers: {
+                            id: string;
+                            customerId: string;
+                            name: string;
+                            mobile: string;
+                            email: string;
+                            /** @enum {string} */
+                            source: "online" | "offline";
+                        }[];
+                    }[];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    postApiV1CustomersMerge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    keepId: string;
+                    mergeId: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        ok: true;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     getApiV1CustomersId: {
         parameters: {
             query?: never;
@@ -10187,6 +10369,8 @@ export interface operations {
                         id: string;
                         customerId: string;
                         country: string;
+                        /** @enum {string} */
+                        source: "online" | "offline";
                         loyaltyPoints: number;
                         walletBalance: number;
                         /** @constant */
@@ -10292,6 +10476,8 @@ export interface operations {
                         id: string;
                         customerId: string;
                         country: string;
+                        /** @enum {string} */
+                        source: "online" | "offline";
                         loyaltyPoints: number;
                         walletBalance: number;
                         /** @constant */
@@ -13143,6 +13329,7 @@ export interface operations {
                 status?: string;
                 vendorId?: string;
                 billStatus?: "open" | "paid";
+                paymentStatus?: "unpaid" | "partial" | "paid";
             };
             header?: never;
             path?: never;
@@ -13202,7 +13389,10 @@ export interface operations {
                             inputTaxCredit: number;
                             paid: number;
                             debitNotes: number;
+                            settled: number;
                             outstanding: number;
+                            /** @enum {string} */
+                            paymentStatus: "unpaid" | "partial" | "paid";
                             notes: string;
                             createdAt: string;
                             freightCostAdded: number;
@@ -13325,7 +13515,10 @@ export interface operations {
                         inputTaxCredit: number;
                         paid: number;
                         debitNotes: number;
+                        settled: number;
                         outstanding: number;
+                        /** @enum {string} */
+                        paymentStatus: "unpaid" | "partial" | "paid";
                         notes: string;
                         createdAt: string;
                         freightCostAdded: number;
@@ -13451,7 +13644,10 @@ export interface operations {
                         inputTaxCredit: number;
                         paid: number;
                         debitNotes: number;
+                        settled: number;
                         outstanding: number;
+                        /** @enum {string} */
+                        paymentStatus: "unpaid" | "partial" | "paid";
                         notes: string;
                         createdAt: string;
                         freightCostAdded: number;
@@ -14015,6 +14211,189 @@ export interface operations {
             };
         };
     };
+    getApiV1VendorSettlements: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                sort?: string;
+                q?: string;
+                from?: string;
+                to?: string;
+                store?: string;
+                category?: string;
+                brand?: string;
+                vendor?: string;
+                status?: string;
+                vendorId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            id: string;
+                            settlementNumber: string;
+                            vendorId: string;
+                            vendorName: string;
+                            billId: string;
+                            billNumber: string;
+                            date: string;
+                            /** @enum {string} */
+                            kind: "full" | "partial";
+                            amount: number;
+                            reason: string;
+                            /** @constant */
+                            currency: "INR";
+                            createdAt: string;
+                        }[];
+                        total: number;
+                        nextPage: number | null;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    postApiV1VendorSettlements: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Unique key (8 to 128 chars) per logical request. A retry with the same key never posts twice. */
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    billId: string;
+                    /** Format: date-time */
+                    date: string;
+                    /** @enum {string} */
+                    kind: "full" | "partial";
+                    amount?: number;
+                    reason: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        settlementNumber: string;
+                        vendorId: string;
+                        vendorName: string;
+                        billId: string;
+                        billNumber: string;
+                        date: string;
+                        /** @enum {string} */
+                        kind: "full" | "partial";
+                        amount: number;
+                        reason: string;
+                        /** @constant */
+                        currency: "INR";
+                        createdAt: string;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Business rule broken */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     getApiV1VendorsIdOutstanding: {
         parameters: {
             query?: never;
@@ -14039,6 +14418,7 @@ export interface operations {
                         billed: number;
                         debitNotes: number;
                         paid: number;
+                        settled: number;
                         outstanding: number;
                         advance: number;
                         netPayable: number;
@@ -14060,6 +14440,7 @@ export interface operations {
                             total: number;
                             debitNotes: number;
                             paid: number;
+                            settled: number;
                             outstanding: number;
                             daysOverdue: number;
                         }[];
@@ -19110,6 +19491,7 @@ export interface operations {
                 brand?: string;
                 vendor?: string;
                 status?: string;
+                kind?: "expense" | "charge";
             };
             header?: never;
             path?: never;
@@ -19125,6 +19507,11 @@ export interface operations {
                 content: {
                     "application/json": {
                         items: {
+                            /**
+                             * @default expense
+                             * @enum {string}
+                             */
+                            kind: "expense" | "charge";
                             category: string;
                             /** @default  */
                             payee: string;
@@ -19188,6 +19575,11 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    /**
+                     * @default expense
+                     * @enum {string}
+                     */
+                    kind?: "expense" | "charge";
                     category: string;
                     /** @default  */
                     payee?: string;
@@ -19211,6 +19603,11 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /**
+                         * @default expense
+                         * @enum {string}
+                         */
+                        kind: "expense" | "charge";
                         category: string;
                         /** @default  */
                         payee: string;
@@ -19294,6 +19691,11 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /**
+                         * @default expense
+                         * @enum {string}
+                         */
+                        kind: "expense" | "charge";
                         category: string;
                         /** @default  */
                         payee: string;
@@ -19362,6 +19764,8 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    /** @enum {string} */
+                    kind?: "expense" | "charge";
                     category?: string;
                     payee?: string;
                     /** Format: date-time */
@@ -19383,6 +19787,11 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /**
+                         * @default expense
+                         * @enum {string}
+                         */
+                        kind: "expense" | "charge";
                         category: string;
                         /** @default  */
                         payee: string;

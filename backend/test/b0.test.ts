@@ -286,7 +286,7 @@ describe('GST switch', () => {
 describe('number series', () => {
   it('issues numbers like POS-2026-27-000001 and previews the next one', async () => {
     const list = await t.api('GET', `${A}/number-series`, { token: t.adminToken });
-    expect(list.body.items.map((s: any) => s.key).sort()).toEqual(['ADJ', 'AUD', 'CN', 'CNT', 'CUST', 'DN', 'EAN', 'ECM', 'GRN', 'ITEM', 'ORD', 'PB', 'PO', 'POS', 'PR', 'PV', 'RCT', 'TRF', 'VND', 'VP']);
+    expect(list.body.items.map((s: any) => s.key).sort()).toEqual(['ADJ', 'AUD', 'CN', 'CNT', 'CUST', 'DN', 'EAN', 'ECM', 'GRN', 'ITEM', 'ORD', 'PB', 'PO', 'POS', 'PR', 'PV', 'RCT', 'TRF', 'VND', 'VP', 'VS']);
     const pos = list.body.items.find((s: any) => s.key === 'POS');
     expect(pos.next).toMatch(/^POS-\d{4}-\d{2}-000001$/);
     expect(list.body.items.find((s: any) => s.key === 'CUST').next).toBe('CUST-000001');
@@ -356,6 +356,12 @@ describe('activity log', () => {
     expect(row.after.name).toBe('Audit Renamed');
     expect(row.userName).toBeTruthy();
     expect(row.requestId).toBe(upd.headers['x-request-id']);
+    // role and module are stored on each row and can be filtered
+    expect(row).toMatchObject({ userRole: 'Admin', module: 'Users' });
+    const byModule = await t.api('GET', `${A}/activity-log?module=Users&pageSize=50`, { token: t.adminToken });
+    expect(byModule.body.items.length).toBeGreaterThan(0);
+    expect(byModule.body.items.every((i: any) => i.module === 'Users')).toBe(true);
+    expect((await t.api('GET', `${A}/activity-log?module=Billing%20Center&pageSize=50`, { token: t.adminToken })).body.items.every((i: any) => i.module === 'Billing Center')).toBe(true);
     const raw = JSON.stringify(await ActivityLog.find().lean());
     expect(raw).not.toContain('Audit-Pass-2026');
     expect(raw).not.toMatch(/\$argon2/);

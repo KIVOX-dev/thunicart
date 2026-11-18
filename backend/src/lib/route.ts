@@ -78,7 +78,7 @@ export function registerRoutes(app: FastifyInstance, defs: RouteDef<any, any, an
           if (customer) req.actor = { id: customer.id, name: customer.email };
         } else if (def.permission !== 'public') {
           user = await authenticate(req);
-          req.actor = { id: user.id, name: user.name };
+          req.actor = { id: user.id, name: user.name, role: user.roleName };
           if (def.permission !== 'authenticated' && !user.permissions.has(def.permission)) {
             throw forbidden(`You need the ${def.permission} permission`);
           }

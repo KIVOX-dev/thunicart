@@ -140,10 +140,7 @@ export const accountsHandlers: HttpHandler[] = [
   })),
   http.get(p('/reports'), guarded('reports.view', () => HttpResponse.json(REPORTS.filter((r) => !r.gstOnly || gstOn()).map((r) => ({ key: r.key, title: r.title, group: r.group, description: r.description, big: !!r.big, gstOnly: !!r.gstOnly, filters: r.filters }))))),
 
-  /* Export center */
-  http.get(p('/exports/datasets'), guarded('reports.export', () => HttpResponse.json(DATASETS.map((x) => ({ key: x.key, label: x.label }))))),
-  http.get(p('/exports/settings'), guarded('reports.export', () => HttpResponse.json({ monthlyEmail: d().acc.monthlyEmail }))),
-  http.put(p('/exports/settings'), guarded('reports.export', async ({ user, request }) => { d().acc.monthlyEmail = !!((await request.json()) as { monthlyEmail: boolean }).monthlyEmail; saveDb(); log(user, 'PUT', '/exports/settings', 'export', 'monthly-email', null, null, { on: d().acc.monthlyEmail }); return HttpResponse.json({ monthlyEmail: d().acc.monthlyEmail }); })),
+  /* Exports (each list has its own button) */
   http.get(p('/exports/download'), guarded('reports.export', ({ request }) => {
     const sp = new URL(request.url).searchParams;
     const ds = sp.get('dataset') ?? 'all'; const format = sp.get('format') ?? 'xlsx';

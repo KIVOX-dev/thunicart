@@ -128,10 +128,15 @@ export const vendorBody = z.object({
 export type VendorBody = z.infer<typeof vendorBody>;
 
 export const CUSTOMER_GROUPS = ['Retail Walk-in', 'E-commerce B2C', 'B2B Trade Customer'] as const;
+/** Online customers signed up on the website (E-commerce B2C). Offline customers were added at the counter or imported. */
+export const CUSTOMER_SOURCES = ['online', 'offline'] as const;
+export type CustomerSource = (typeof CUSTOMER_SOURCES)[number];
 export const customerDto = z.object({
   id: z.string(),
   code: z.string(),
   accountGroup: z.string(),
+  /** Older mock data has no source: it is worked out from the account group. */
+  source: z.enum(CUSTOMER_SOURCES).optional(),
   name: z.string(),
   email: z.string(),
   mobile: z.string(),

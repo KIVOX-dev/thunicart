@@ -1,5 +1,5 @@
 import type { ListQuery } from '@thunikart/shared';
-import { Grn, PurchaseBill, PurchaseReturn, Variant, Vendor, VendorPayment } from '../../models';
+import { Grn, PurchaseBill, PurchaseReturn, Variant, Vendor, VendorPayment, VendorSettlement } from '../../models';
 import { AppError, badRequest, businessRule, notFound } from '../../lib/errors';
 import { withTransaction } from '../../lib/transaction';
 import { nextNumber } from '../../lib/numberSeries';
@@ -15,7 +15,15 @@ type Audit = (e: AuditEntry) => void;
 const DAY = 86400000;
 
 // ---------- purchase bills ----------
-const outstandingOf = (b: any) => b.grandTotal - (b.paid ?? 0) - (b.debitNotes ?? 0);
+const outstandingOf = (b: any) => b.grandTotal - (b.paid ?? 0) - (b.debitNotes ?? 0) - (b.settled ?? 0);
+/** The same sum inside a Mongo query. `settled` is missing on bills made before settlements existed, so it counts as 0. */
+const OUTSTANDING_EXPR = { $subtract: [{ $subtract: [{ $subtract: ['$grandTotal', { $ifNull: ['$paid', 0] }] }, { $ifNull: ['$debitNotes', 0] }] }, { $ifNull: ['$settled', 0] }] };
+/** Unpaid: nothing has been paid, credited or settled. Paid: nothing is left. Partially paid: something is left and something was taken off. */
+export const paymentStatusOf = (b: any): 'unpaid' | 'partial' | 'paid' => {
+  const out = outstandingOf(b);
+  if (out <= 0) return 'paid';
+  return (b.paid ?? 0) + (b.debitNotes ?? 0) + (b.settled ?? 0) > 0 ? 'partial' : 'unpaid';
+};
 
 export function billDto(b: any, vendorName: string) {
   return {
@@ -23,7 +31,7 @@ export function billDto(b: any, vendorName: string) {
     paymentTerms: b.paymentTerms ?? '', grnIds: (b.grnIds ?? []).map(String), grnNumbers: b.grnNumbers ?? [],
     lines: b.lines.map((l: any) => ({ variantId: String(l.variantId), itemCode: l.itemCode, description: l.description, acceptedQty: l.acceptedQty, unitCost: l.unitCost, discountPercent: l.discountPercent ?? 0, gstRate: l.gstRate ?? null, taxable: l.taxable, cgst: l.cgst, sgst: l.sgst, igst: l.igst, total: l.total })),
     totals: totalsOf(b.totals), freight: b.freight ?? 0, otherCharges: b.otherCharges ?? 0, roundOff: b.roundOff ?? 0, grandTotal: b.grandTotal, gstMode: b.gstMode, supply: b.supply ?? null,
-    inputTaxCredit: b.inputTaxCredit ?? 0, freightCostAdded: b.freightCostAdded ?? 0, freightNote: b.freightNote ?? '', paid: b.paid ?? 0, debitNotes: b.debitNotes ?? 0, outstanding: outstandingOf(b), notes: b.notes ?? '', createdAt: iso(b.createdAt)!,
+    inputTaxCredit: b.inputTaxCredit ?? 0, freightCostAdded: b.freightCostAdded ?? 0, freightNote: b.freightNote ?? '', paid: b.paid ?? 0, debitNotes: b.debitNotes ?? 0, settled: b.settled ?? 0, outstanding: outstandingOf(b), paymentStatus: paymentStatusOf(b), notes: b.notes ?? '', createdAt: iso(b.createdAt)!,
   };
 }
 
@@ -34,13 +42,16 @@ export async function getBill(id: string) {
   return billDto(b, v?.name ?? '');
 }
 
-export async function listBills(q: ListQuery & { vendorId?: string; billStatus?: string }) {
+export async function listBills(q: ListQuery & { vendorId?: string; billStatus?: string; paymentStatus?: string }) {
   const f: any = {};
   if (q.vendorId) f.vendorId = q.vendorId;
   if (q.from || q.to) f.billDate = { ...(q.from ? { $gte: new Date(q.from) } : {}), ...(q.to ? { $lte: new Date(q.to) } : {}) };
   if (q.q) { const r = new RegExp(escapeRegex(q.q), 'i'); f.$or = [{ billNumber: r }, { vendorBillNo: r }]; }
-  if (q.billStatus === 'open') f.$expr = { $gt: [{ $subtract: [{ $subtract: ['$grandTotal', '$paid'] }, '$debitNotes'] }, 0] };
-  if (q.billStatus === 'paid') f.$expr = { $lte: [{ $subtract: [{ $subtract: ['$grandTotal', '$paid'] }, '$debitNotes'] }, 0] };
+  if (q.billStatus === 'open') f.$expr = { $gt: [OUTSTANDING_EXPR, 0] };
+  if (q.billStatus === 'paid') f.$expr = { $lte: [OUTSTANDING_EXPR, 0] };
+  if (q.paymentStatus === 'paid') f.$expr = { $lte: [OUTSTANDING_EXPR, 0] };
+  if (q.paymentStatus === 'unpaid') f.$expr = { $and: [{ $gt: [OUTSTANDING_EXPR, 0] }, { $eq: [{ $add: [{ $ifNull: ['$paid', 0] }, { $ifNull: ['$debitNotes', 0] }, { $ifNull: ['$settled', 0] }] }, 0] }] };
+  if (q.paymentStatus === 'partial') f.$expr = { $and: [{ $gt: [OUTSTANDING_EXPR, 0] }, { $gt: [{ $add: [{ $ifNull: ['$paid', 0] }, { $ifNull: ['$debitNotes', 0] }, { $ifNull: ['$settled', 0] }] }, 0] }] };
   const res = await paginate(PurchaseBill, f, q, parseSort(q.sort, ['billDate', 'billNumber', 'dueDate'], { billDate: -1 }), (b) => b);
   const names = await namesFor(res.items.map((b: any) => String(b.vendorId)), []);
   return { ...res, items: res.items.map((b: any) => billDto(b, names.vendor.get(String(b.vendorId))?.name ?? '')) };
@@ -217,7 +228,7 @@ export async function createPayment(user: AuthUser, input: any, audit: Audit) {
     for (const [i, a] of input.allocations.entries()) {
       // Conditional update: two payments at the same moment cannot both settle the same balance.
       const b: any = await PurchaseBill.findOneAndUpdate(
-        { _id: a.billId, vendorId: input.vendorId, $expr: { $gte: [{ $subtract: [{ $subtract: ['$grandTotal', '$paid'] }, '$debitNotes'] }, a.amount] } },
+        { _id: a.billId, vendorId: input.vendorId, $expr: { $gte: [OUTSTANDING_EXPR, a.amount] } },
         { $inc: { paid: a.amount } }, { new: true, session }).lean();
       if (!b) {
         const cur: any = await PurchaseBill.findOne({ _id: a.billId, vendorId: input.vendorId }).session(session).lean();
@@ -256,21 +267,60 @@ export async function vendorOutstanding(vendorId: string, asOf = new Date()) {
   const payments: any[] = await VendorPayment.find({ vendorId }, { amount: 1, allocations: 1 }).lean();
   const ageing = { current: 0, d0_30: 0, d31_60: 0, d61_90: 0, over90: 0 };
   const rows = [];
-  let billed = 0, debit = 0, paidOnBills = 0, outstanding = 0;
+  let billed = 0, debit = 0, paidOnBills = 0, settledOnBills = 0, outstanding = 0;
   for (const b of bills) {
     const out = outstandingOf(b);
-    billed += b.grandTotal; debit += b.debitNotes ?? 0; paidOnBills += b.paid ?? 0;
+    billed += b.grandTotal; debit += b.debitNotes ?? 0; paidOnBills += b.paid ?? 0; settledOnBills += b.settled ?? 0;
     const over = istDay(asOf) - istDay(b.dueDate);
     if (out > 0) {
       outstanding += out;
       if (over < 0) ageing.current += out; else if (over <= 30) ageing.d0_30 += out; else if (over <= 60) ageing.d31_60 += out; else if (over <= 90) ageing.d61_90 += out; else ageing.over90 += out;
     }
-    rows.push({ billId: String(b._id), billNumber: b.billNumber, vendorBillNo: b.vendorBillNo, billDate: iso(b.billDate)!, dueDate: iso(b.dueDate)!, total: b.grandTotal, debitNotes: b.debitNotes ?? 0, paid: b.paid ?? 0, outstanding: out, daysOverdue: Math.max(0, over) });
+    rows.push({ billId: String(b._id), billNumber: b.billNumber, vendorBillNo: b.vendorBillNo, billDate: iso(b.billDate)!, dueDate: iso(b.dueDate)!, total: b.grandTotal, debitNotes: b.debitNotes ?? 0, paid: b.paid ?? 0, settled: b.settled ?? 0, outstanding: out, daysOverdue: Math.max(0, over) });
   }
   const advance = payments.reduce((a, p) => a + p.amount - (p.allocations ?? []).reduce((x: number, y: any) => x + y.amount, 0), 0);
   return {
-    vendorId, vendorName: v.name, paymentTerms: v.paymentTerms ?? '', billed, debitNotes: debit, paid: paidOnBills, outstanding, advance, netPayable: outstanding - advance, currency: 'INR' as const,
+    vendorId, vendorName: v.name, paymentTerms: v.paymentTerms ?? '', billed, debitNotes: debit, paid: paidOnBills, settled: settledOnBills, outstanding, advance, netPayable: outstanding - advance, currency: 'INR' as const,
     ageing, bills: rows.filter((r) => r.outstanding > 0),
   };
 }
 
+
+// ---------- settlements ----------
+export function settlementDto(s: any, vendorName: string) {
+  return { id: String(s._id), settlementNumber: s.settlementNumber, vendorId: String(s.vendorId), vendorName, billId: String(s.billId), billNumber: s.billNumber ?? '', date: iso(s.date)!, kind: s.kind as 'full' | 'partial', amount: s.amount, reason: s.reason, currency: 'INR' as const, createdAt: iso(s.createdAt)! };
+}
+
+/**
+ * Marks vendor outstanding as settled without a cash payment (agreed discount, write off). A full settlement clears whatever is left on the bill.
+ * A partial settlement takes off the amount given, which must be less than what is left. The conditional update means two settlements at the same
+ * moment cannot take off more than the bill still owes.
+ */
+export async function createSettlement(user: AuthUser, input: any, audit: Audit) {
+  const id = await withTransaction(async (session) => {
+    const cur: any = await PurchaseBill.findById(input.billId).session(session).lean();
+    if (!cur) throw notFound('Purchase bill');
+    const left = outstandingOf(cur);
+    if (left <= 0) throw businessRule(`${cur.billNumber} has nothing outstanding`, 'NOTHING_OUTSTANDING');
+    const amount = input.kind === 'full' ? left : input.amount;
+    if (input.kind === 'partial' && (!amount || amount >= left)) throw badRequest('Partial settlement must be less than the outstanding amount', [{ path: 'amount', message: `Enter an amount below ${left}, or choose a full settlement` }]);
+    const upd: any = await PurchaseBill.findOneAndUpdate({ _id: input.billId, $expr: { $gte: [OUTSTANDING_EXPR, amount] } }, { $inc: { settled: amount } }, { new: true, session }).lean();
+    if (!upd) throw businessRule(`${cur.billNumber} changed while you were settling it. Reload and try again.`, 'OVER_SETTLEMENT');
+    const date = new Date(input.date);
+    const [s] = await VendorSettlement.create([{ settlementNumber: await nextNumber('VS', { date, session }), vendorId: cur.vendorId, billId: cur._id, billNumber: cur.billNumber, date, kind: input.kind, amount, reason: input.reason, createdBy: user.id }], { session });
+    return String(s!._id);
+  });
+  const s: any = await VendorSettlement.findById(id).lean();
+  const v: any = await Vendor.findById(s.vendorId, { name: 1 }).lean();
+  const dto = settlementDto(s, v?.name ?? '');
+  audit({ entity: 'vendor_settlement', entityId: id, action: 'create', after: dto });
+  return dto;
+}
+
+export async function listSettlements(q: ListQuery & { vendorId?: string }) {
+  const f: any = q.vendorId ? { vendorId: q.vendorId } : {};
+  if (q.from || q.to) f.date = { ...(q.from ? { $gte: new Date(q.from) } : {}), ...(q.to ? { $lte: new Date(q.to) } : {}) };
+  const res = await paginate(VendorSettlement, f, q, parseSort(q.sort, ['date', 'settlementNumber'], { date: -1 }), (s) => s);
+  const names = await namesFor(res.items.map((s: any) => String(s.vendorId)), []);
+  return { ...res, items: res.items.map((s: any) => settlementDto(s, names.vendor.get(String(s.vendorId))?.name ?? '')) };
+}

@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { formatPaise } from '@thunikart/shared';
-import { Badge, Button, EmptyState, Input, ListSkeleton, Modal, Table, TBody, Td, Th, THead, Tr, useToast } from '@thunikart/ui';
+import { Badge, Button, Drawer, EmptyState, Input, ListSkeleton, Modal, Table, TBody, Td, Th, THead, Tr, useToast } from '@thunikart/ui';
+import { ExportButton } from '../../../components/ExportButton';
 import { QueryError } from '../../../components/ErrorBanner';
 import { PageHeader } from '../../../components/PageHeader';
 import { VendorForm } from '../../../components/PartyForms';
+import { VendorDetail } from '../../../components/VendorDetail';
 import { useCan } from '../../../features/auth/permissions';
 import type { Vendor } from '../../../features/catalog/types';
 import { useVendors } from '../../../features/catalog/use-parties';
@@ -13,11 +15,12 @@ export function VendorsDesktop() {
   const { toast } = useToast();
   const [q, setQ] = useState('');
   const [dlg, setDlg] = useState<{ vendor?: Vendor } | null>(null);
+  const [open, setOpen] = useState<Vendor | null>(null);
   const list = useVendors(q);
   const rows = list.data?.pages.flatMap((p) => p.items) ?? [];
   return (
     <div>
-      <PageHeader title="Vendors" description="Suppliers you buy from." actions={can('vendors.create') ? <Button variant="primary" onClick={() => setDlg({})}>Add vendor</Button> : undefined} />
+      <PageHeader title="Vendors" description="Suppliers you buy from." actions={<><ExportButton dataset="vendors" />{can('vendors.create') && <Button variant="primary" onClick={() => setDlg({})}>Add vendor</Button>}</>} />
       <div className="mb-3 w-72"><Input aria-label="Search vendors" placeholder="Search name, code or GSTIN" value={q} onChange={(e) => setQ(e.target.value)} /></div>
       {list.isPending ? <ListSkeleton label="Loading vendors" /> : list.isError ? <QueryError error={list.error} onRetry={() => list.refetch()} /> : rows.length === 0 ? <EmptyState title="No vendors found" /> : (
         <>
@@ -33,7 +36,7 @@ export function VendorsDesktop() {
                   <Td className="font-mono text-xs">{v.gstin}</Td>
                   <Td>{v.paymentTerms}</Td>
                   <Td className="text-right">{v.outstanding ? <Badge tone="warning">{formatPaise(v.outstanding)}</Badge> : formatPaise(0)}</Td>
-                  <Td className="text-right">{can('vendors.edit') && <Button size="sm" onClick={() => setDlg({ vendor: v })} aria-label={`Edit ${v.name}`}>Edit</Button>}</Td>
+                  <Td className="text-right"><span className="inline-flex gap-2"><Button size="sm" onClick={() => setOpen(v)} aria-label={`Purchase history for ${v.name}`}>Purchases</Button>{can('vendors.edit') && <Button size="sm" onClick={() => setDlg({ vendor: v })} aria-label={`Edit ${v.name}`}>Edit</Button>}</span></Td>
                 </Tr>
               ))}
             </TBody>
@@ -41,6 +44,7 @@ export function VendorsDesktop() {
           {list.hasNextPage && <div className="mt-3"><Button onClick={() => list.fetchNextPage()} loading={list.isFetchingNextPage}>Load more</Button></div>}
         </>
       )}
+      <Drawer side="right" open={!!open} onClose={() => setOpen(null)} title={open ? open.name : ''}>{open && <VendorDetail vendor={open} onSaved={() => { setOpen(null); toast('Vendor saved', 'success'); }} />}</Drawer>
       <Modal open={!!dlg} onClose={() => setDlg(null)} title={dlg?.vendor ? 'Edit vendor' : 'Add vendor'}>
         {dlg && <VendorForm key={dlg.vendor?.id ?? 'new'} vendor={dlg.vendor} onDone={() => { setDlg(null); toast('Vendor saved', 'success'); }} />}
       </Modal>

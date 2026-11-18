@@ -55,6 +55,7 @@ export const DEFAULT_SERIES = [
   { key: 'VND', prefix: 'VND', padding: 6, perFinancialYear: false },
   { key: 'PB', prefix: 'PB', padding: 6, perFinancialYear: true },
   { key: 'VP', prefix: 'VP', padding: 6, perFinancialYear: true },
+  { key: 'VS', prefix: 'VS', padding: 6, perFinancialYear: true },
   { key: 'ADJ', prefix: 'ADJ', padding: 6, perFinancialYear: true },
   { key: 'AUD', prefix: 'AUD', padding: 6, perFinancialYear: true },
   { key: 'TRF', prefix: 'TRF', padding: 6, perFinancialYear: true },
