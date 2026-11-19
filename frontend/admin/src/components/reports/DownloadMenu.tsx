@@ -34,3 +34,17 @@ export function DownloadMenu({ reportKey, title, big, gst, query, sheet, disable
     </div>
   );
 }
+
+/** One click Excel and PDF buttons for a report (the Download menu still has CSV). Works from the report list and the report page. */
+export function ReportQuickButtons({ reportKey, title, query = '', compact }: { reportKey: string; title: string; query?: string; compact?: boolean }) {
+  const d = useDownload({ key: reportKey, title, big: false, query });
+  const size = compact ? 'min-h-11' : '';
+  return (
+    <span className="inline-flex flex-wrap items-center gap-2">
+      <Button size="sm" className={size} disabled={d.busy} onClick={() => d.run('xlsx', 'xlsx')} aria-label={`Download ${title} as Excel`}><Download aria-hidden size={14} />Excel</Button>
+      <Button size="sm" className={size} disabled={d.busy} onClick={() => d.run('pdf', 'pdf')} aria-label={`Download ${title} as PDF`}><Download aria-hidden size={14} />PDF</Button>
+      {d.error && <span role="alert" className="text-xs text-danger">{d.error.friendly}</span>}
+      {d.saved && <span role="status" className="text-xs text-muted">Saved {d.saved}</span>}
+    </span>
+  );
+}

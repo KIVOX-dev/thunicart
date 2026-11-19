@@ -83,7 +83,6 @@ export const MENU: MenuEntry[] = [
   { key: 'purchase', label: 'Purchase and payment', path: '/purchase', icon: ShoppingBag, perm: 'purchase.view', match: ['/purchase'] },
   { key: 'store', label: 'Online store', path: '/store', icon: Store, perm: ['orders.view', 'cms.view'], match: ['/store'] },
   { key: 'accounts', label: 'Accounts (cashflow)', path: '/accounts', icon: Wallet, perm: 'accounts.view', match: ['/accounts'] },
-  { key: 'reports', label: 'Reports', path: '/reports', icon: BarChart3, perm: 'reports.view', match: ['/reports', '/gst'] },
   { key: 'business-profile', label: 'Business profile', path: '/settings/business-profile', icon: Building2, perm: 'settings.view', match: ['/settings/business-profile', '/settings/hsn'] },
   { key: 'users', label: 'Users', path: '/settings/users', icon: UserCog, perm: 'users.view', match: ['/settings/users'] },
   { key: 'number-series', label: 'Number series', path: '/settings/number-series', icon: Hash, perm: 'settings.view', match: ['/settings/number-series'] },

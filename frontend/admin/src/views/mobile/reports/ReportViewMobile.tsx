@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { formatPaise } from '@thunikart/shared';
 import { BottomSheet, Button, EmptyState, ListSkeleton } from '@thunikart/ui';
 import { QueryError } from '../../../components/ErrorBanner';
-import { DownloadMenu } from '../../../components/reports/DownloadMenu';
+import { DownloadMenu, ReportQuickButtons } from '../../../components/reports/DownloadMenu';
 import { fmtCell } from '../../../components/reports/format';
 import { GstWarnings } from '../../../components/reports/GstWarnings';
 import { ReportFilterBar } from '../../../components/reports/ReportFilterBar';
@@ -28,7 +28,7 @@ export function ReportViewMobile() {
     <div className="flex flex-col gap-3 pb-6">
       <h2 className="text-lg">{r.title}</h2>
       {r.gstOnly && <GstWarnings warnings={r.warnings} />}
-      <div className="flex gap-2"><Button className="min-h-12 flex-1" onClick={() => setSheet(true)}>Filters</Button><DownloadMenu sheet reportKey={r.key} title={r.title} big={r.big} gst={r.gstOnly} query={filterQuery(f)} /></div>
+      <div className="flex gap-2"><Button className="min-h-12 flex-1" onClick={() => setSheet(true)}>Filters</Button><ReportQuickButtons compact reportKey={r.key} title={r.title} query={filterQuery(f)} /><DownloadMenu sheet reportKey={r.key} title={r.title} big={r.big} gst={r.gstOnly} query={filterQuery(f)} /></div>
       {Object.keys(r.totals).length > 0 && <dl className="grid grid-cols-2 gap-2" aria-label="Totals">{cols.filter((c) => c.key in r.totals && c.type !== 'text').slice(0, 4).map((c) => <StatCard key={c.key} label={`Total ${c.label.toLowerCase()}`} value={c.type === 'money' ? formatPaise(r.totals[c.key]!) : r.totals[c.key]!.toLocaleString('en-IN')} testId={`total-${c.key}`} />)}</dl>}
       {r.items.length === 0 ? <EmptyState title="Nothing to show" /> : (
         <ul className="flex flex-col gap-2">

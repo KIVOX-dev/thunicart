@@ -5,7 +5,7 @@ import { applyFieldIssues } from '../api/field-issues';
 import { rupeesToPaise } from '../api/money';
 import { uploadFile } from '../catalog/use-uploads';
 import { customerDto, listEnvelope } from '../catalog/types';
-import { dashboardDto, jobDto, receiptList, receivableRow, reportData, reportMeta, type Job } from './types';
+import { dashboardDto, jobDto, receiptList, receivableRow, reportData, reportMeta, type Job, type ReportMeta } from './types';
 
 /** The real backend publishes the dashboard as /dashboard/summary with its own field names. This maps it onto the shape the screens use. */
 const CHANNEL_NAMES: Record<string, string> = { POS: 'POS', ECM: 'Online', CNT: 'Counter' };
@@ -29,14 +29,49 @@ function fromBackend(r: BackendDashboard) {
 export function useDashboard() {
   return useQuery({ queryKey: ['dashboard'], queryFn: async () => dashboardDto.parse(MOCK_MODE ? await api.get('/dashboard') : fromBackend(await api.get<BackendDashboard>('/dashboard/summary'))) });
 }
-export function useReportList() { return useQuery({ queryKey: ['report-list'], queryFn: async () => (await api.get<unknown[]>('/reports')).map((r) => reportMeta.parse(r)) }); }
+/**
+ * The backend has no report list: its reports are fixed. This is that list, with the filters each report understands.
+ * (The offline demo still asks its own /reports.)
+ */
+const D = ['date'], DC = ['date', 'category', 'brand', 'search'];
+const CATALOG: ReportMeta[] = [
+  { key: 'sales', title: 'Sales and sales return', group: 'Sales', description: 'Every bill and return, with channel and payment.', big: false, gstOnly: false, filters: [...D, 'category', 'brand', 'search'] },
+  { key: 'daily-sales', title: 'Daily sales, online and offline', group: 'Sales', description: 'Day by day totals split by channel.', big: false, gstOnly: false, filters: D },
+  { key: 'margin', title: 'Margin report', group: 'Sales', description: 'Net sales less cost, by item or category.', big: false, gstOnly: false, filters: DC },
+  { key: 'purchase-vs-sales', title: 'Purchase against sales', group: 'Sales', description: 'What came in against what went out.', big: false, gstOnly: false, filters: D },
+  { key: 'stock', title: 'Stock report', group: 'Stock', description: 'On hand, reserved and value by item and size.', big: false, gstOnly: false, filters: ['category', 'brand', 'search'] },
+  { key: 'mrp', title: 'MRP report', group: 'Stock', description: 'Retail price list.', big: false, gstOnly: false, filters: ['category', 'brand', 'search'] },
+  { key: 'non-moving', title: 'Non moving stock', group: 'Stock', description: 'Stock with no sale in 60 or 90 days.', big: false, gstOnly: false, filters: ['category', 'brand', 'search'] },
+  { key: 'slow-moving', title: 'Slow moving stock', group: 'Stock', description: 'Stock that sells slowly.', big: false, gstOnly: false, filters: ['category', 'brand', 'search'] },
+  { key: 'purchases', title: 'Purchase and purchase return', group: 'Purchase', description: 'Bills and returns to vendors.', big: false, gstOnly: false, filters: [...D, 'vendor', 'search'] },
+  { key: 'outstanding', title: 'Outstanding', group: 'Cashflow', description: 'What vendors are owed and what customers owe.', big: false, gstOnly: false, filters: ['search'] },
+  { key: 'profit-loss', title: 'Profit and loss', group: 'Cashflow', description: 'Margin less expenses.', big: false, gstOnly: false, filters: D },
+];
+export function useReportList() { return useQuery({ queryKey: ['report-list'], queryFn: async () => (MOCK_MODE ? (await api.get<unknown[]>('/reports')).map((r) => reportMeta.parse(r)) : CATALOG) }); }
 
 export interface ReportFilters { from: string; to: string; category: string; brand: string; vendor: string; q: string }
 export const EMPTY_REPORT_FILTERS: ReportFilters = { from: '', to: '', category: '', brand: '', vendor: '', q: '' };
 export const filterQuery = (f: ReportFilters) => Object.entries(f).filter(([, v]) => v).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
 
+interface ApiReport { title: string; columns: Array<{ key: string; label: string; type?: string }>; rows: Array<Record<string, string | number | null>>; totals?: Record<string, unknown> | null; total: number; nextPage: number | null }
+const COL_TYPE: Record<string, 'money' | 'number' | 'date' | 'text'> = { paise: 'money', money: 'money', int: 'number', number: 'number', decimal: 'number', percent: 'number', pct: 'number', date: 'date' };
+const fromApi = (key: string, r: ApiReport) => {
+  const meta = CATALOG.find((c) => c.key === key);
+  return reportData.parse({
+    key, title: r.title ?? meta?.title ?? key, big: false, gstOnly: false, filters: meta?.filters ?? [],
+    columns: r.columns.map((c) => ({ key: c.key, label: c.label, type: COL_TYPE[c.type ?? ''] ?? 'text' })),
+    totals: Object.fromEntries(Object.entries(r.totals ?? {}).filter(([, v]) => typeof v === 'number')),
+    warnings: [], items: r.rows.map((row) => Object.fromEntries(Object.entries(row).map(([k, v]) => [k, v ?? '']))), total: r.total ?? r.rows.length, nextPage: r.nextPage ?? null,
+  });
+};
 export function useReport(key: string, f: ReportFilters, sort: string, page: number) {
-  return useQuery({ queryKey: ['report', key, f, sort, page], queryFn: async () => reportData.parse(await api.get(`/reports/${key}`, { ...f, sort, page, pageSize: 25 })), placeholderData: (p) => p });
+  return useQuery({
+    queryKey: ['report', key, f, sort, page],
+    queryFn: async () => (MOCK_MODE
+      ? reportData.parse(await api.get(`/reports/${key}`, { ...f, sort, page, pageSize: 25 }))
+      : fromApi(key, await api.get<ApiReport>(`/reports/${key}`, { from: f.from ? new Date(`${f.from}T00:00:00+05:30`).toISOString() : undefined, to: f.to ? new Date(`${f.to}T23:59:59.999+05:30`).toISOString() : undefined, category: f.category || undefined, brand: f.brand || undefined, vendor: f.vendor || undefined, q: f.q || undefined, format: 'json', page, pageSize: 25 }))),
+    placeholderData: (p) => p,
+  });
 }
 
 /**
@@ -53,7 +88,7 @@ export function useDownload(opts: { key: string; title: string; big: boolean; qu
     const name = `${opts.key}.${ext}`;
     try {
       if (opts.big) setJob(jobDto.parse(await api.post('/reports/jobs', { key: opts.key, format, query: opts.query }, { idempotencyKey: newIdempotencyKey() })));
-      else { await downloadFile(`/reports/${opts.key}/download?format=${format}${opts.query ? `&${opts.query}` : ''}`, name); setSaved(name); }
+      else { await downloadFile(MOCK_MODE ? `/reports/${opts.key}/download?format=${format}${opts.query ? `&${opts.query}` : ''}` : `/reports/${opts.key}?format=${format}${opts.query ? `&${opts.query}` : ''}`, name); setSaved(name); }
     } catch (e) { setError(e instanceof ApiError ? e : null); } finally { setBusy(false); }
   };
   useEffect(() => {

@@ -6,7 +6,7 @@ import { Button, EmptyState, ListSkeleton, Table, TBody, Td, Th, THead, Tr } fro
 import { QueryError } from '../../../components/ErrorBanner';
 import { PageHeader } from '../../../components/PageHeader';
 import { StatCard } from '../../../components/reports/StatCard';
-import { DownloadMenu } from '../../../components/reports/DownloadMenu';
+import { DownloadMenu, ReportQuickButtons } from '../../../components/reports/DownloadMenu';
 import { fmtCell } from '../../../components/reports/format';
 import { GstWarnings } from '../../../components/reports/GstWarnings';
 import { ReportFilterBar } from '../../../components/reports/ReportFilterBar';
@@ -29,6 +29,7 @@ export function ReportViewDesktop() {
           {r.gstOnly && <div className="mb-4"><GstWarnings warnings={r.warnings} /></div>}
           <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
             <ReportFilterBar allowed={r.filters} value={f} onChange={(v) => { setF(v); setPage(1); }} />
+            <ReportQuickButtons reportKey={r.key} title={r.title} query={filterQuery(f)} />
             <DownloadMenu reportKey={r.key} title={r.title} big={r.big} gst={r.gstOnly} query={filterQuery(f)} />
           </div>
           {Object.keys(r.totals).length > 0 && (

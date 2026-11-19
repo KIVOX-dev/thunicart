@@ -3,8 +3,10 @@ import type { z } from 'zod';
 import { activityDto, listResponse } from '@thunikart/shared';
 import { api } from '../api/http';
 
-export type Activity = z.infer<typeof activityDto>;
-const page = listResponse(activityDto);
+/** The live API may predate the role and module fields, so they are optional here. */
+const row = activityDto.extend({ userRole: activityDto.shape.userRole.nullish(), module: activityDto.shape.module.nullish() });
+export type Activity = z.infer<typeof row>;
+const page = listResponse(row);
 
 export interface ActivityFilters { userId?: string; module?: string; from?: string; to?: string }
 
