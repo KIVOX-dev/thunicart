@@ -1,22 +1,26 @@
+import { Link } from 'react-router-dom';
+import { BarChart3 } from 'lucide-react';
 import { formatPaise } from '@thunikart/shared';
-import { ListSkeleton, Table, TBody, Td, Th, THead, Tr } from '@thunikart/ui';
+import { Button, ListSkeleton, Table, TBody, Td, Th, THead, Tr } from '@thunikart/ui';
 import { QueryError } from '../../../components/ErrorBanner';
 import { PageHeader } from '../../../components/PageHeader';
 import { LineChart } from '../../../components/reports/LineChart';
 import { CashflowWidgets } from '../../../components/reports/CashflowWidgets';
 import { StatCard } from '../../../components/reports/StatCard';
+import { useCan } from '../../../features/auth/permissions';
 import { useDashboard } from '../../../features/reports/use-reports';
 
 const channels = (c: Record<string, number>) => (Object.keys(c).length ? Object.entries(c).map(([k, v]) => `${k} ${formatPaise(v)}`).join(' · ') : 'No sales yet');
 
 export function DashboardDesktop() {
   const q = useDashboard();
+  const can = useCan();
   if (q.isPending) return <div><PageHeader title="Dashboard" /><ListSkeleton rows={6} label="Loading dashboard" /></div>;
   if (q.isError) return <div><PageHeader title="Dashboard" /><QueryError error={q.error} onRetry={() => q.refetch()} /></div>;
   const d = q.data;
   return (
     <div>
-      <PageHeader title="Dashboard" description="Today and this month at a glance." />
+      <PageHeader title="Dashboard" description="Today and this month at a glance." actions={can('reports.view') ? <Link to="/reports"><Button variant="primary"><BarChart3 aria-hidden size={16} />Reports</Button></Link> : undefined} />
       <dl className="grid grid-cols-4 gap-4 [&>div:nth-child(3n+1)]:bg-orange-100 [&>div:nth-child(3n+2)]:bg-teal-100">
         <StatCard label="Sales today" value={formatPaise(d.today.total)} hint={channels(d.today.channels)} testId="sales-today" />
         <StatCard label="Sales this month" value={formatPaise(d.month.total)} hint={channels(d.month.channels)} testId="sales-month" />

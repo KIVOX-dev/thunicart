@@ -1,7 +1,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { Tabs } from '@thunikart/ui';
 import { PageHeader } from '../../../components/PageHeader';
-import { StoreBanners, StoreCatalogue, StoreContent, StoreOrders } from '../../../components/store/StorePanels';
+import { StoreBanners, StoreProducts, StoreContent, StoreOrders } from '../../../components/store/StorePanels';
 import { useCan } from '../../../features/auth/permissions';
 
 /** Everything for the website in one module: orders, banners, page content and the catalogue that feeds it. */
@@ -11,7 +11,7 @@ export function StoreDesktop() {
   const items = [
     ...(can('orders.view') ? [{ key: 'orders', label: 'Orders', panel: <StoreOrders /> }] : []),
     ...(can('cms.view') ? [{ key: 'banners', label: 'Banners', panel: <StoreBanners /> }, { key: 'content', label: 'Content', panel: <StoreContent /> }] : []),
-    { key: 'products', label: 'Products', panel: <StoreCatalogue /> },
+    { key: 'products', label: 'Products', panel: <StoreProducts /> },
   ];
   return (
     <div>

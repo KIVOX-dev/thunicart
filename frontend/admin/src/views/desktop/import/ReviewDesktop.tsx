@@ -3,11 +3,12 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { formatPaise } from '@thunikart/shared';
 import { Badge, Button, EmptyState, Input, ListSkeleton, Modal, Select, Table, TBody, Td, Th, THead, Tabs, Tr, useToast } from '@thunikart/ui';
 import { ErrorBanner, QueryError } from '../../../components/ErrorBanner';
+import { Pager } from '../../../components/Pager';
 import { PageHeader } from '../../../components/PageHeader';
 import { useCan } from '../../../features/auth/permissions';
 import { REVIEW_LABELS, type ReviewRow } from '../../../features/catalog/types';
 import { useFacets } from '../../../features/catalog/use-items';
-import { useBulkFix, useDataQuality, useFixRow, useReviewQueue, type FixAction } from '../../../features/catalog/use-review';
+import { useBulkFix, useDataQuality, useFixRow, useReviewQueuePage, REVIEW_PAGE_SIZE, type FixAction } from '../../../features/catalog/use-review';
 import { ApiError } from '../../../features/api/http';
 
 const label = (k: string) => REVIEW_LABELS[k] ?? k;
@@ -88,10 +89,11 @@ function QueueTab() {
   const [sizeValue, setSizeValue] = useState('Free Size');
   const { toast } = useToast();
   const can = useCan();
-  const list = useReviewQueue({ issue, category, q });
+  const [page, setPage] = useState(1);
+  const list = useReviewQueuePage({ issue, category, q }, page);
   const bulk = useBulkFix();
   const cats = useFacets().data?.categories ?? [];
-  const rows = list.data?.pages.flatMap((p) => p.items) ?? [];
+  const rows = list.data?.items ?? [];
   const run = async (action: 'accept-hsn-suggestions' | 'set-size', value?: string) => {
     const r = await bulk.mutateAsync({ action, category: category || undefined, value });
     toast(r.updated ? `${r.updated} items fixed` : 'Nothing to fix here', r.updated ? 'success' : 'info');
@@ -99,9 +101,9 @@ function QueueTab() {
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-end gap-3">
-        <Select aria-label="Problem" className="w-52" value={issue} onChange={(e) => setIssue(e.target.value)}><option value="">All problems</option>{Object.entries(REVIEW_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</Select>
-        <Select aria-label="Category" className="w-44" value={category} onChange={(e) => setCategory(e.target.value)}><option value="">All categories</option>{cats.map((c) => <option key={c}>{c}</option>)}</Select>
-        <div className="w-60"><Input aria-label="Search rows" placeholder="Search name or code" value={q} onChange={(e) => setQ(e.target.value)} /></div>
+        <Select aria-label="Problem" className="w-52" value={issue} onChange={(e) => { setIssue(e.target.value); setPage(1); }}><option value="">All problems</option>{Object.entries(REVIEW_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</Select>
+        <Select aria-label="Category" className="w-44" value={category} onChange={(e) => { setCategory(e.target.value); setPage(1); }}><option value="">All categories</option>{cats.map((c) => <option key={c}>{c}</option>)}</Select>
+        <div className="w-60"><Input aria-label="Search rows" placeholder="Search name or code" value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} /></div>
         {can('items.edit') && (
           <span className="ml-auto flex gap-2">
             <Button onClick={() => run('accept-hsn-suggestions')} loading={bulk.isPending}>Accept all HSN suggestions{category ? ` for ${category}` : ''}</Button>
@@ -113,12 +115,12 @@ function QueueTab() {
         <EmptyState title="Nothing to review" body="Every item has an HSN, a size and a price." />
       ) : (
         <>
-          <p className="mb-2 text-xs text-muted" role="status">{list.data.pages[0]!.total.toLocaleString('en-IN')} rows need a fix. Suggestions use the HSN most used in the same category.</p>
+          <p className="mb-2 text-xs text-muted" role="status">{list.data.total.toLocaleString('en-IN')} rows need a fix. Suggestions use the HSN most used in the same category.</p>
           <Table caption="Review queue">
             <THead><Tr><Th>Code</Th><Th>Item</Th><Th>Problem</Th><Th>Fix</Th><Th className="text-right">MRP</Th></Tr></THead>
             <TBody>{rows.map((r) => <Row key={r.id} r={r} />)}</TBody>
           </Table>
-          {list.hasNextPage && <div className="mt-3"><Button onClick={() => list.fetchNextPage()} loading={list.isFetchingNextPage}>Load more</Button></div>}
+          <Pager page={page} total={list.data.total} pageSize={REVIEW_PAGE_SIZE} onPage={setPage} />
         </>
       )}
       <Modal open={sizeModal} onClose={() => setSizeModal(false)} title="Set size for placeholders" footer={<><Button onClick={() => setSizeModal(false)}>Cancel</Button><Button variant="primary" disabled={!sizeValue.trim()} onClick={async () => { await run('set-size', sizeValue); setSizeModal(false); }}>Apply</Button></>}>

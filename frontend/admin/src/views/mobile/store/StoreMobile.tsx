@@ -1,6 +1,6 @@
 import { useSearchParams } from 'react-router-dom';
 import { Tabs } from '@thunikart/ui';
-import { StoreBanners, StoreCatalogue, StoreContent, StoreOrders } from '../../../components/store/StorePanels';
+import { StoreBanners, StoreProducts, StoreContent, StoreOrders } from '../../../components/store/StorePanels';
 import { useCan } from '../../../features/auth/permissions';
 
 /** Everything for the website in one module: orders, banners, page content and the catalogue that feeds it. */
@@ -10,7 +10,7 @@ export function StoreMobile() {
   const items = [
     ...(can('orders.view') ? [{ key: 'orders', label: 'Orders', panel: <StoreOrders /> }] : []),
     ...(can('cms.view') ? [{ key: 'banners', label: 'Banners', panel: <StoreBanners compact /> }, { key: 'content', label: 'Content', panel: <StoreContent compact /> }] : []),
-    { key: 'products', label: 'Products', panel: <StoreCatalogue /> },
+    { key: 'products', label: 'Products', panel: <StoreProducts compact /> },
   ];
   return (
     <div>

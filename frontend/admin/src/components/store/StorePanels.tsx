@@ -4,6 +4,7 @@ import { formatDate, formatPaise } from '@thunikart/shared';
 import { Badge, BottomSheet, Button, Checkbox, EmptyState, Field, Input, ListSkeleton, Modal, Select, useToast } from '@thunikart/ui';
 import { QueryError } from '../ErrorBanner';
 import { useCan } from '../../features/auth/permissions';
+import { EMPTY_FILTERS, useBulkItems, useItems } from '../../features/catalog/use-items';
 import { ORDER_FLOW, uploadBannerImage, useBanners, useCmsPages, useMoveOrder, useStoreOrders, type Banner, type CmsPage } from '../../features/store/use-store';
 
 /** Website orders: filter by stage and move each one along (packed, shipped, delivered). Returns are handled under Return transfers. */
@@ -131,16 +132,38 @@ export function StoreContent({ compact }: { compact?: boolean }) {
   );
 }
 
-/** What shows on the website follows the catalogue: an item appears online when it is active and has stock. */
-export function StoreCatalogue() {
+/** Products on the website. An item shows online when it is active and has stock; switch it on or off here. Full editing is in Items and labels. */
+export function StoreProducts({ compact }: { compact?: boolean }) {
   const can = useCan();
+  const { toast } = useToast();
+  const [q, setQ] = useState('');
+  const [show, setShow] = useState('');
+  const list = useItems({ ...EMPTY_FILTERS, q, active: show === 'hidden' ? 'false' : show === 'online' ? 'true' : '' });
+  const bulk = useBulkItems();
+  const rows = list.data?.pages.flatMap((p) => p.items) ?? [];
+  const toggle = async (id: string, on: boolean) => { await bulk.mutateAsync({ ids: [id], action: on ? 'activate' : 'deactivate' }); toast(on ? 'Shown on the website' : 'Hidden from the website', 'success'); };
   return (
-    <div className="flex flex-col gap-3 text-sm">
-      <p>Products and categories on the website come from the item catalogue. An item shows online when it is active and a size is in stock.</p>
-      <ul className="flex flex-col gap-2">
-        {can('items.view') && <li><Link className="underline" to="/items">Items and labels</Link>: names, photos, prices, sizes and the active switch.</li>}
-        {can('items.view') && <li><Link className="underline" to="/stock">Stock levels</Link>: what is available to sell online.</li>}
-      </ul>
+    <div className="flex flex-col gap-3">
+      <div className={compact ? 'flex flex-col gap-2' : 'flex flex-wrap items-center gap-3'}>
+        <div className={compact ? '' : 'w-64'}><Input aria-label="Search products" placeholder="Name or code" className={compact ? 'min-h-12' : ''} value={q} onChange={(e) => setQ(e.target.value)} /></div>
+        <Select aria-label="Show" className={compact ? 'min-h-12' : 'w-44'} value={show} onChange={(e) => setShow(e.target.value)}><option value="">All products</option><option value="online">Switched on</option><option value="hidden">Hidden</option></Select>
+        {can('items.view') && <Link to="/items" className="text-xs underline">Edit photos, prices and sizes in Items and labels</Link>}
+      </div>
+      {list.isPending ? <ListSkeleton label="Loading products" /> : list.isError ? <QueryError error={list.error} onRetry={() => list.refetch()} /> : rows.length === 0 ? <EmptyState title="No products found" /> : (
+        <ul className="flex flex-col gap-2">{rows.map((i) => {
+          const live = i.active && i.totalStock > 0;
+          return (
+            <li key={i.id} className="flex flex-wrap items-center justify-between gap-2 rounded border-2 border-navy-100 p-3 text-sm">
+              <span className="min-w-0"><strong>{i.name}</strong><span className="block text-xs text-muted">{i.code} · {i.category}{i.brand ? ` · ${i.brand}` : ''} · {i.totalStock} in stock</span></span>
+              <span className="flex items-center gap-2">
+                <Badge tone={live ? 'success' : i.active ? 'warning' : 'neutral'}>{live ? 'Live' : i.active ? 'No stock' : 'Hidden'}</Badge>
+                {can('items.edit') && <Button size="sm" disabled={bulk.isPending} onClick={() => toggle(i.id, !i.active)}>{i.active ? 'Hide' : 'Show'}</Button>}
+              </span>
+            </li>
+          );
+        })}</ul>
+      )}
+      {list.hasNextPage && <Button onClick={() => list.fetchNextPage()} loading={list.isFetchingNextPage}>Load more</Button>}
     </div>
   );
 }

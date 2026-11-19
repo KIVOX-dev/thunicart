@@ -13,6 +13,17 @@ const toRow = (r: ApiReview) => reviewRow.parse({
 export interface ReviewFilters { issue: string; category: string; q: string }
 const KEY = ['review'] as const;
 
+export const REVIEW_PAGE_SIZE = 25;
+/** The same queue one numbered page at a time (1 2 3 >), for the desktop screen. */
+export function useReviewQueuePage(f: ReviewFilters, page: number) {
+  return useQuery({
+    queryKey: [...KEY, 'page', f, page], placeholderData: (prev) => prev,
+    queryFn: async () => {
+      const r = await api.get<{ items: ApiReview[]; total: number; nextPage: number | null }>('/imports/review-queue', { q: f.q || undefined, reason: f.issue || undefined, reviewStatus: 'open', page, pageSize: REVIEW_PAGE_SIZE });
+      return listEnvelope(reviewRow).parse({ items: r.items.map(toRow), total: r.total, nextPage: r.nextPage });
+    },
+  });
+}
 export function useReviewQueue(f: ReviewFilters) {
   return useInfiniteQuery({
     queryKey: [...KEY, f], initialPageParam: 1,

@@ -46,7 +46,7 @@ export const MODULES_REGISTRY: AppModule[] = [
   { key: 'audit-count', path: '/stock/audits/:id', label: 'Stock count', group: 'Stock', icon: ClipboardCheck, perm: 'stock.view', hidden: true, desktop: view('desktop', 'audits', 'AuditCountDesktop'), mobile: view('mobile', 'audits', 'AuditCountMobile') },
   { key: 'returns', path: '/returns', label: 'Return transfers', group: 'Stock', icon: Undo2, perm: 'stock.view', desktop: view('desktop', 'transfers', 'ReturnsDesktop'), mobile: view('mobile', 'transfers', 'ReturnsMobile') },
   { key: 'transfer-detail', path: '/stock/transfers/:id', label: 'Store transfer', group: 'Stock', icon: ArrowLeftRight, perm: 'stock.view', hidden: true, desktop: view('desktop', 'transfers', 'TransferDetailDesktop'), mobile: view('mobile', 'transfers', 'TransferDetailMobile') },
-  { key: 'store', path: '/store', label: 'Online store', group: 'Online store', icon: Store, perm: 'orders.view', tab: 'orders', desktop: view('desktop', 'store', 'StoreDesktop'), mobile: view('mobile', 'store', 'StoreMobile') },
+  { key: 'store', path: '/store', label: 'Online store', group: 'Website', icon: Store, perm: 'orders.view', tab: 'orders', desktop: view('desktop', 'store', 'StoreDesktop'), mobile: view('mobile', 'store', 'StoreMobile') },
   { key: 'dashboard', path: '/dashboard', label: 'Dashboard', group: 'Overview', icon: LayoutDashboard, perm: 'reports.view', desktop: view('desktop', 'dashboard', 'DashboardDesktop'), mobile: view('mobile', 'dashboard', 'DashboardMobile') },
   { key: 'accounts', path: '/accounts', label: 'Accounts (cashflow)', group: 'Accounts', icon: Wallet, perm: 'accounts.view', desktop: view('desktop', 'accounts', 'AccountsDesktop'), mobile: view('mobile', 'accounts', 'AccountsMobile') },
   { key: 'gst', path: '/gst', label: 'GST reports', group: 'Accounts', icon: Percent, perm: 'gst.view', gstOnly: true, desktop: view('desktop', 'gst', 'GstDesktop'), mobile: view('mobile', 'gst', 'GstMobile') },
@@ -64,19 +64,17 @@ export const MOBILE_TABS: Array<{ key: TabKey; label: string; path: string; icon
   { key: 'sell', label: 'Billing', path: '/billing', icon: ScanLine, perm: 'pos.view' },
   { key: 'stock', label: 'Audit', path: '/stock/audits', icon: ClipboardCheck, perm: 'stock.view' },
   { key: 'orders', label: 'Store', path: '/store', icon: Store, perm: 'orders.view' },
-  { key: 'reports', label: 'Reports', path: '/reports', icon: BarChart3, perm: 'reports.view' },
 ];
 
 export const GROUP_ORDER = ['Overview', 'Sell', 'Catalogue', 'Stock', 'Online store', 'Accounts', 'Settings'];
 
 /**
  * The admin sidebar, in the order the owner asked for. One entry per module; sub screens (tabs, detail pages) hang under their entry and keep it
- * highlighted through match. Billing Center is its own area (its own route group and layout), so it opens outside the admin shell.
+ * highlighted through match. Billing Center is a separate module at /billing (its own route group and layout) and is not in this menu.
  * perm may list several keys: the entry shows when the role holds any of them.
  */
 export interface MenuEntry { key: string; label: string; path: string; icon: LucideIcon; perm?: string | string[]; match: string[]; area?: 'billing' }
 export const MENU: MenuEntry[] = [
-  { key: 'billing', label: 'Billing center', path: '/billing', icon: ScanLine, perm: 'pos.view', match: ['/billing'], area: 'billing' },
   { key: 'review', label: 'Review queue', path: '/import/review', icon: ListChecks, perm: 'items.edit', match: ['/import/review'] },
   { key: 'vendors', label: 'Vendors', path: '/vendors', icon: Truck, perm: 'vendors.view', match: ['/vendors'] },
   { key: 'customers', label: 'Customers', path: '/customers', icon: Users, perm: 'customers.view', match: ['/customers'] },
@@ -85,7 +83,7 @@ export const MENU: MenuEntry[] = [
   { key: 'purchase', label: 'Purchase and payment', path: '/purchase', icon: ShoppingBag, perm: 'purchase.view', match: ['/purchase'] },
   { key: 'store', label: 'Online store', path: '/store', icon: Store, perm: ['orders.view', 'cms.view'], match: ['/store'] },
   { key: 'accounts', label: 'Accounts (cashflow)', path: '/accounts', icon: Wallet, perm: 'accounts.view', match: ['/accounts'] },
-  { key: 'reports', label: 'Reports', path: '/reports', icon: BarChart3, perm: 'reports.view', match: ['/reports', '/gst', '/dashboard'] },
+  { key: 'reports', label: 'Reports', path: '/reports', icon: BarChart3, perm: 'reports.view', match: ['/reports', '/gst'] },
   { key: 'business-profile', label: 'Business profile', path: '/settings/business-profile', icon: Building2, perm: 'settings.view', match: ['/settings/business-profile', '/settings/hsn'] },
   { key: 'users', label: 'Users', path: '/settings/users', icon: UserCog, perm: 'users.view', match: ['/settings/users'] },
   { key: 'number-series', label: 'Number series', path: '/settings/number-series', icon: Hash, perm: 'settings.view', match: ['/settings/number-series'] },

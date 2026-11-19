@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { formatPaise } from '@thunikart/shared';
-import { BottomSheet, ListSkeleton } from '@thunikart/ui';
+import { BottomSheet, Button, ListSkeleton } from '@thunikart/ui';
 import { QueryError } from '../../../components/ErrorBanner';
 import { LineChart } from '../../../components/reports/LineChart';
 import { CashflowWidgets } from '../../../components/reports/CashflowWidgets';
@@ -25,6 +26,7 @@ export function DashboardMobile() {
   ];
   return (
     <div className="flex flex-col gap-3">
+      <Link to="/reports"><Button variant="primary" block className="min-h-12">Reports</Button></Link>
       <dl className="flex flex-col gap-3">
         {cards.map(([k, label, value, id]) => <button key={k} type="button" onClick={() => setOpen(k)} className="min-h-14 text-left" aria-label={`${label}: ${value}. Show detail`}><StatCard label={label} value={value} testId={id} /></button>)}
       </dl>

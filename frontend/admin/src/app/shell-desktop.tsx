@@ -62,6 +62,7 @@ function MenuLink({ entry, n }: { entry: MenuEntry; n?: number }) {
 
 export function DesktopShell() {
   const { main, more } = useMenu();
+  const { pathname } = useLocation();
   const gst = useGstMode();
   const shopId = useShopId().data;
   const shopName = useFacets().data?.stores.find((x) => x.id === shopId)?.name ?? 'Store';
@@ -73,7 +74,7 @@ export function DesktopShell() {
         <Link to="/" className="block px-3 py-4" aria-label="Thunikart home"><Logo variant="sidebar" tile className="w-full" /></Link>
         <nav className="flex-1 px-2 pb-4">
           {can('reports.view') && (
-            <NavLink to="/dashboard" className={({ isActive }) => `${linkCls(isActive)} mb-2`}><LayoutDashboard aria-hidden size={16} />Dashboard</NavLink>
+            <NavLink to="/dashboard" className={({ isActive }) => `${linkCls(isActive || /^\/(reports|gst)(\/|$)/.test(pathname))} mb-2`}><LayoutDashboard aria-hidden size={16} />Dashboard</NavLink>
           )}
           <ul aria-label="Admin menu">{main.map((e) => <MenuLink key={e.key} entry={e} />)}</ul>
           {more.length > 0 && (
