@@ -73,7 +73,7 @@ export async function runSeed(opts: SeedOptions): Promise<SeedResult> {
   }
   await LabelTemplate.updateOne({ name: '50 x 25 mm' }, { $setOnInsert: { name: '50 x 25 mm', widthMm: 50, heightMm: 25, fields: ['barcode', 'name', 'size', 'color', 'mrp', 'itemCode'], isDefault: true } }, { upsert: true });
   // 4 inch (100 mm wide) thermal roll labels. Not the default: pick them in Barcode labels.
-  for (const t of [{ name: '4 inch thermal 100 x 50 mm', widthMm: 100, heightMm: 50 }, { name: '4 inch thermal 100 x 25 mm', widthMm: 100, heightMm: 25 }]) {
+  for (const t of [{ name: 'Thermal 4 inch 100 x 50 mm', widthMm: 100, heightMm: 50 }, { name: 'Thermal 4 inch 100 x 25 mm', widthMm: 100, heightMm: 25 }]) {
     await LabelTemplate.updateOne({ name: t.name }, { $setOnInsert: { ...t, fields: ['barcode', 'name', 'size', 'color', 'mrp', 'itemCode'], isDefault: false } }, { upsert: true });
   }
 

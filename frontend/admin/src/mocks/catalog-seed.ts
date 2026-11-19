@@ -88,8 +88,8 @@ export function seedCatalog(): { stores: Store[]; items: Item[]; vendors: Vendor
     mappings: {},
     labelTemplates: [
       { id: 'lbl-50x25', name: '50 x 25 mm', widthMm: 50, heightMm: 25, fields: ['name', 'size', 'mrp', 'barcode'], fontPx: 9 },
-      { id: 'lbl-100x50', name: '4 inch thermal 100 x 50 mm', widthMm: 100, heightMm: 50, fields: ['name', 'code', 'size', 'mrp', 'barcode'], fontPx: 14 },
-      { id: 'lbl-100x25', name: '4 inch thermal 100 x 25 mm', widthMm: 100, heightMm: 25, fields: ['name', 'size', 'mrp', 'barcode'], fontPx: 11 },
+      { id: 'lbl-100x50', name: 'Thermal 4 inch 100 x 50 mm', widthMm: 100, heightMm: 50, fields: ['name', 'code', 'size', 'mrp', 'barcode'], fontPx: 14 },
+      { id: 'lbl-100x25', name: 'Thermal 4 inch 100 x 25 mm', widthMm: 100, heightMm: 25, fields: ['name', 'size', 'mrp', 'barcode'], fontPx: 11 },
       { id: 'lbl-38x25', name: '38 x 25 mm', widthMm: 38, heightMm: 25, fields: ['code', 'size', 'mrp', 'barcode'], fontPx: 8 },
     ],
   };

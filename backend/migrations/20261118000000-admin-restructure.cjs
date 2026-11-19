@@ -60,7 +60,7 @@ module.exports = {
 
     // 4 inch thermal label templates (100 mm wide), so a 4 inch roll printer has a matching page size
     const lt = db.collection('label_templates');
-    for (const t of [{ name: '4 inch thermal 100 x 50 mm', widthMm: 100, heightMm: 50 }, { name: '4 inch thermal 100 x 25 mm', widthMm: 100, heightMm: 25 }]) {
+    for (const t of [{ name: 'Thermal 4 inch 100 x 50 mm', widthMm: 100, heightMm: 50 }, { name: 'Thermal 4 inch 100 x 25 mm', widthMm: 100, heightMm: 25 }]) {
       if (!(await lt.findOne({ name: t.name }))) { const now = new Date(); await lt.insertOne({ ...t, fields: ['barcode', 'name', 'size', 'color', 'mrp', 'itemCode'], isDefault: false, createdAt: now, updatedAt: now, version: 0 }); }
     }
 
