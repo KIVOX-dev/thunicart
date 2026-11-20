@@ -9,6 +9,8 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   retries: 1,
+  // Screens are lazy chunks that the dev server compiles on first use, so give the first paint more time.
+  expect: { timeout: 15_000 },
   reporter: [['list'], ['html', { open: 'never' }]],
   use: { baseURL: `http://localhost:${PORT}`, trace: 'retain-on-failure' },
   projects: [

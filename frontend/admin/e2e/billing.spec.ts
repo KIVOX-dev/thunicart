@@ -101,10 +101,10 @@ test.describe('the store billing counter', () => {
     await login(page, 'admin@thunikart.test');
     if (isMobile) { await expect(page.getByRole('navigation', { name: 'Main tabs' })).toBeVisible(); return; }
     const menu = page.getByRole('complementary', { name: 'Main menu' });
-    await expect(menu.getByRole('link', { name: 'Billing center' })).toBeVisible();
-    await expect(menu.getByRole('link', { name: 'POS billing' })).toHaveCount(0); // billing was moved out of the admin menu
+    await expect(menu.getByRole('link', { name: 'Vendors' })).toBeVisible();
+    await expect(menu.getByRole('link', { name: /Billing/ })).toHaveCount(0); // Billing center is a separate module at /billing, not in the admin menu
     await expect(menu.getByRole('link', { name: 'Bills and returns' })).toHaveCount(0);
-    await menu.getByRole('link', { name: 'Billing center' }).click();
+    await page.goto('/billing');
     await expect(page).toHaveURL(/\/billing$/);
   });
 

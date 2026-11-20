@@ -17,8 +17,9 @@ const paths = ['/billing', '/billing/bills', '/billing/lookup', '/billing/b2b', 
 export function BillingApp() {
   return (
     <Routes>
-      <Route path="/billing/login" element={<BillingLogin />} />
-      <Route path="/billing" element={<BillingGate />}>
+      {/* Paths are relative to /billing: this app is mounted on the splat route /billing/*. */}
+      <Route path="login" element={<BillingLogin />} />
+      <Route element={<BillingGate />}>
         {paths.map((path) => {
           const r = BILLING_ROUTES.find((x) => x.path === path && !x.tab)!;
           const element = <Guard perm={r.perm}><BillingScreen route={r} /></Guard>;

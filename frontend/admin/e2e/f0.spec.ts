@@ -48,7 +48,7 @@ test.describe('roles and permissions', () => {
   test('Admin creates Store Manager and a user with it (desktop matrix)', async ({ page, isMobile }) => {
     test.skip(isMobile, 'The permission matrix is desktop first. Mobile shows a notice, tested below.');
     await login(page, 'admin@thunikart.test');
-    await page.goto('/settings/users?tab=permissions');
+    await page.goto('/settings/users?tab=roles');
     await page.getByRole('button', { name: 'Create role' }).click();
     const roleDlg = page.getByRole('dialog', { name: 'Create role' });
     await roleDlg.getByLabel('Role name').fill('Store Manager');
