@@ -183,8 +183,10 @@ describe('stock sheet import: the Krishnas Orchids rules', () => {
     const raised = await q('KO1000409');
     const keep = await t.api('PATCH', `${A}/imports/review-queue/bulk`, { token: t.adminToken, body: { ids: [String(raised._id)], action: 'set', set: { size: 'Free Size' } } });
     expect(keep.body.resolved).toBe(0);
-    const dismiss = await t.api('PATCH', `${A}/imports/review-queue/bulk`, { token: t.adminToken, body: { ids: [String(raised._id)], action: 'dismiss' } });
-    expect(dismiss.body.resolved).toBe(1);
+    // saving the MRP confirms it, so the MRP_RAISED flag clears and the row leaves the queue
+    const confirmed: any = await Variant.findOne({ itemCode: 'KO1000409' }).lean();
+    const mrpFix = await t.api('PATCH', `${A}/imports/review-queue/bulk`, { token: t.adminToken, body: { ids: [String(raised._id)], action: 'set', set: { mrp: confirmed.mrp } } });
+    expect(mrpFix.body.resolved).toBe(1);
     expect((await t.api('PATCH', `${A}/imports/review-queue/bulk`, { token: t.adminToken, body: { action: 'dismiss' } })).status).toBe(400);
   });
   it('the data quality report lists unresolved rows as JSON and CSV, with HSN codes that have no GST rate rule', async () => {

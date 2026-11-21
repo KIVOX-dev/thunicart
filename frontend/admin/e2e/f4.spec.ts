@@ -87,7 +87,7 @@ test.describe('expenses, receipts and outstanding', () => {
     await billApi(page, [{ variantId: it.variants[0]!.id, qty: 4 }], [{ mode: 'Credit', amount: 200000 }], { customerId: TRADE_CUSTOMER, channel: 'Counter', dueDate: '2026-01-01' });
     await login(page, 'admin@thunikart.test');
     await page.goto('/dashboard');
-    await expect(page.getByTestId('receivables')).toHaveText('₹2,000.00');
+    await expect(page.getByTestId('outstanding')).toContainText('Customers overdue ₹2,000.00');
     await page.goto('/accounts?tab=outstanding');
     await expect(page.getByText('Trendy Apparel Retailers').first()).toBeVisible();
     await expect(page.getByText('₹2,000.00').first()).toBeVisible();
@@ -103,7 +103,7 @@ test.describe('expenses, receipts and outstanding', () => {
     await f.getByRole('button', { name: 'Record receipt' }).click();
     await expect(page.getByText('Receipt recorded')).toBeVisible();
     await page.goto('/dashboard');
-    await expect(page.getByTestId('receivables')).toHaveText('₹0.00');
+    await expect(page.getByTestId('outstanding')).toContainText('Customers overdue ₹0.00');
     await page.goto('/accounts?tab=outstanding');
     await expect(page.getByText('Nobody owes anything')).toBeVisible();
   });

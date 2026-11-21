@@ -7,6 +7,8 @@ import { listEnvelope } from '../catalog/types';
  */
 export const TENDERS = ['Cash', 'UPI', 'Card', 'Wallet', 'Bank Transfer', 'Credit'] as const;
 export type Tender = (typeof TENDERS)[number];
+/** What the counter offers: Cash, UPI and the customer's wallet. B2B invoices keep their own list (credit, bank transfer). */
+export const POS_TENDERS = ['Cash', 'UPI', 'Wallet'] as const satisfies readonly Tender[];
 export const PRINT_SIZES_UI = [
   { key: 'a4', label: 'A4 sheet', hint: 'Office printer, B2B invoices' },
   { key: '2in', label: 'Thermal 2 inch (58 mm)', hint: 'Small receipt printer' },

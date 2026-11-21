@@ -12,7 +12,7 @@ export const AppSettings = defineModel('AppSettings', 'app_settings', {
   returnWindowDays: { type: Number, default: 7 },
   returnDiscountedItems: { type: Boolean, default: false },
   defectReportHours: { type: Number, default: 48 },
-  loyalty: { type: Object, default: { enabled: false, pointsPer100: 0, pointValuePaise: 0, minRedeem: 0, expiryDays: 0 } },
+  loyalty: { type: Object, default: { enabled: true, pointsPer100: 1, pointValuePaise: 100, minRedeem: 1, expiryDays: 0 } },
 }, [[{ singleKey: 1 }, { unique: true }]], { minimize: false });
 
 export const StockAudit = defineModel('StockAudit', 'stock_audits', {

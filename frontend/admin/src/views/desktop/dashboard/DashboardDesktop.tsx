@@ -5,7 +5,7 @@ import { Button, ListSkeleton, Table, TBody, Td, Th, THead, Tr } from '@thunikar
 import { QueryError } from '../../../components/ErrorBanner';
 import { PageHeader } from '../../../components/PageHeader';
 import { LineChart } from '../../../components/reports/LineChart';
-import { CashflowWidgets } from '../../../components/reports/CashflowWidgets';
+import { CashflowWidgets, MonthPayments } from '../../../components/reports/CashflowWidgets';
 import { StatCard } from '../../../components/reports/StatCard';
 import { useCan } from '../../../features/auth/permissions';
 import { useDashboard } from '../../../features/reports/use-reports';
@@ -30,8 +30,8 @@ export function DashboardDesktop() {
         <StatCard label="Low stock sizes" value={d.lowStock} hint="At or below reorder level" testId="low-stock" />
         <StatCard label="Non moving stock" value={formatPaise(d.nonMovingValue)} hint="Cost value, no sale in 30 days" testId="non-moving" />
         <StatCard label="Payables due" value={formatPaise(d.payablesDue)} hint="Open vendor bills" testId="payables" />
-        <StatCard label="Receivables overdue" value={formatPaise(d.receivablesOverdue)} hint="Customers past their due date" testId="receivables" />
       </dl>
+      <div className="mt-6"><MonthPayments {...d.monthPayments} /></div>
       <div className="mt-6"><CashflowWidgets payablesDue={d.payablesDue} receivablesOverdue={d.receivablesOverdue} /></div>
       <div className="mt-6 grid grid-cols-[2fr_1fr] gap-6">
         <section aria-label="Sales for 30 days" className="rounded-xl bg-navy-50 p-5"><h2 className="mb-3 text-xl">Sales, last 30 days</h2><LineChart points={d.salesLine} /></section>

@@ -56,10 +56,12 @@ export async function dashboard() {
   let receivables = 0; for (const c of (await Customer.find({ accountGroup: 'B2B Trade' }).lean()) as any[]) receivables += (await customerOutstanding(String(c._id))).overdue;
   const series: any[] = []; for (let i = 29; i >= 0; i--) { const day = ist(new Date(Date.now() - i * DAY)); series.push({ date: day, sales: 0 }); }
   for (const b of await invoicesIn({ from: new Date(Date.now() - 30 * DAY).toISOString() })) { const s = series.find((x) => x.date === ist(b.finalizedAt)); if (s) s.sales += b.grandTotal; }
+  const monthPayments = { cash: 0, upi: 0, wallet: 0 };
+  for (const b of invs) for (const t of b.tenders ?? []) if (t.mode in monthPayments) monthPayments[t.mode as keyof typeof monthPayments] += t.amount;
   void SalesBill; void SalesReturn; void StockLedger; void Variant;
   return {
     today: sales(todays), monthToDate: { ...sales(invs), returns: rets.reduce((a, r) => a + r.refundTotal, 0) }, grossMargin: { amount: margin.totals!.margin, percent: margin.totals!.marginPct },
     topItems: top.rows.slice(0, 10).map((r: any) => ({ itemCode: r.key, name: r.name, qty: r.qty, netSales: r.netSales })), lowStockCount: low, nonMovingStockValue: nm.totals!.costValue,
-    payablesDueThisWeek: payables, receivablesOverdue: receivables, last30Days: series, currency: 'INR' as const,
+    monthPayments, payablesDueThisWeek: payables, receivablesOverdue: receivables, last30Days: series, currency: 'INR' as const,
   };
 }

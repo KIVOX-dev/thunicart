@@ -12,6 +12,7 @@ const CHANNEL_NAMES: Record<string, string> = { POS: 'POS', ECM: 'Online', CNT: 
 interface BackendPeriod { total?: number; bills?: number; averageBill?: number; byChannel?: Record<string, number> }
 interface BackendDashboard {
   today?: BackendPeriod; monthToDate?: BackendPeriod; grossMargin?: { amount?: number }; lowStockCount?: number; nonMovingStockValue?: number;
+  monthPayments?: { cash?: number; upi?: number; wallet?: number };
   payablesDueThisWeek?: number; receivablesOverdue?: number; last30Days?: Array<{ date: string; sales?: number }>; topItems?: Array<{ name: string; qty: number; netSales?: number }>;
 }
 function fromBackend(r: BackendDashboard) {
@@ -22,6 +23,7 @@ function fromBackend(r: BackendDashboard) {
   return {
     today: period(r.today), month: period(r.monthToDate), margin: { today: 0, month: r.grossMargin?.amount ?? 0 },
     lowStock: r.lowStockCount ?? 0, nonMovingValue: r.nonMovingStockValue ?? 0, payablesDue: r.payablesDueThisWeek ?? 0, receivablesOverdue: r.receivablesOverdue ?? 0,
+    monthPayments: { cash: r.monthPayments?.cash ?? 0, upi: r.monthPayments?.upi ?? 0, wallet: r.monthPayments?.wallet ?? 0 },
     salesLine: (r.last30Days ?? []).map((d) => ({ date: d.date, total: d.sales ?? 0 })),
     topItems: (r.topItems ?? []).map((t) => ({ name: t.name, qty: t.qty, amount: t.netSales ?? 0 })),
   };

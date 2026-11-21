@@ -34,7 +34,7 @@ export async function capi<T>(method: string, path: string, body?: unknown, opts
     });
   } catch { throw new ApiError(0, 'NETWORK', 'Cannot reach the store.'); }
   if (res.ok) {
-    const data = (res.status === 204 ? undefined : await res.json()) as any;
+    const data = (res.status === 204 ? undefined : await res.json()) as { accessToken?: string | null } | undefined;
     if (live && real === '/customer/auth/otp/verify') setToken(data?.accessToken ?? null);
     if (live && real === '/customer/auth/logout') setToken(null);
     return data as T;

@@ -79,6 +79,7 @@ export async function bulkReview(input: any, userId: string, audit: Audit) {
   const items = new Map((await Item.find({ _id: { $in: docs.map((d) => d.itemId) } })).map((i: any) => [String(i._id), i]));
   const variants = new Map((await Variant.find({ _id: { $in: docs.map((d) => d.variantId) } })).map((v: any) => [String(v._id), v]));
   let updated = 0, skipped = 0; const touchedItems = new Set<string>(); const dismissed = new Set<string>();
+  const mrpConfirmed = new Set<string>(); // variants whose MRP was saved here, so their MRP_RAISED flag is cleared below
   const set = input.set ?? {};
 
   for (const d of docs) {
@@ -100,7 +101,7 @@ export async function bulkReview(input: any, userId: string, audit: Audit) {
         if (set.mrp !== undefined || set.sellingPrice !== undefined) {
           const mrp = set.mrp ?? v.mrp, sell = set.sellingPrice ?? v.sellingPrice;
           assertPrices(mrp, sell, v.offerPrice); v.mrp = mrp; v.sellingPrice = sell; v.priceMissing = false;
-          d.reasons = d.reasons.filter((x: string) => x !== 'MRP_RAISED');
+          mrpConfirmed.add(String(d.variantId));
         }
         await v.save();
       } else if (input.action === 'split_sizes') {
@@ -144,7 +145,7 @@ export async function bulkReview(input: any, userId: string, audit: Audit) {
   for (const d of all) {
     if (dismissed.has(String(d._id))) { d.reasons = []; }
     else {
-      const sticky = (d.reasons as string[]).filter((r) => (STICKY_REASONS as readonly string[]).includes(r));
+      const sticky = (d.reasons as string[]).filter((r) => (STICKY_REASONS as readonly string[]).includes(r) && !(r === 'MRP_RAISED' && mrpConfirmed.has(String(d.variantId))));
       d.reasons = [...new Set([...dataReasons(iitems.get(String(d.itemId)), ivars.get(String(d.variantId))), ...sticky])];
     }
     if (!d.reasons.some((r: string) => r === 'MISSING_HSN' || r === 'INVALID_HSN')) d.suggestion = null;

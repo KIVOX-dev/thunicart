@@ -4,6 +4,20 @@ import { StatCard } from './StatCard';
 import { useCan } from '../../features/auth/permissions';
 import { useCashflow } from '../../features/reports/use-reports';
 
+/** This month's bills by payment: Cash, UPI (GPay, PhonePe and so on) and the customer wallet. */
+export function MonthPayments({ cash, upi, wallet, stacked }: { cash: number; upi: number; wallet: number; stacked?: boolean }) {
+  return (
+    <section aria-label="Collected this month">
+      <h2 className="mb-2 text-xs">Collected this month</h2>
+      <dl className={stacked ? 'flex flex-col gap-3' : 'grid grid-cols-4 gap-4'}>
+        <StatCard label="Cash" value={formatPaise(cash)} hint="This month" testId="month-cash" />
+        <StatCard label="UPI (GPay)" value={formatPaise(upi)} hint="This month" testId="month-upi" />
+        <StatCard label="Wallet" value={formatPaise(wallet)} hint="Paid from customer wallets this month" testId="month-wallet" />
+      </dl>
+    </section>
+  );
+}
+
 /** Cashflow and outstanding widgets for the dashboard, next to the sales and stock cards. Shown to roles that can see accounts. */
 export function CashflowWidgets({ payablesDue, receivablesOverdue, stacked }: { payablesDue: number; receivablesOverdue: number; stacked?: boolean }) {
   const can = useCan();

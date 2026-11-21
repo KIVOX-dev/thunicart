@@ -5,6 +5,8 @@ import { listEnvelope } from '../catalog/types';
 const period = z.object({ total: z.number().int(), bills: z.number().int(), average: z.number().int(), channels: z.record(z.string(), z.number().int()) });
 export const dashboardDto = z.object({
   today: period, month: period, margin: z.object({ today: z.number().int(), month: z.number().int() }), lowStock: z.number().int(), nonMovingValue: z.number().int(),
+  /** This month's bills by how they were paid. Absent from older backends and the mock API, so it defaults to zero. */
+  monthPayments: z.object({ cash: z.number().int(), upi: z.number().int(), wallet: z.number().int() }).default({ cash: 0, upi: 0, wallet: 0 }),
   payablesDue: z.number().int(), receivablesOverdue: z.number().int(), salesLine: z.array(z.object({ date: z.string(), total: z.number().int() })),
   topItems: z.array(z.object({ name: z.string(), qty: z.number().int(), amount: z.number().int() })),
 });

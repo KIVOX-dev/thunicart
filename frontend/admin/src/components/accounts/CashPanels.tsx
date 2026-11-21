@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { formatDate, formatPaise } from '@thunikart/shared';
 import { Badge, BottomSheet, Button, EmptyState, ListSkeleton, Modal, Table, TBody, Td, Th, THead, Tr, useToast } from '@thunikart/ui';
 import { ExportButton } from '../ExportButton';
 import { StatCard } from '../reports/StatCard';
 import { QueryError } from '../ErrorBanner';
 import { ExpenseForm, SettleForm } from '../reports/AccountForms';
+import { PaymentForm } from '../PurchaseForms';
 import { useCan } from '../../features/auth/permissions';
 import { useExpenses, useMonthTotal, useSettlements, useVendorDues, type CashKind, type VendorDue } from '../../features/reports/use-reports';
 import { Pager } from '../Pager';
@@ -42,22 +42,28 @@ export function CashEntries({ kind, compact }: { kind: CashKind; compact?: boole
   );
 }
 
-function VendorRow({ v, compact, onSettle }: { v: VendorDue; compact?: boolean; onSettle: (b: VendorDue['bills'][number]) => void }) {
+function VendorRow({ v, compact, onSettle, onPay }: { v: VendorDue; compact?: boolean; onSettle: (b: VendorDue['bills'][number]) => void; onPay: (vendorId: string) => void }) {
   const can = useCan();
   const [open, setOpen] = useState(false);
   return (
     <li className="rounded border-2 border-navy-100 p-3 text-sm">
-      <button type="button" className="flex w-full min-h-11 items-center justify-between gap-3 text-left" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
-        <span><strong>{v.vendorName}</strong><span className="block text-xs text-muted">Bought {formatPaise(v.billed)} · paid {formatPaise(v.paid)} · returns {formatPaise(v.debitNotes)}{v.settled ? ` · settled ${formatPaise(v.settled)}` : ''}</span></span>
-        <span className="text-right"><strong>{formatPaise(v.outstanding)}</strong>{v.advance > 0 && <span className="block text-xs text-muted">advance {formatPaise(v.advance)}</span>}</span>
-      </button>
+      <div className="flex items-center gap-2">
+        <button type="button" className="flex min-h-11 min-w-0 flex-1 items-center justify-between gap-3 text-left" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+          <span><strong>{v.vendorName}</strong><span className="block text-xs text-muted">Bought {formatPaise(v.billed)} · paid {formatPaise(v.paid)} · returns {formatPaise(v.debitNotes)}{v.settled ? ` · settled ${formatPaise(v.settled)}` : ''}</span></span>
+          <span className="text-right"><strong>{formatPaise(v.outstanding)}</strong>{v.advance > 0 && <span className="block text-xs text-muted">advance {formatPaise(v.advance)}</span>}</span>
+        </button>
+        {v.outstanding > 0 && can('accounts.approve') && (
+          <Button size="sm" className="shrink-0" aria-label={`Settle ${v.vendorName}`}
+            onClick={() => (v.bills.length === 1 ? onSettle(v.bills[0]!) : setOpen(true))}>Settle</Button>
+        )}
+      </div>
       {open && (
         <ul className="mt-2 divide-y divide-line border-t border-line">
           {v.bills.length === 0 ? <li className="py-2 text-xs text-muted">No open bills.</li> : v.bills.map((b) => (
             <li key={b.billId} className={`flex ${compact ? 'flex-col' : 'items-center'} justify-between gap-2 py-2`}>
               <span>{b.billNumber}<span className="block text-xs text-muted">Due {formatDate(b.dueDate)}{b.daysOverdue > 0 ? ` · ${b.daysOverdue} days late` : ''}</span></span>
               <span className="flex items-center gap-2"><strong>{formatPaise(b.outstanding)}</strong>
-                {can('accounts.create') && <Link to="/purchase?tab=payments"><Button size="sm">Pay</Button></Link>}
+                {can('accounts.create') && <Button size="sm" onClick={() => onPay(v.vendorId)} aria-label={`Pay ${v.vendorName} for ${b.billNumber}`}>Pay</Button>}
                 {can('accounts.approve') && <Button size="sm" onClick={() => onSettle(b)} aria-label={`Settle ${b.billNumber}`}>Settle</Button>}
               </span>
             </li>
@@ -72,15 +78,23 @@ function VendorRow({ v, compact, onSettle }: { v: VendorDue; compact?: boolean; 
 export function VendorOutstanding({ compact }: { compact?: boolean }) {
   const q = useVendorDues();
   const { toast } = useToast();
+  const can = useCan();
   const [bill, setBill] = useState<VendorDue['bills'][number] | null>(null);
+  const [paying, setPaying] = useState(false);
+  const [vendorId, setVendorId] = useState('');
   const Sheet = compact ? BottomSheet : Modal;
   const total = q.data?.reduce((a, v) => a + v.outstanding, 0) ?? 0;
+  const startPay = (id = '') => { setVendorId(id); setPaying(true); };
   return (
     <div className="flex flex-col gap-3">
-      <p className="rounded bg-mist p-3 text-sm">We owe vendors <strong className="ml-1 text-lg" data-testid="vendor-outstanding-total">{formatPaise(total)}</strong><span className="block text-xs text-muted">Updates as purchases are billed, paid or returned. Pay from Purchase and payment; settle here.</span></p>
+      <div className="flex flex-wrap items-center gap-3">
+        <p className="min-w-0 flex-1 rounded bg-mist p-3 text-sm">We owe vendors <strong className="ml-1 text-lg" data-testid="vendor-outstanding-total">{formatPaise(total)}</strong><span className="block text-xs text-muted">Updates as purchases are billed, paid or returned. Pay a vendor or settle a bill here.</span></p>
+        {can('accounts.create') && <Button variant="primary" className={compact ? 'min-h-12 w-full' : ''} onClick={() => startPay()}>Pay vendor</Button>}
+      </div>
       {q.isPending ? <ListSkeleton label="Loading vendor outstanding" /> : q.isError ? <QueryError error={q.error} onRetry={() => q.refetch()} /> : q.data.length === 0 ? <EmptyState title="Nothing is owed to vendors" /> : (
-        <ul className="flex flex-col gap-3">{q.data.map((v) => <VendorRow key={v.vendorId} v={v} compact={compact} onSettle={setBill} />)}</ul>
+        <ul className="flex flex-col gap-3">{q.data.map((v) => <VendorRow key={v.vendorId} v={v} compact={compact} onSettle={setBill} onPay={startPay} />)}</ul>
       )}
+      <Sheet open={paying} onClose={() => setPaying(false)} title="Pay vendor"><PaymentForm vendorId={vendorId} onVendor={setVendorId} onDone={() => { setPaying(false); setVendorId(''); toast('Payment recorded', 'success'); }} /></Sheet>
       <Sheet open={!!bill} onClose={() => setBill(null)} title="Settle outstanding">
         {bill && <SettleForm big={compact} bill={bill} onDone={() => { setBill(null); toast('Marked as settled', 'success'); }} />}
       </Sheet>

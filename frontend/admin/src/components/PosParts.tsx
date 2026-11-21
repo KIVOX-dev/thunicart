@@ -6,7 +6,7 @@ import { useGstMode } from '../features/auth/permissions';
 import type { Customer } from '../features/catalog/types';
 import type { Cart } from '../features/pos/use-cart';
 import { useApproval, useCustomerSearch, useQuickCustomer, useShift, useShiftActions } from '../features/pos/use-pos-data';
-import { TENDERS, type Preview } from '../features/pos/types';
+import { POS_TENDERS as TENDERS, type Preview } from '../features/pos/types';
 import { ApiError } from '../features/api/http';
 
 /** Customer lookup by mobile, with quick add (name and mobile only). */
