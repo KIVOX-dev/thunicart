@@ -66,7 +66,7 @@ function BillingShell() {
             {all.map((r) => <Link key={r.label} to={r.tab ? `${r.path}?tab=${r.tab}` : r.path} aria-current={isOn(r, loc.pathname, loc.search) ? 'page' : undefined} className={`tk-press flex min-h-10 items-center gap-2 rounded-full px-4 text-sm ${isOn(r, loc.pathname, loc.search) ? 'bg-orange font-bold text-navy shadow-soft' : 'font-medium text-white hover:bg-white/15'}`}><r.icon aria-hidden size={16} />{r.label}</Link>)}
           </nav>
         )}
-        <div className="ml-auto flex items-center gap-3"><span className="hidden text-xs md:block">{me?.name}<span className="block text-white/70">{me?.role.name}</span></span>
+        <div className="ml-auto flex items-center gap-3"><span className="max-w-32 truncate text-xs md:max-w-none" data-testid="billing-employee"><span className="block text-[10px] uppercase tracking-wider text-teal">Billing employee</span>{me?.name}<span className="hidden text-white/70 md:block">{me?.role.name}</span></span>
           <button type="button" onClick={signOut} className="tk-press flex min-h-11 items-center gap-1 rounded-full border-2 border-white/60 px-4 text-sm font-semibold hover:bg-white hover:text-navy"><LogOut aria-hidden size={14} />Sign out</button></div>
       </header>
       <main id="main" className="flex-1 px-3 py-4 pb-28 md:px-6 md:pb-6"><div className="min-h-full rounded-2xl bg-white p-4 shadow-soft md:p-6"><Suspense fallback={<ListSkeleton label="Loading screen" />}><Outlet /></Suspense></div></main>

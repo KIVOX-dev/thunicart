@@ -82,3 +82,28 @@ export function useBusinessProfileForm(profile: BusinessProfile) {
   const confirm = () => pending && run(pending.kind === 'clear' ? { ...pending.body, confirmGstClear: true } : pending.body);
   return { form, submit, banner, saving: save.isPending, saved: save.isSuccess, pending, confirm, cancel: () => setPending(null), gstLive };
 }
+
+/**
+ * A GST on/off switch. GST is on exactly while a valid GSTIN is saved on the business profile, so:
+ * turning it ON asks for the GST details and saves them (they stay saved, for every device, until the switch is turned off);
+ * turning it OFF clears them after a confirmation. The server does the checking (GSTIN format, state code, PAN) and keeps the history.
+ */
+export function useGstSwitch() {
+  const qc = useQueryClient();
+  const { data: me } = useSession();
+  const q = useBusinessProfile();
+  const save = useMutation({
+    mutationFn: (body: z.input<typeof businessProfileBody>) => api.put('/settings/business', body),
+    onSuccess: () => Promise.all([qc.invalidateQueries({ queryKey: PROFILE_KEY }), qc.invalidateQueries({ queryKey: ME_KEY })]),
+  });
+  const base = (p: BusinessProfile): z.input<typeof businessProfileBody> => ({
+    legalName: p.legalName, brandName: p.brandName, addressLines: p.addressLines, city: p.city, state: p.state, stateCode: p.stateCode, pincode: p.pincode,
+    phone: p.phone, email: p.email, website: p.website, gstin: p.gstin, pan: p.pan, defaultPrintSize: p.defaultPrintSize, termsText: p.termsText,
+    invoiceFooter: p.invoiceFooter, logoKey: p.logoKey, brandColors: p.brandColors,
+  });
+  return {
+    profile: q.data, loading: q.isPending, live: me?.gst.gstMode === 'on', saving: save.isPending,
+    turnOn: (gstin: string, pan: string) => save.mutateAsync({ ...base(q.data!), gstin: gstin.trim().toUpperCase(), pan: pan.trim().toUpperCase() }),
+    turnOff: () => save.mutateAsync({ ...base(q.data!), gstin: '', confirmGstClear: true }),
+  };
+}

@@ -1,6 +1,8 @@
 import argon2 from 'argon2';
 import type { ClientSession } from 'mongoose';
 import type { ListQuery } from '@thunikart/shared';
+import { employeeCredentialsMail } from '../../lib/emailTemplates';
+import { email } from '../../adapters/email';
 import { Lock, Role, User } from '../../models';
 import { badRequest, businessRule, conflict, notFound } from '../../lib/errors';
 import { withTransaction } from '../../lib/transaction';
@@ -9,7 +11,7 @@ import { revokeAllSessions } from '../auth/auth.service';
 import type { AuditEntry } from '../../middleware/audit';
 
 type Audit = (e: AuditEntry) => void;
-const hash = (p: string) => argon2.hash(p, { type: argon2.argon2id });
+export const hash = (p: string) => argon2.hash(p, { type: argon2.argon2id });
 
 async function roleNames(ids: unknown[]) {
   const roles: any[] = await Role.find({ _id: { $in: ids } }).lean();
@@ -65,7 +67,9 @@ export async function createUser(input: { name: string; email: string; mobile?: 
   });
   const dto = toDto(u.toObject(), role);
   audit({ entity: 'user', entityId: dto.id, action: 'create', after: snapshot(u) });
-  return dto;
+  // The new employee is emailed how to sign in. A failed email never undoes the user: the Admin still has the password they typed.
+  const credentialsEmailed = await sendMail(employeeCredentialsMail(input.email, input.name, role.name, input.password, 'new'));
+  return { ...dto, credentialsEmailed };
 }
 
 export async function updateUser(actorId: string, id: string, input: { name?: string; mobile?: string | null; roleId?: string; active?: boolean }, audit: Audit) {
@@ -133,4 +137,11 @@ export async function resetPassword(id: string, password: string, audit: Audit) 
   if (!u) throw notFound('User');
   await revokeAllSessions(id);
   audit({ entity: 'user', entityId: id, action: 'reset_password' });
+  const role: any = await Role.findById(u.roleId, { name: 1 }).lean();
+  return { credentialsEmailed: await sendMail(employeeCredentialsMail(u.email, u.name, role?.name ?? 'Staff', password, 'reset')) };
+}
+
+/** Sends one email and says whether it went. Never throws: email is a courtesy on top of the real work. */
+export async function sendMail(mail: Parameters<ReturnType<typeof email>['send']>[0]): Promise<boolean> {
+  try { await email().send(mail); return true; } catch (e) { console.error('[email] could not send:', e instanceof Error ? e.message : e); return false; }
 }

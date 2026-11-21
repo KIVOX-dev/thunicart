@@ -19,9 +19,21 @@ const MODE: Record<string, string> = { cash: 'Cash', upi: 'UPI', card: 'Card', b
 /** Every bill from the Billing center, with its number: counter (POS), online (ECM) and B2B counter invoices. */
 function useBillings(q: string, channel: string) {
   return useInfiniteQuery({
-    queryKey: ['billings', q, channel], initialPageParam: 1,
+    queryKey: ['bills', 'billings', q, channel], initialPageParam: 1,
     queryFn: async ({ pageParam }) => api.get<Page>('/sales/invoices', { q: q || undefined, channel: channel || undefined, page: pageParam, pageSize: 20 }),
     getNextPageParam: (l) => l.nextPage ?? undefined,
+  });
+}
+
+/** Money received so far, by how it was paid. Comes from the day book (bills, customer receipts), so it follows every bill made in Billing. */
+function useReceivedByMode() {
+  return useQuery({
+    queryKey: ['bills', 'received-by-mode'],
+    queryFn: async () => {
+      const r = await api.get<{ byMode: Record<string, { in: number; out: number; net: number }> }>('/accounts/daybook', {});
+      const get = (m: string) => r.byMode[m]?.in ?? 0;
+      return { cash: get('cash'), upi: get('upi'), card: get('card') };
+    },
   });
 }
 
@@ -37,6 +49,8 @@ export function Billings({ compact }: { compact?: boolean }) {
   const [open, setOpen] = useState(false);
   const list = useBillings(q, channel);
   const pv = usePagedView(list);
+  const recv = useReceivedByMode();
+  const money = (v?: number) => (v === undefined ? '–' : formatPaise(v));
   const Sheet = compact ? BottomSheet : Modal;
   const h = compact ? 'min-h-12' : '';
   return (
@@ -45,6 +59,11 @@ export function Billings({ compact }: { compact?: boolean }) {
         <div className={compact ? '' : 'w-64'}><Input aria-label="Search bills" placeholder="Bill number, customer or mobile" className={h} value={q} onChange={(e) => setQ(e.target.value)} /></div>
         <Select aria-label="Where" className={compact ? h : 'w-44'} value={channel} onChange={(e) => setChannel(e.target.value)}><option value="">All bills</option><option value="POS">Counter (POS)</option><option value="ECM">Online</option><option value="CNT">B2B invoice</option></Select>
         <dl className={compact ? '' : 'w-48'}><StatCard label="Bills" value={pv.total.toLocaleString('en-IN')} testId="bills-total" /></dl>
+        <dl className={compact ? 'grid grid-cols-3 gap-2' : 'contents'}>
+          <div className={compact ? '' : 'w-48'}><StatCard label="Cash" value={money(recv.data?.cash)} testId="received-cash" /></div>
+          <div className={compact ? '' : 'w-48'}><StatCard label="UPI" value={money(recv.data?.upi)} testId="received-upi" /></div>
+          <div className={compact ? '' : 'w-48'}><StatCard label="Card" value={money(recv.data?.card)} testId="received-card" /></div>
+        </dl>
         {can('accounts.create') && <Button variant="primary" className={`${h} ${compact ? '' : 'ml-auto'}`} onClick={() => setOpen(true)}>Record receipt</Button>}
       </div>
       {list.isPending ? <ListSkeleton label="Loading bills" /> : list.isError ? <QueryError error={list.error} onRetry={() => list.refetch()} /> : pv.items.length === 0 ? <EmptyState title="No bills yet" body="Bills made in the Billing center and on the website show here with their numbers." /> : compact ? (

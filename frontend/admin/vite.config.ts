@@ -9,17 +9,37 @@ import { VitePWA } from 'vite-plugin-pwa';
  */
 const BASE = process.env.VITE_BASE ?? '/';
 
+/**
+ * A second install target: opening the Billing center and choosing "Install" / "Add to Home screen" makes an app called "Thunikart Billing"
+ * that starts on the billing screen. The page switches to this manifest while billing is open (see billing-app.tsx).
+ */
+const billingManifest = () => ({
+  name: 'billing-manifest',
+  generateBundle(this: { emitFile: (f: { type: 'asset'; fileName: string; source: string }) => void }) {
+    this.emitFile({
+      type: 'asset', fileName: 'billing.webmanifest',
+      source: JSON.stringify({
+        id: '/billing', name: 'Thunikart Billing', short_name: 'Thunikart Billing', start_url: '/billing', scope: '/billing',
+        display: 'standalone', background_color: '#ffffff', theme_color: '#0B1B54',
+        icons: [{ src: `${BASE}icon-192.png`, sizes: '192x192', type: 'image/png', purpose: 'any' }, { src: `${BASE}icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'any' }],
+      }),
+    });
+  },
+});
+
 export default defineConfig({
   base: BASE,
   build: { outDir: BASE === '/' ? 'dist' : `dist${BASE.replace(/\/$/, '')}`, emptyOutDir: true },
   plugins: [
     react(),
+    billingManifest(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'logo-mark.png', 'logo-sidebar.png', 'logo-primary.png'],
       manifest: {
-        name: 'Thunikart Admin and POS',
-        short_name: 'Thunikart',
+        id: BASE,
+        name: 'Thunikart Admin',
+        short_name: 'Thunikart Admin',
         start_url: BASE,
         scope: BASE,
         display: 'standalone',

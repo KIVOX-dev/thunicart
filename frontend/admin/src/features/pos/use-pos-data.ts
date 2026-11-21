@@ -42,13 +42,17 @@ export function useApproval(onToken: (t: string) => void) {
 const toShift = (r: any) => shiftDto.parse({
   id: r.id, openedAt: r.openedAt ?? r.createdAt ?? new Date().toISOString(), openingCash: r.openingCash ?? 0, closedAt: r.closedAt ?? null, bills: r.bills ?? 0, cashSales: r.cashSales ?? 0, cashRefunds: r.cashRefunds ?? 0,
   expectedCash: r.expectedCash ?? null, countedCash: r.countedCash ?? null, difference: r.difference ?? null,
+  businessDate: r.businessDate ?? '', cashier: r.cashier ?? '', stale: !!r.stale,
 });
 export function useShift() {
   const shop = useShopId();
   return useQuery({ queryKey: ['shift', shop.data], enabled: !!shop.data, queryFn: async () => { const r = await api.get<{ shift: unknown | null }>('/pos/shifts/current', { storeId: shop.data }); return r.shift ? toShift(r.shift) : null; } });
 }
-/** The API has no shift history list yet. */
-export function useShifts() { return useQuery({ queryKey: ['shift', 'history'], queryFn: async () => [] as ReturnType<typeof toShift>[] }); }
+/** Closed days, newest first, each with its date, cashier, times and cash. */
+export function useShifts() {
+  const shop = useShopId();
+  return useQuery({ queryKey: ['shift', 'history', shop.data], enabled: !!shop.data, queryFn: async () => { const r = await api.get<{ items: unknown[] } | unknown[]>('/pos/shifts', { storeId: shop.data }); return (Array.isArray(r) ? r : r.items).map(toShift); } });
+}
 export function useShiftActions(onError: (m: string) => void) {
   const qc = useQueryClient();
   const shop = useShopId();

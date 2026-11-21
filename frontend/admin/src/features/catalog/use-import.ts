@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api } from '../api/http';
+import { api, downloadFile } from '../api/http';
 import { IMPORT_FIELDS, type ImportBatch, type ImportFieldKey } from './types';
 import { uploadFile } from './use-uploads';
 
@@ -8,20 +8,25 @@ export type Mapping = Partial<Record<ImportFieldKey, string>>;
 
 /** Guesses a column for each field from its name. The person can change every guess. */
 const SYNONYMS: Record<ImportFieldKey, string[]> = {
-  code: ['code', 'item code', 'sku'], name: ['item name', 'name', 'description'], category: ['cat', 'category', 'product category', 'group'], brand: ['brand'],
-  model: ['model', 'style', 'model/style no'], size: ['size'], hsn: ['hsn', 'hsn code'], qty: ['qty', 'quantity', 'stock'], cost: ['purchase', 'base cost', 'cost'], rate: ['s.rate', 'selling rate', 'rate'], mrp: ['mrp', 'retail mrp'],
+  code: ['code', 'itemcode', 'sku', 'productcode', 'productid', 'itemno'], name: ['itemname', 'name', 'productname', 'product', 'title', 'description'],
+  category: ['cat', 'category', 'productcategory', 'group'], brand: ['brand'], model: ['model', 'style', 'modelstyleno', 'stylemodel'], size: ['size'],
+  color: ['color', 'colour', 'colorname', 'colourname'], hsn: ['hsn', 'hsncode'], qty: ['qty', 'quantity', 'stock', 'openingqty', 'onhand'],
+  cost: ['purchase', 'basecost', 'cost', 'unitcost', 'purchaserate'], rate: ['srate', 'sellingprice', 'sellingrate', 'saleprice', 'price', 'rate'], mrp: ['mrp', 'retailmrp'],
+  batchRef: ['bachno', 'batchno', 'batch', 'batchref', 'batchnumber'], barcode: ['barcode', 'barcodeupc', 'upc', 'ean'], bin: ['binlocation', 'bin'],
 };
+const norm = (h: string) => h.toLowerCase().replace(/[^a-z0-9]/g, '');
 export function suggestMapping(columns: string[]): Mapping {
   const out: Mapping = {};
   for (const f of IMPORT_FIELDS) {
-    const hit = columns.find((c) => SYNONYMS[f.key].includes(c.trim().toLowerCase()));
+    // Matched by the column's name, whatever its position in the sheet. A column is used for one field only.
+    const hit = columns.find((c) => SYNONYMS[f.key].includes(norm(c)) && !Object.values(out).includes(c));
     if (hit) out[f.key] = hit;
   }
   return out;
 }
 
 /* The screen's field names and the API's field names differ for four fields. */
-const TO_API: Record<string, string> = { code: 'itemCode', qty: 'openingQty', cost: 'baseCost', rate: 'sellingPrice' };
+const TO_API: Record<string, string> = { code: 'itemCode', qty: 'openingQty', cost: 'baseCost', rate: 'sellingPrice', bin: 'binLocation' };
 const FROM_API: Record<string, string> = Object.fromEntries(Object.entries(TO_API).map(([a, b]) => [b, a]));
 const SCREEN_KEYS = new Set<string>(IMPORT_FIELDS.map((f) => f.key));
 
@@ -34,8 +39,9 @@ function fromApiMapping(m: Record<string, string>): { shown: Mapping; extra: Rec
   }
   return { shown, extra };
 }
-function toApiMapping(shown: Mapping, extra: Record<string, string>): Record<string, string> {
+function toApiMapping(shown: Mapping, extra: Record<string, string>, attrCols: string[] = []): Record<string, string> {
   const out: Record<string, string> = { ...extra };
+  for (const c of attrCols) out[`attr:${c}`] = c; // an extra column kept as a product attribute under its own header name
   for (const [k, col] of Object.entries(shown)) if (col) out[TO_API[k] ?? k] = col;
   return out;
 }
@@ -75,6 +81,7 @@ export function useImportWizard() {
   const [sheet, setSheet] = useState('');
   const [mapping, setMapping] = useState<Mapping>({});
   const [saveMapping, setSaveMapping] = useState(true);
+  const [attrCols, setAttrCols] = useState<string[]>([]);
   const [upload, setUpload] = useState<{ name: string; progress: number; error?: string } | null>(null);
   const suggested = useRef<ApiImport['suggestedMapping']>(null);
   const extra = useRef<Record<string, string>>({});
@@ -108,7 +115,7 @@ export function useImportWizard() {
   };
   const dry = useMutation({
     mutationFn: async () => {
-      await api.put(`/imports/${batch!.id}/mapping`, { sheet, headerRow: 1, mapping: toApiMapping(mapping, extra.current), ...(saveMapping ? { saveMappingAs: 'My stock sheet' } : {}) });
+      await api.put(`/imports/${batch!.id}/mapping`, { sheet, headerRow: 1, mapping: toApiMapping(mapping, extra.current, attrCols), ...(saveMapping ? { saveMappingAs: 'My stock sheet' } : {}) });
       const p = await api.get<ApiPreview>(`/imports/${batch!.id}/preview`);
       pieces.current = p.totals.pieces;
       const base = await api.get<ApiImport>(`/imports/${batch!.id}`);
@@ -135,9 +142,9 @@ export function useImportWizard() {
     onSuccess: (b) => { setBatch(b); void qc.invalidateQueries(); },
   });
 
-  const reset = () => { setBatch(null); setStep('upload'); setMapping({}); setUpload(null); };
+  const reset = () => { setAttrCols([]); setBatch(null); setStep('upload'); setMapping({}); setUpload(null); };
   const missingRequired = IMPORT_FIELDS.filter((f) => f.required && !mapping[f.key]).map((f) => f.label);
-  return { step, setStep, batch, sheet, setSheet, mapping, setMapping, columns, saveMapping, setSaveMapping, upload, doUpload, chooseSheet, dry, commit, rollback, reset, missingRequired, hasSaved: !!suggested.current };
+  return { attrCols, setAttrCols, step, setStep, batch, sheet, setSheet, mapping, setMapping, columns, saveMapping, setSaveMapping, upload, doUpload, chooseSheet, dry, commit, rollback, reset, missingRequired, hasSaved: !!suggested.current };
 }
 
 /** Rollback from the history list, for a batch that is not the one open in the wizard. */
@@ -148,3 +155,16 @@ export function useRollbackBatch() {
     onSuccess: () => qc.invalidateQueries(),
   });
 }
+
+export interface ProcessedRow {
+  row: number; status: 'new' | 'updated' | 'skipped' | 'failed'; message: string; itemCode: string; codeGenerated: boolean; batchNumber: string; batchGenerated: boolean;
+  product: string; variantsInProduct: number; name: string; category: string; brand: string; model: string; size: string; color: string; hsn: string; barcode: string;
+  qty: number; baseCost: number; sellingPrice: number; mrp: number; attributes: Record<string, string>; flags: string[];
+}
+export interface ProcessedPage { items: ProcessedRow[]; total: number; nextPage: number | null; summary: { new: number; updated: number; skipped: number; failed: number; generatedCodes: number; batchNumbers: string[] } }
+
+/** Every row of the sheet as the import sees it (cleaned values, generated codes and batch numbers), 100 rows a page. */
+export function useProcessedRows(id: string | undefined, page: number, enabled: boolean) {
+  return useQuery({ queryKey: ['import-processed', id, page], enabled: enabled && !!id, queryFn: () => api.get<ProcessedPage>(`/imports/${id}/processed`, { page, pageSize: 100 }) });
+}
+export const downloadProcessed = (id: string, fileName: string) => downloadFile(`/imports/${id}/export`, `${fileName.replace(/\.[^.]+$/, '')}-processed.xlsx`);

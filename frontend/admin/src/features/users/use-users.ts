@@ -1,3 +1,4 @@
+import { useToast } from '@thunikart/ui';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -24,6 +25,7 @@ type Banner = { message: string; requestId?: string } | null;
 
 export function useCreateUserForm(onDone: () => void) {
   const qc = useQueryClient();
+  const { toast } = useToast();
   const form = useForm<z.input<typeof userCreateBody>>({
     resolver: zodResolver(userCreateBody),
     defaultValues: { name: '', email: '', mobile: undefined, password: '', roleId: '', active: true },
@@ -31,8 +33,8 @@ export function useCreateUserForm(onDone: () => void) {
   const [banner, setBanner] = useState<Banner>(null);
   const [key] = useState(newIdempotencyKey);
   const m = useMutation({
-    mutationFn: (v: z.output<typeof userCreateBody>) => api.post('/users', v, { idempotencyKey: key }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+    mutationFn: (v: z.output<typeof userCreateBody>) => api.post<{ credentialsEmailed?: boolean }>('/users', v, { idempotencyKey: key }),
+    onSuccess: (r) => { toast(r?.credentialsEmailed === false ? 'User added, but the login email could not be sent. Share the password yourself.' : r?.credentialsEmailed ? 'User added. Their login details were emailed.' : 'User added.', r?.credentialsEmailed === false ? 'info' : 'success'); return qc.invalidateQueries({ queryKey: KEY }); },
   });
   const submit = form.handleSubmit(async (v) => {
     try { await m.mutateAsync(userCreateBody.parse(v)); onDone(); } catch (e) { setBanner(applyApiError(form, e)); }
@@ -61,7 +63,11 @@ export function useEditUserForm(user: User, onDone: () => void) {
 export function useResetPasswordForm(user: User, onDone: () => void) {
   const form = useForm<z.input<typeof resetPasswordBody>>({ resolver: zodResolver(z.object({ password: passwordRule })), defaultValues: { password: '' } });
   const [banner, setBanner] = useState<Banner>(null);
-  const m = useMutation({ mutationFn: (v: { password: string }) => api.post(`/users/${user.id}/reset-password`, v) });
+  const { toast } = useToast();
+  const m = useMutation({
+    mutationFn: (v: { password: string }) => api.post<{ credentialsEmailed?: boolean }>(`/users/${user.id}/reset-password`, v),
+    onSuccess: (r) => toast(r?.credentialsEmailed ? 'Password reset. The new details were emailed.' : 'Password reset. The email could not be sent, so share it yourself.', r?.credentialsEmailed ? 'success' : 'info'),
+  });
   const submit = form.handleSubmit(async (v) => {
     try { await m.mutateAsync(v); onDone(); } catch (e) { setBanner(applyApiError(form, e)); }
   });

@@ -32,6 +32,8 @@ export const Customer = defineModel('Customer', 'customers', {
   glAccount: { type: String, default: '' },
   creditLimit: { ...paise },
   active: { type: Boolean, default: true },
+  gender: { type: String, enum: ['Male', 'Female', ''], default: '' },
+  dob: { type: Date, default: null },
 }, [
   [{ customerId: 1 }, { unique: true }],
   [{ mobile: 1 }, { unique: true }], // mobile is unique per customer

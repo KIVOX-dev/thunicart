@@ -44,6 +44,8 @@ export const StoreSettings = defineModel('StoreSettings', 'store_settings', {
   shipping: { type: Object, default: { flatCharge: 5000, freeAbove: 99900, etaDays: '4-7', allowedStates: [], allowedPincodes: [], blockedPincodes: [] } },
   cod: { type: Object, default: { enabled: true, fee: 4000, maxOrderValue: 500000, pincodes: [] } },
   holdMinutes: { type: Number, default: 15 },
+  /** What the admin changed on the website home page: section order, on or off, headings and cards. Empty means the automatic layout. */
+  home: { type: Object, default: {} },
   returnPickup: { type: Boolean, default: true },
 }, [[{ singleKey: 1 }, { unique: true }]], { minimize: false });
 

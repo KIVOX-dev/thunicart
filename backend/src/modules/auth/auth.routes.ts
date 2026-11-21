@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { loginBody, loginResponse, refreshResponse, meResponse, okResponse, sessionDto, idParam } from '@thunikart/shared';
+import { forgotPasswordBody, resetPasswordWithTokenBody, loginBody, loginResponse, refreshResponse, meResponse, okResponse, sessionDto, idParam } from '@thunikart/shared';
 import { defineRoute } from '../../lib/route';
 import { config } from '../../config/env';
 import { REFRESH_TTL_SECONDS, STAFF_COOKIE } from '../../middleware/auth';
@@ -8,6 +8,7 @@ import { Session } from '../../models';
 import { notFound } from '../../lib/errors';
 import { iso } from '../../lib/list';
 import * as svc from './auth.service';
+import * as reset from './passwordReset.service';
 
 const cookieOpts = () => ({
   httpOnly: true,
@@ -79,6 +80,25 @@ export const authRoutes = [
       const r = await Session.updateOne({ _id: params.id, userId: user.id, revokedAt: null }, { $set: { revokedAt: new Date() } });
       if (!r.matchedCount) throw notFound('Session');
       audit({ entity: 'session', entityId: params.id, action: 'revoke', after: { userId: user.id } });
+      return { ok: true as const };
+    },
+  }),
+  defineRoute({
+    method: 'POST', path: '/auth/forgot-password', tags: ['Auth'], permission: 'public', body: forgotPasswordBody, response: okResponse, errors: [429],
+    summary: 'Forgot password for staff (admin app and Billing center). Emails a one time link, and always answers the same, so nobody can find out who has an account.',
+    rateLimit: { name: 'forgot-ip', limit: 10, windowSec: 3600 },
+    handler: async ({ req, body }) => {
+      await reset.requestReset(body.email, req.ip ?? null);
+      return { ok: true as const };
+    },
+  }),
+  defineRoute({
+    method: 'POST', path: '/auth/reset-password', tags: ['Auth'], permission: 'public', body: resetPasswordWithTokenBody, response: okResponse, errors: [400, 429],
+    summary: 'Choose a new password with the link from the email. The link works once and for 60 minutes; every session on the account is ended.',
+    rateLimit: { name: 'reset-ip', limit: 20, windowSec: 3600 },
+    handler: async ({ body, audit }) => {
+      await reset.resetWithToken(body.token, body.password);
+      audit({ entity: 'user', action: 'reset_password_by_email' });
       return { ok: true as const };
     },
   }),

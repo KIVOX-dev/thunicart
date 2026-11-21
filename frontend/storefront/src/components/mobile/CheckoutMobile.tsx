@@ -19,7 +19,7 @@ export function CheckoutMobile({ c }: { c: Checkout }) {
       {step === 1 && <><DeliverySection c={c} /><CouponBox c={c} /></>}
       {step === 2 && <PaymentSection c={c} />}
       {step === 3 && <><h2 className="text-sm">4. Review</h2><Summary c={c} /></>}
-      <div className="fixed inset-x-0 bottom-14 z-30 flex gap-2 border-t-2 border-navy-100 bg-white p-3">
+      <div className="fixed inset-x-3 bottom-[calc(5.75rem+env(safe-area-inset-bottom))] z-50 flex gap-2 rounded-3xl bg-white p-2.5 shadow-overlay ring-2 ring-navy-100">
         {step > 0 && <button type="button" onClick={() => setStep((s) => s - 1)} className="min-h-12 rounded-full font-semibold tk-press hover:bg-navy hover:text-white border-2 border-navy px-5 text-sm">Back</button>}
         <button type="submit" disabled={step < 3 ? !canNext : c.placing || blocked} aria-busy={c.placing} className="min-h-12 flex-1 rounded-sm bg-orange text-sm font-semibold uppercase tracking-wider text-navy disabled:opacity-50">{step < 3 ? 'Continue' : c.placing ? 'Placing your order…' : c.method === 'cod' ? 'Place order' : 'Place order and pay'}</button>
       </div>

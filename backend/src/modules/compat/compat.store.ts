@@ -118,12 +118,24 @@ export function registerStoreCompat(app: FastifyInstance) {
   app.get(`${P}/cms/home`, async (req, reply) => {
     const [cats, fresh, popular, biz] = await Promise.all([categories(req), list(req, { pageSize: '12', sort: 'new' }), list(req, { pageSize: '12', sort: 'popular' }), real(app, req, 'GET', '/store/home')]);
     const top = cats.slice(0, 8); const pic = (i: number) => top[i % Math.max(1, top.length)]?.image ?? '/api/img/banner/1';
+    const saved: any = ((await storeSettings()) as any).home ?? {};
+    const sec = (k: string) => saved.sections?.[k] ?? {};
+    const cardsOf = (k: string, auto: Array<{ title: string; image: string; link: string }>) => { const c = sec(k).cards; return (Array.isArray(c) ? c : auto).map((x: any) => ({ title: x.title, image: x.image ? img(req, x.image) : '', link: x.link || '#' })); };
+    const catCards = cardsOf('categories', cats.map((c) => ({ title: c.name, image: c.image, link: `/c/${c.slug}` })));
+    const lookCards = cardsOf('lookbook', top.slice(0, 4).map((c, i) => ({ title: c.name, image: pic(i), link: `/c/${c.slug}` })));
+    const occCards = cardsOf('occasions', []);
+    const stripCards = cardsOf('strip', [{ title: 'New arrivals every week. Made for everyday comfort.', image: '', link: '' }]);
+    const AUTO = ['strip', 'categories', 'sizes', 'trending', 'occasions', 'newArrivals', 'lookbook'];
+    const order = [...(saved.order ?? []).filter((k: string) => AUTO.includes(k)), ...AUTO.filter((k) => !(saved.order ?? []).includes(k))];
+    const DEFAULT_TITLE: Record<string, string> = { strip: 'Free shipping above ₹999 | Easy returns in 7 days', categories: 'Shop by category', sizes: 'Shop by size', trending: 'Trending now', occasions: 'Shop by occasion', newArrivals: 'New arrivals', lookbook: 'Lookbook' };
+    const layout = order.map((k: string) => ({ key: k, enabled: sec(k).enabled !== false, title: sec(k).title || DEFAULT_TITLE[k] }));
     return reply.send({
+      layout, stripCards,
       announcements: ['Free shipping on orders above Rs 999', 'Easy 7 day exchange'],
       banners: top.slice(0, 3).map((c, i) => ({ id: `b${i + 1}`, title: c.name, subtitle: 'New styles in store now', mobileImage: c.image, desktopImage: c.image, href: `/c/${c.slug}` })),
-      categories: cats, sizes: fresh.json?.facets?.sizes ?? [], occasions: [],
+      categories: cats, sizes: fresh.json?.facets?.sizes ?? [], occasions: occCards.map((o: any) => ({ name: o.title, image: o.image, href: o.link })), categoryCards: catCards,
       trending: popular.json?.items ?? [], newArrivals: fresh.json?.items ?? [],
-      lookbook: top.slice(0, 4).map((c, i) => ({ image: pic(i), title: c.name, href: `/c/${c.slug}` })),
+      lookbook: lookCards.map((l: any) => ({ image: l.image, title: l.title, href: l.link })),
       contact: { name: 'Thunikart', address: biz.json?.contact?.address ?? 'Near KN Hall, Peedampalli Main Road, Pattanam, Coimbatore 641016', phone: biz.json?.contact?.phone ?? '8400044191', email: biz.json?.contact?.email ?? '', social: [] },
     });
   });

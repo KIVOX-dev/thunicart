@@ -10,7 +10,18 @@ export const otpSendBody = z.object({ email: z.string().trim().toLowerCase().ema
 export const otpVerifyBody = z.object({ email: z.string().trim().toLowerCase().email(), code: z.string().regex(/^\d{6}$/, 'The code is 6 digits') });
 export const googleBody = z.object({ idToken: z.string().min(5) });
 export const customerSession = z.object({ accessToken: z.string(), expiresInSeconds: z.number().int(), customer: z.looseObject({ id: objectId, email: z.string(), name: z.string() }) });
-export const profileBody = z.object({ name: z.string().trim().min(2).max(100).optional(), mobile: z.string().trim().regex(/^[6-9]\d{9}$/, 'Enter a 10 digit mobile number').optional() });
+const dobRule = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Enter your date of birth').refine((d) => { const t = Date.parse(d); return t > Date.parse('1900-01-01') && t < Date.now(); }, 'Enter a valid date of birth');
+/** The account form after the first sign in: name, mobile, gender and date of birth are needed; the address is optional. */
+export const profileBody = z.object({
+  name: z.string().trim().min(2).max(100).optional(),
+  mobile: z.string().trim().regex(/^[6-9]\d{9}$/, 'Enter a 10 digit mobile number').optional(),
+  gender: z.enum(['Male', 'Female']).optional(),
+  dob: dobRule.optional(),
+  address: z.object({
+    line1: z.string().trim().min(3).max(150), line2: z.string().trim().max(150).default(''), city: z.string().trim().min(2).max(60),
+    state: z.string().trim().min(2).max(60), stateCode: z.string().regex(/^\d{2}$/), pincode: z.string().regex(/^\d{6}$/),
+  }).optional(),
+});
 export const addressBody = z.object({
   name: z.string().trim().min(2).max(100), phone: z.string().trim().regex(/^[6-9]\d{9}$/, 'Enter a 10 digit mobile number'), line1: z.string().trim().min(3).max(150), line2: z.string().trim().max(150).default(''),
   city: z.string().trim().min(2).max(60), state: z.string().trim().min(2).max(60), stateCode: z.string().regex(/^\d{2}$/), pincode: z.string().regex(/^\d{6}$/), isDefault: z.boolean().default(false),
@@ -65,3 +76,17 @@ export const adminOrderPatchBody = z.object({ status: z.enum(ORDER_STATUSES), no
 export const returnDecisionBody = z.object({ note: z.string().trim().max(300).default('') });
 export const returnRefundBody = z.object({ refundTo: z.enum(['wallet', 'original']).default('wallet'), condition: z.enum(['restock', 'damaged']).default('restock') });
 export const cancelOrderBody = z.object({ note: z.string().trim().max(300).default('') });
+
+// ---------- home page layout (edited in the admin Online store, shown on the website home page) ----------
+export const HOME_SECTIONS = [
+  { key: 'strip', label: 'Offer strip', about: 'The coloured bar under the banners. The title is the big line, the first card is the small line.', cards: true, imageSize: '' },
+  { key: 'categories', label: 'Shop by category', about: 'The round-cornered category tiles.', cards: true, imageSize: '600 x 600 px (square)' },
+  { key: 'sizes', label: 'Shop by size', about: 'The size buttons. Sizes come from your stock.', cards: false, imageSize: '' },
+  { key: 'trending', label: 'Trending now', about: 'Best selling products, picked automatically.', cards: false, imageSize: '' },
+  { key: 'occasions', label: 'Shop by occasion', about: 'Picture cards for an occasion or a collection.', cards: true, imageSize: '600 x 600 px (square)' },
+  { key: 'newArrivals', label: 'New arrivals', about: 'Newest products, picked automatically.', cards: false, imageSize: '' },
+  { key: 'lookbook', label: 'Lookbook', about: 'Picture cards that link to a collection or a story.', cards: true, imageSize: '900 x 1200 px (3:4, portrait)' },
+] as const;
+export const homeCard = z.object({ title: z.string().trim().max(80), image: z.string().trim().max(500).default(''), link: z.string().trim().max(300).default('') });
+export const homeSectionBody = z.object({ enabled: z.boolean().default(true), title: z.string().trim().max(100).default(''), cards: z.array(homeCard).max(24).optional() });
+export const homeLayoutBody = z.object({ order: z.array(z.string()).max(20).default([]), sections: z.record(z.string(), homeSectionBody) });

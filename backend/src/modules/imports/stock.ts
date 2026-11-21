@@ -15,6 +15,10 @@ export interface StockRow {
   row: number; code: string; name: string; printName: string; batchRef: string; category: string; model: string; brand: string;
   size: string; sizeSplit: string[]; hsn: string; qty: number; baseCost: number; selling: number; mrp: number; barcode: string; color: string;
   bin: string; type: string; reorderLevel: number; flags: string[]; detail: Record<string, unknown>; priceMissing: boolean;
+  /** Extra mapped columns ("attr:Fabric" -> { Fabric: 'Cotton' }), stored on the variant. */
+  attributes: Record<string, string>;
+  /** The sheet gave no code, so one is generated. Until the import is saved the code is a placeholder "(auto-<row>)". */
+  autoCode: boolean;
 }
 export interface RowIssue { row: number; code: string | null; message: string }
 export interface Prepared {
@@ -38,18 +42,23 @@ function codeText(v: unknown): string {
 /** Rows that are really headers repeated inside the data (row 57 of the stock sheet). */
 const looksLikeHeader = (code: string, name: string) => /^code$/i.test(code) || /^item name$/i.test(name);
 
-export function prepareStockRows(raw: SheetRow[], mapping: Record<string, string>): Prepared {
+/** Placeholder shown for a generated code before the import is saved. */
+export const autoCodePlaceholder = (row: number) => `(auto-${row})`;
+
+export function prepareStockRows(raw: SheetRow[], mapping: Record<string, string>, opts: { autoCodes?: Record<string, string> } = {}): Prepared {
   const get = (r: SheetRow, f: string) => (mapping[f] ? r.values[mapping[f]!] : undefined);
+  const attrCols = Object.entries(mapping).filter(([k, col]) => k.startsWith('attr:') && k.slice(5).trim() && col).map(([k, col]) => [k.slice(5).trim(), col] as const);
   const rows: StockRow[] = []; const errors: RowIssue[] = []; const skipped: RowIssue[] = []; const notes: string[] = [];
   const seenCodes = new Set<string>(); const seenBarcodes = new Set<string>();
 
   for (const r of raw) {
-    const code = codeText(get(r, 'itemCode'));
+    let code = codeText(get(r, 'itemCode'));
     const name = str(get(r, 'name'));
     const printName = str(get(r, 'printName'));
     if (!code && !name) { skipped.push({ row: r.row, code: null, message: 'Totals or blank row (no item code)' }); continue; }
     if (looksLikeHeader(code, name)) { skipped.push({ row: r.row, code, message: 'Repeated header row inside the data' }); continue; }
-    if (!code) { errors.push({ row: r.row, code: null, message: 'Item code is missing' }); continue; }
+    const autoCode = !code;
+    if (autoCode) code = opts.autoCodes?.[String(r.row)] ?? autoCodePlaceholder(r.row);
     if (seenCodes.has(code)) { skipped.push({ row: r.row, code, message: `Duplicate item code ${code} in the file (first one kept)` }); continue; }
     const itemName = name || printName;
     if (!itemName) { errors.push({ row: r.row, code, message: 'Item name is missing' }); continue; }
@@ -82,17 +91,19 @@ export function prepareStockRows(raw: SheetRow[], mapping: Record<string, string
     const qty = typeof qtyRaw === 'number' ? qtyRaw : Number(str(qtyRaw)) || 0;
     if (qty < 0) { flags.push('NEGATIVE_QTY'); detail.qty = qty; }
     if (qty > 0 && baseCost === 0) flags.push('NO_COST');
-    if (code.length < 3 || /\s/.test(code)) flags.push('ODD_CODE');
+    if (!autoCode && (code.length < 3 || /\s/.test(code))) flags.push('ODD_CODE');
 
     const barcode = str(get(r, 'barcode'));
     if (barcode && seenBarcodes.has(barcode)) { errors.push({ row: r.row, code, message: `Barcode ${barcode} is used by another row in the file` }); continue; }
     if (barcode) seenBarcodes.add(barcode);
     seenCodes.add(code);
+    const attributes: Record<string, string> = {};
+    for (const [label, col] of attrCols) { const v = r.values[col]; const t = v instanceof Date ? v.toISOString().slice(0, 10) : str(v); if (t) attributes[label] = t; }
 
     rows.push({
       row: r.row, code, name: itemName.replace(/\s+/g, ' '), printName: printName.replace(/\s+/g, ' '), batchRef: str(get(r, 'batchRef')), category, model, brand,
       size, sizeSplit: sz.multi ? sz.sizes : [], hsn, qty: Number.isFinite(qty) ? qty : 0, baseCost, selling, mrp, barcode, color: cleanWord(get(r, 'color')),
-      bin: str(get(r, 'binLocation')), type: str(get(r, 'type')), reorderLevel: Number(str(get(r, 'reorderLevel'))) || 0, flags, detail, priceMissing,
+      bin: str(get(r, 'binLocation')), type: str(get(r, 'type')), reorderLevel: Number(str(get(r, 'reorderLevel'))) || 0, flags, detail, priceMissing, attributes, autoCode,
     });
   }
 
@@ -205,6 +216,7 @@ export async function applyStockUnits(units: Unit[], ctx: ApplyCtx): Promise<App
       const r = u.rows[0]!; const ex = u.existing;
       const before: any = { size: ex.size, color: ex.color, mrp: ex.mrp, sellingPrice: ex.sellingPrice, batchRef: ex.batchRef, binLocation: ex.binLocation, baseCost: ex.baseCost, priceMissing: ex.priceMissing };
       const set: any = { mrp: r.mrp, sellingPrice: r.selling, priceMissing: r.priceMissing };
+      if (Object.keys(r.attributes).length) { before.attributes = ex.attributes ?? null; set.attributes = { ...(ex.attributes ?? {}), ...r.attributes }; }
       if (r.size) set.size = r.size;
       if (r.color) set.color = r.color;
       if (refOf(r)) set.batchRef = refOf(r);
@@ -248,7 +260,7 @@ export async function applyStockUnits(units: Unit[], ctx: ApplyCtx): Promise<App
     const docs = u.rows.map((r) => ({
       itemId, itemCode: r.code, sku: r.code, barcode: r.barcode || r.code, size: r.size || undefined, color: r.color || undefined, mrp: r.mrp, sellingPrice: r.selling,
       offerPrice: null, baseCost: r.baseCost, reorderLevel: r.reorderLevel, binLocation: r.bin || undefined, batchRef: refOf(r), active: true,
-      priceMissing: r.priceMissing, importBatchId: ctx.batchId,
+      priceMissing: r.priceMissing, importBatchId: ctx.batchId, attributes: Object.keys(r.attributes).length ? r.attributes : undefined,
     }));
     const created: any[] = await Variant.insertMany(docs, s);
     for (let i = 0; i < created.length; i++) {

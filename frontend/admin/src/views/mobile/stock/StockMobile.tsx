@@ -80,7 +80,7 @@ function ReorderTab() {
           <span className="min-w-0 flex-1 text-sm"><strong className="block truncate">{r.name}</strong><span className="text-xs text-muted">Size {r.size} · on hand {r.onHand} · reorder at {r.reorderLevel}</span></span>
         </label>
       ))}
-      {can('purchase.create') && <div className="fixed inset-x-0 bottom-14 z-30 border-t-2 border-navy-100 bg-white p-3"><Button variant="primary" size="lg" block className="min-h-12" disabled={picked.size === 0} onClick={() => setOpen(true)}>Create PO ({picked.size})</Button></div>}
+      {can('purchase.create') && <div className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 border-t-2 border-navy-100 bg-white p-3"><Button variant="primary" size="lg" block className="min-h-12" disabled={picked.size === 0} onClick={() => setOpen(true)}>Create PO ({picked.size})</Button></div>}
       <BottomSheet open={open} onClose={() => setOpen(false)} title="Create purchase order" footer={<><Button onClick={() => setOpen(false)}>Cancel</Button><Button variant="primary" disabled={!vendorId} loading={create.isPending} onClick={async () => { const po = await create.mutateAsync({ vendorId, variantIds: [...picked] }); toast(`Draft order ${po.number} created`, 'success'); nav(`/purchase/orders/${po.id}`); }}>Create draft</Button></>}>
         <Select aria-label="Vendor" className="min-h-12" value={vendorId} onChange={(e) => setVendorId(e.target.value)}><option value="">Choose a vendor</option>{vendors.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}</Select>
       </BottomSheet>

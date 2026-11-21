@@ -92,3 +92,17 @@ export const dataQualityResponse = z.object({
   /** All sizes in stock, and how many of them still have a problem to review, so the report can say how many are clean. */
   totalVariants: z.number().int(), flagged: z.number().int(),
 });
+
+/** Every sheet row as the import sees it: cleaned values, generated product code and batch number, and what happens to the row. Money is in paise. */
+export const importProcessedRow = z.object({
+  row: z.number().int(), status: z.enum(['new', 'updated', 'skipped', 'failed']), message: z.string(),
+  itemCode: z.string(), codeGenerated: z.boolean(), batchNumber: z.string(), batchGenerated: z.boolean(),
+  product: z.string(), variantsInProduct: z.number().int(),
+  name: z.string(), category: z.string(), brand: z.string(), model: z.string(), size: z.string(), color: z.string(), hsn: z.string(), barcode: z.string(),
+  qty: z.number(), baseCost: z.number().int(), sellingPrice: z.number().int(), mrp: z.number().int(),
+  attributes: z.record(z.string(), z.string()), flags: z.array(z.string()),
+});
+export const importProcessedResponse = z.object({
+  items: z.array(importProcessedRow), total: z.number().int(), nextPage: z.number().int().nullable(),
+  summary: z.object({ new: z.number().int(), updated: z.number().int(), skipped: z.number().int(), failed: z.number().int(), generatedCodes: z.number().int(), batchNumbers: z.array(z.string()) }),
+});

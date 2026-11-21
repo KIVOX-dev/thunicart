@@ -89,6 +89,8 @@ export const Variant = defineModel('Variant', 'variants', {
   hasStockHistory: { type: Boolean, default: false },
   /** Set by an import when the source row had no usable price. Cleared when a price is saved. */
   priceMissing: { type: Boolean, default: false },
+  /** Extra columns an import carried over (fabric, fit, season...). Free names and values, never a fixed list. */
+  attributes: { type: Object },
   importBatchId: { ...oid('ImportBatch') },
 }, [
   [{ itemCode: 1 }, { unique: true }],

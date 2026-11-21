@@ -4,19 +4,20 @@ export type Target = 'items' | 'vendors' | 'customers' | 'opening_stock';
 export interface FieldSpec { key: string; label: string; required?: boolean; aliases: string[] }
 
 const stockFields: FieldSpec[] = [
-  { key: 'itemCode', label: 'Item code', required: true, aliases: ['code', 'itemcode', 'sku'] },
-  { key: 'name', label: 'Item name', required: true, aliases: ['itemname', 'name', 'productname', 'description'] },
+  // Not required: a row without a code gets the next product code automatically when the import is saved.
+  { key: 'itemCode', label: 'Item code', aliases: ['code', 'itemcode', 'sku', 'productcode', 'productid', 'itemno', 'articleno'] },
+  { key: 'name', label: 'Item name', required: true, aliases: ['itemname', 'name', 'productname', 'product', 'title', 'description'] },
   { key: 'printName', label: 'Print name', aliases: ['printname'] },
   { key: 'batchRef', label: 'Batch reference', aliases: ['bachno', 'batchno', 'batch', 'batchref'] },
   { key: 'category', label: 'Category', aliases: ['cat', 'category', 'productcategory'] },
   { key: 'model', label: 'Model / style', aliases: ['model', 'modelstyleno', 'style', 'stylemodel'] },
   { key: 'brand', label: 'Brand', aliases: ['brand'] },
   { key: 'size', label: 'Size', aliases: ['size'] },
-  { key: 'color', label: 'Colour', aliases: ['color', 'colour'] },
+  { key: 'color', label: 'Colour', aliases: ['color', 'colour', 'colorname', 'colourname'] },
   { key: 'hsn', label: 'HSN', aliases: ['hsn', 'hsncode'] },
-  { key: 'openingQty', label: 'Opening quantity', aliases: ['qty', 'quantity', 'openingqty', 'openingstock'] },
+  { key: 'openingQty', label: 'Opening quantity', aliases: ['qty', 'quantity', 'openingqty', 'openingstock', 'stock', 'onhand', 'stockqty'] },
   { key: 'baseCost', label: 'Cost (rupees)', aliases: ['purchase', 'basecost', 'cost', 'unitcost', 'purchaserate'] },
-  { key: 'sellingPrice', label: 'Selling price (rupees)', aliases: ['srate', 'sellingprice', 'sellrate', 'salerate'] },
+  { key: 'sellingPrice', label: 'Selling price (rupees)', aliases: ['srate', 'sellingprice', 'sellrate', 'sellingrate', 'salerate', 'saleprice', 'price', 'rate'] },
   { key: 'mrp', label: 'MRP (rupees)', aliases: ['mrp', 'retailmrp'] },
   { key: 'barcode', label: 'Barcode', aliases: ['barcode', 'barcodeupc', 'upc', 'ean'] },
   { key: 'binLocation', label: 'Bin location', aliases: ['binlocation', 'bin'] },
@@ -56,6 +57,10 @@ export const FIELDS: Record<Target, FieldSpec[]> = {
     { key: 'loyaltyPoints', label: 'Opening loyalty points', aliases: ['loyaltypointsbalance', 'loyaltypoints'] },
   ],
 };
+
+/** A mapping key like "attr:Fabric" carries any extra column into the variant's attributes under the name "Fabric". */
+export const ATTR_PREFIX = 'attr:';
+export const isAttrField = (key: string) => key.startsWith(ATTR_PREFIX) && key.slice(ATTR_PREFIX.length).trim().length > 0;
 
 /** Guess a mapping by matching header names to field aliases. */
 export function autoMap(target: Target, headers: string[]): Record<string, string> {

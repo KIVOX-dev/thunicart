@@ -19,6 +19,8 @@ export const userDto = z.object({
   lockedUntil: z.string().nullable(),
   lastLoginAt: z.string().nullable(),
   createdAt: z.string(),
+  /** Only on a new user: whether their login details went out by email. */
+  credentialsEmailed: z.boolean().optional(),
 });
 export const userCreateBody = z.object({
   name: z.string().trim().min(2).max(100),
@@ -35,3 +37,7 @@ export const userUpdateBody = z.object({
   active: z.boolean().optional(),
 });
 export const resetPasswordBody = z.object({ password: passwordRule });
+
+// ---------- forgot and reset password ----------
+export const forgotPasswordBody = z.object({ email: z.string().trim().toLowerCase().email() });
+export const resetPasswordWithTokenBody = z.object({ token: z.string().min(20).max(200), password: passwordRule });

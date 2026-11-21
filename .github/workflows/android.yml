@@ -1,6 +1,7 @@
 name: Android apps
 # Builds two installable Android apps (APK files) that open the live websites, and publishes them on the "android-latest" release:
 #   thunikart-admin.apk  ->  https://thunicart-frontend.vercel.app/admin/   (admin, stock, Billing center)
+#   thunikart-billing.apk ->  https://thunicart-frontend.vercel.app/billing  (the Billing center only)
 #   thunikart-shop.apk   ->  https://thunicart-frontend.vercel.app/         (the customer shop)
 # Run it from the Actions tab (Run workflow), or it runs by itself when the Android project changes.
 # Download on the phone: https://github.com/<owner>/<repo>/releases/tag/android-latest
@@ -26,6 +27,12 @@ jobs:
             url: https://thunicart-frontend.vercel.app/admin/
             host: thunicart-frontend.vercel.app
             path: /admin
+          - name: billing
+            appId: in.thunikart.billing
+            label: Thunikart Billing
+            url: https://thunicart-frontend.vercel.app/billing
+            host: thunicart-frontend.vercel.app
+            path: /billing
           - name: shop
             appId: in.thunikart.shop
             label: Thunikart
@@ -70,7 +77,8 @@ jobs:
           name: Android apps (latest)
           body: |
             Install on an Android phone: open this page on the phone, tap the APK, and allow "Install unknown apps" for your browser when asked.
-            - **thunikart-admin.apk**: admin, stock, Billing center
+            - **thunikart-admin.apk** ("Thunikart Admin"): admin, stock, Billing center
+            - **thunikart-billing.apk** ("Thunikart Billing"): the Billing center only
             - **thunikart-shop.apk**: the customer shop
 
             The apps open the live websites, so they always show the latest version. Nothing to update here unless the app itself changes.

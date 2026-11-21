@@ -233,7 +233,7 @@ export function useReceiptForm(onDone: () => void) {
     mutationFn: (b: { customerId: string; amount: number; mode: string; reference: string }) => (MOCK_MODE
       ? api.post('/accounts/receipts', b, { idempotencyKey: key })
       : api.post('/receipts', { customerId: b.customerId, amount: b.amount, mode: RECEIPT_MODE[b.mode] ?? b.mode.toLowerCase(), reference: b.reference, date: new Date().toISOString(), notes: '' }, { idempotencyKey: key })),
-    onSuccess: () => Promise.all(['receipts', 'receivables', 'customers', 'report', 'dashboard', 'billings', 'customers-owe', 'cashflow'].map((k) => qc.invalidateQueries({ queryKey: [k] }))),
+    onSuccess: () => Promise.all(['receipts', 'receivables', 'customers', 'report', 'dashboard', 'billings', 'bills', 'customers-owe', 'cashflow'].map((k) => qc.invalidateQueries({ queryKey: [k] }))),
   });
   return {
     customerId, setCustomerId, amount, setAmount, mode, setMode, reference, setReference, errors, banner, saving: m.isPending,

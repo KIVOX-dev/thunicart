@@ -1,12 +1,13 @@
 import { Suspense, type ReactNode } from 'react';
 import { Link, Navigate, NavLink, Outlet, Route, Routes, useLocation, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, FileText, Image, Menu, ShoppingBag, Tag, Undo2, Users, type LucideIcon } from 'lucide-react';
+import { ArrowLeft, FileText, Home, Image, Menu, ShoppingBag, Tag, Undo2, Users, type LucideIcon } from 'lucide-react';
 import { ListSkeleton } from '@thunikart/ui';
 import { Logo } from '../components/Logo';
 import { PageHeader } from '../components/PageHeader';
 import { ProfileMenu } from '../components/ProfileMenu';
 import { ForbiddenPage, NotFoundPage } from '../components/StatusPage';
 import { OnlineReturns } from '../components/returns/CustomerReturns';
+import { HomeLayoutEditor } from '../components/store/HomeLayoutEditor';
 import { StoreBanners, StoreContent, StoreOrders, StoreProducts } from '../components/store/StorePanels';
 import { useCan } from '../features/auth/permissions';
 import { CustomersDesktop } from '../views/desktop/customers/CustomersDesktop';
@@ -20,6 +21,7 @@ const SECTIONS: Section[] = [
   { key: 'orders', label: 'Orders', icon: ShoppingBag, perm: 'orders.view', title: 'Online orders', about: 'Orders placed on the website. Move them along: packed, shipped, delivered.' },
   { key: 'returns', label: 'Returns', icon: Undo2, perm: 'orders.view', title: 'Online returns', about: 'Return requests from website orders: approve, mark received, refund.' },
   { key: 'products', label: 'Products', icon: Tag, perm: 'items.view', title: 'Products and photos', about: 'What is shown on the website, with photos. Prices and sizes are in the admin.' },
+  { key: 'home', label: 'Home page', icon: Home, perm: 'cms.view', title: 'Home page', about: 'Every section and card of the website home page. Change headings, pictures and links, hide a section, or move it.' },
   { key: 'banners', label: 'Banners', icon: Image, perm: 'cms.view', title: 'Banners', about: 'Pictures at the top of the website home page.' },
   { key: 'content', label: 'Content', icon: FileText, perm: 'cms.view', title: 'Website pages', about: 'About, Contact, Privacy, Terms and Refund pages.' },
   { key: 'customers', label: 'Customers', icon: Users, perm: 'customers.view', title: 'Online customers', about: 'People who signed up on the website.' },
@@ -35,6 +37,7 @@ function Body({ k, compact }: { k: string; compact: boolean }) {
     case 'orders': return <StoreOrders />;
     case 'returns': return <OnlineReturns />;
     case 'products': return <StoreProducts compact={compact} />;
+    case 'home': return <HomeLayoutEditor />;
     case 'banners': return <StoreBanners compact={compact} />;
     case 'content': return <StoreContent compact={compact} />;
     default: return <ResponsiveView desktop={<CustomersDesktop onlyOnline />} mobile={<CustomersMobile onlyOnline />} />;
@@ -82,7 +85,7 @@ function MobileStoreShell() {
   return (
     <div className="flex min-h-screen flex-col bg-navy-50">
       <header className="sticky top-0 z-40 flex items-center justify-between rounded-b-3xl bg-navy px-5 py-3 text-white shadow-lift"><h1 className="text-xl">Online store</h1><Logo variant="mark" tile className="h-9 w-9 !p-0.5" /></header>
-      <main id="main" className="flex-1 px-4 pb-24 pt-4"><Suspense fallback={<ListSkeleton label="Loading screen" />}><Outlet /></Suspense></main>
+      <main id="main" className="flex-1 px-4 pb-44 pt-4"><Suspense fallback={<ListSkeleton label="Loading screen" />}><Outlet /></Suspense></main>
       <nav aria-label="Online store tabs" className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 flex gap-1 rounded-full bg-white p-1.5 shadow-lift ring-2 ring-navy-100">
         {main.map((s) => <NavLink key={s.key} to={`/store/${s.key}`} className={({ isActive }) => `${tab} ${isActive ? 'bg-navy text-white' : 'text-navy'}`}><s.icon aria-hidden size={20} />{s.label}</NavLink>)}
         <NavLink to="/store/more" className={() => `${tab} ${more ? 'bg-navy text-white' : 'text-navy'}`}><Menu aria-hidden size={20} />More</NavLink>

@@ -55,7 +55,7 @@ export function ItemsMobile() {
         </ul>
       )}
       {items.hasNextPage && <Button size="lg" className="min-h-12" onClick={() => items.fetchNextPage()} loading={items.isFetchingNextPage}>Load more</Button>}
-      {can('items.create') && <div className="fixed inset-x-0 bottom-14 z-30 border-t-2 border-navy-100 bg-white p-3"><Link to="/items/new"><Button variant="primary" size="lg" block className="min-h-12">Add item</Button></Link></div>}
+      {can('items.create') && <div className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 border-t-2 border-navy-100 bg-white p-3"><Link to="/items/new"><Button variant="primary" size="lg" block className="min-h-12">Add item</Button></Link></div>}
       <BottomSheet open={sheet} onClose={() => setSheet(false)} title="Filters" footer={<><Button onClick={reset}>Clear</Button><Button variant="primary" onClick={() => setSheet(false)}>Show items</Button></>}>
         <div className="flex flex-col gap-4">
           <label className="text-xs font-medium">Category<Select className="mt-1 min-h-12" value={filters.category} onChange={(e) => set({ category: e.target.value })}><option value="">All categories</option>{facets?.categories.map((c) => <option key={c}>{c}</option>)}</Select></label>

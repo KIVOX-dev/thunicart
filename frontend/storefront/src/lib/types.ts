@@ -9,7 +9,7 @@ export interface ProductList { items: Product[]; total: number; nextPage: number
 export interface Facets { sizes: string[]; colors: Array<{ name: string; hex: string }>; fabrics: string[]; brands: string[]; occasions: string[]; priceRanges: Array<{ key: string; label: string }> }
 export interface Category { slug: string; name: string; image: string; children: Array<{ slug: string; name: string }> }
 export interface Banner { id: string; title: string; subtitle: string; mobileImage: string; desktopImage: string; href: string }
-export interface HomeData { announcements: string[]; banners: Banner[]; categories: Category[]; sizes: string[]; occasions: Array<{ name: string; image: string; href: string }>; trending: Product[]; newArrivals: Product[]; lookbook: Array<{ image: string; title: string; href: string }>; contact: Contact }
+export interface HomeData { layout?: Array<{ key: string; enabled: boolean; title: string }>; stripCards?: Array<{ title: string }>; categoryCards?: Array<{ title: string; image: string; link: string }>; announcements: string[]; banners: Banner[]; categories: Category[]; sizes: string[]; occasions: Array<{ name: string; image: string; href: string }>; trending: Product[]; newArrivals: Product[]; lookbook: Array<{ image: string; title: string; href: string }>; contact: Contact }
 export interface Contact { name: string; address: string; phone: string; email: string; social: Array<{ label: string; href: string }> }
 export interface CmsPage { slug: string; title: string; body: string[]; updatedAt: string }
 export interface BlogPost { slug: string; title: string; excerpt: string; image: string; body: string[]; publishedAt: string }

@@ -5,6 +5,7 @@ import { LoginDesktop } from '../views/desktop/auth/LoginDesktop';
 import { LoginMobile } from '../views/mobile/auth/LoginMobile';
 import { ForgotDesktop } from '../views/desktop/auth/ForgotDesktop';
 import { ForgotMobile } from '../views/mobile/auth/ForgotMobile';
+import { ResetPasswordPage } from '../views/desktop/auth/ResetPasswordPage';
 import { ResponsiveView } from './view';
 
 function Public({ children }: { children: ReactNode }) {
@@ -36,8 +37,10 @@ export const router = createBrowserRouter([
   { path: '/login', element: <Public><ResponsiveView desktop={<LoginDesktop />} mobile={<LoginMobile />} /></Public> },
   { path: '/forgot-password', element: <Public><ResponsiveView desktop={<ForgotDesktop />} mobile={<ForgotMobile />} /></Public> },
   { path: '/style-guide', element: <Public><StyleGuide /></Public> },
+  { path: '/reset-password', element: <Public><ResetPasswordPage /></Public> },
   { path: '*', lazy: async () => ({ Component: (await import('./admin-app')).AdminApp, HydrateFallback: () => fallback }) },
 ], {
   // On Vercel the admin is served under /admin/ (VITE_BASE). Locally it stays at the root.
-  basename: import.meta.env.BASE_URL.replace(/\/$/, '') || undefined,
+  // The Billing center is also served at /billing (no /admin in the address), so the routes are matched from the root there.
+  basename: /^\/billing(\/|$)/.test(window.location.pathname) ? undefined : import.meta.env.BASE_URL.replace(/\/$/, '') || undefined,
 });

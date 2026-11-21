@@ -109,7 +109,7 @@ export const posHandlers: HttpHandler[] = [
     if (openShift()) return fail(409, 'SHIFT_OPEN', 'The day is already open. Refresh to see it.');
     const { openingCash } = (await request.json()) as { openingCash: number };
     if (!Number.isInteger(openingCash) || openingCash < 0) return fail(422, 'VALIDATION', 'Check the amount.', [{ path: 'openingCash', message: 'Enter the cash in the drawer' }]);
-    const s: Shift = { id: nextId(), openedAt: new Date().toISOString(), openingCash, closedAt: null, bills: 0, cashSales: 0, cashRefunds: 0, expectedCash: null, countedCash: null, difference: null };
+    const s: Shift = { id: nextId(), openedAt: new Date().toISOString(), openingCash, closedAt: null, bills: 0, cashSales: 0, cashRefunds: 0, expectedCash: null, countedCash: null, difference: null, businessDate: new Date().toISOString().slice(0, 10), cashier: user.name, stale: false };
     d().pos.shifts.unshift(s); saveDb(); log(user, 'POST', '/pos/shift/open', 'shift', 'open', s.id, null, { openingCash });
     return HttpResponse.json(s, { status: 201 });
   })),

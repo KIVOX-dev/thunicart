@@ -5,6 +5,7 @@ import { Address, Banner, BlogPost, Brand, Cart, Category, CmsPage, Coupon, Coup
 import { AppError, businessRule, conflict, forbidden, notFound, unauthorized } from '../../lib/errors';
 import { rateLimitHit } from '../../middleware/rateLimit';
 import { email as mailer, brandedMail } from '../../adapters/email';
+import { loginCodeMail, welcomeMail } from '../../lib/emailTemplates';
 import { verifyGoogleIdToken } from '../../adapters/auth/google';
 import { STORE_REFRESH_SECONDS, hashStoreSecret, newStoreSecret, signCustomerToken, STORE_ACCESS_SECONDS } from '../../middleware/customerAuth';
 import { nextNumber } from '../../lib/numberSeries';
@@ -48,7 +49,7 @@ export async function sendOtp(emailAddr: string, ip: string) {
   const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
   const minutes = config().OTP_EXPIRY_MINUTES;
   await CustomerOtp.findOneAndUpdate({ email: emailAddr }, { $set: { codeHash: hashCode(emailAddr, code), attempts: 0, lastSentAt: new Date(), expiresAt: new Date(Date.now() + minutes * 60000) } }, { upsert: true });
-  await sendMail(emailAddr, 'Your Thunikart login code', 'Your login code', `<p style="font-size:28px;letter-spacing:6px;font-weight:bold">${code}</p><p>It is valid for ${minutes} minutes. If you did not ask for it, ignore this email.</p>`);
+  try { await mailer().send(loginCodeMail(emailAddr, code, minutes)); } catch (e) { console.error('[email] login code not sent:', e instanceof Error ? e.message : e); }
   return { sent: true as const, expiresInMinutes: minutes, resendAfterSeconds: 30 };
 }
 
@@ -56,6 +57,8 @@ async function findOrCreateCustomer(emailAddr: string, name?: string) {
   let c: any = await Customer.findOne({ email: emailAddr });
   if (c) { if (!c.active) throw forbidden('This account is not active'); return c; }
   c = await Customer.create({ customerId: await nextNumber('CUST'), accountGroup: 'E-commerce B2C', name: name || emailAddr.split('@')[0], email: emailAddr, mobile: `pending-${randomInt(0, 2 ** 31).toString(16)}${Date.now().toString(16)}`, stateCode: '33' });
+  // The first sign in is the sign up: say welcome. A failed email never stops the sign in.
+  try { await mailer().send(welcomeMail(emailAddr, c.name)); } catch (e) { console.error('[email] welcome not sent:', e instanceof Error ? e.message : e); }
   return c;
 }
 async function startSession(emailAddr: string) {
@@ -63,7 +66,7 @@ async function startSession(emailAddr: string) {
   const s: any = await StoreSession.create({ email: emailAddr, secretHash: hashStoreSecret(secret), expiresAt: new Date(Date.now() + STORE_REFRESH_SECONDS * 1000) });
   return { sessionId: String(s._id), cookie: `${s._id}.${secret}`, accessToken: await signCustomerToken(emailAddr, String(s._id)) };
 }
-const customerDto = (c: any) => ({ id: String(c._id), customerId: c.customerId, email: c.email, name: c.name, mobile: c.mobile?.startsWith('pending-') ? null : c.mobile });
+const customerDto = (c: any) => ({ id: String(c._id), customerId: c.customerId, email: c.email, name: c.name, mobile: c.mobile?.startsWith('pending-') ? null : c.mobile, gender: c.gender || null, dob: c.dob ? new Date(c.dob).toISOString().slice(0, 10) : null, profileComplete: !c.mobile?.startsWith('pending-') && !!c.gender && !!c.dob });
 
 export async function verifyOtp(emailAddr: string, code: string, cartCookie?: string) {
   const o: any = await CustomerOtp.findOne({ email: emailAddr });
@@ -120,9 +123,17 @@ export async function setMobile(customerId: string, mobile: string): Promise<str
   other.email = myEmail; await other.save();
   return String(other._id);
 }
-export async function updateProfile(customerId: string, input: { name?: string; mobile?: string }) {
-  if (input.name) await Customer.updateOne({ _id: customerId }, { $set: { name: input.name } });
+export async function updateProfile(customerId: string, input: { name?: string; mobile?: string; gender?: 'Male' | 'Female'; dob?: string; address?: any }) {
+  const set: Record<string, unknown> = {};
+  if (input.name) set.name = input.name;
+  if (input.gender) set.gender = input.gender;
+  if (input.dob) set.dob = new Date(`${input.dob}T00:00:00.000Z`);
+  if (Object.keys(set).length) await Customer.updateOne({ _id: customerId }, { $set: set });
   let id = customerId; if (input.mobile) id = await setMobile(customerId, input.mobile);
+  if (input.address) {
+    const me: any = await Customer.findById(id).lean();
+    await saveAddress(id, { ...input.address, name: me.name, phone: me.mobile, isDefault: true });
+  }
   return getProfile(id);
 }
 

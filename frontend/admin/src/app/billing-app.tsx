@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { ForbiddenPage } from '../components/StatusPage';
 import { useCan } from '../features/auth/permissions';
@@ -15,6 +15,15 @@ const paths = ['/billing', '/billing/bills', '/billing/lookup', '/billing/b2b', 
  * imports the admin shell, the menu or the module registry, so the counter opens full screen without the rest of the admin.
  */
 export function BillingApp() {
+  // While billing is open, installing the app (Android "Install app", iOS "Add to Home Screen") names it "Thunikart Billing" and starts it on billing.
+  useEffect(() => {
+    const link = document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
+    const ios = document.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-title"]') ?? Object.assign(document.createElement('meta'), { name: 'apple-mobile-web-app-title' });
+    const before = { href: link?.getAttribute('href') ?? null, title: document.title, ios: ios.content };
+    link?.setAttribute('href', `${import.meta.env.BASE_URL}billing.webmanifest`);
+    ios.content = 'Thunikart Billing'; document.head.appendChild(ios); document.title = 'Thunikart Billing';
+    return () => { if (before.href) link?.setAttribute('href', before.href); ios.content = before.ios || 'Thunikart Admin'; document.title = before.title; };
+  }, []);
   return (
     <Routes>
       {/* Paths are relative to /billing: this app is mounted on the splat route /billing/*. */}

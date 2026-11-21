@@ -37,9 +37,15 @@ export function PosDesktop() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'F2') { e.preventDefault(); s.newBill(); }
-      if (e.key === 'F4') { e.preventDefault(); void s.holdBill(); }
-      if (e.key === 'F8') { e.preventDefault(); void s.pay(); }
+      if (e.repeat) return; // a held key must not pay or hold twice
+      // F-keys, and the same actions without the Fn key (many laptops send media keys for F2, F4 and F8): Alt+N new, Alt+H hold, Ctrl+Enter pay.
+      const k = e.key.toLowerCase();
+      const newKey = e.key === 'F2' || (e.altKey && k === 'n');
+      const holdKey = e.key === 'F4' || (e.altKey && k === 'h');
+      const payKey = e.key === 'F8' || (e.ctrlKey && e.key === 'Enter');
+      if (newKey) { e.preventDefault(); s.newBill(); }
+      if (holdKey) { e.preventDefault(); void s.holdBill(); }
+      if (payKey) { e.preventDefault(); void s.pay(); }
       if (e.key === 'Escape' && !document.querySelector('dialog[open]')) { const el = document.activeElement as HTMLInputElement | null; if (el && el.tagName === 'INPUT' && el.value) el.value = ''; else if (cart.cart.lines.length) setClearOpen(true); else s.say('The bill is already empty.'); }
     };
     window.addEventListener('keydown', onKey);
@@ -52,7 +58,7 @@ export function PosDesktop() {
   return (
     <div className="grid grid-cols-[1fr_24rem] gap-6" aria-label="Point of sale">
       <section aria-label="Cart" className="min-w-0">
-        <div className="mb-3 flex items-center justify-between"><h1 className="text-2xl md:text-3xl">POS billing</h1><span className="text-xs text-muted">F2 new · F4 hold · F8 pay · Esc clear</span></div>
+        <div className="mb-3 flex items-center justify-between"><h1 className="text-2xl md:text-3xl">POS billing</h1><span className="text-xs text-muted">F2 / Alt+N new · F4 / Alt+H hold · F8 / Ctrl+Enter pay · Esc clear</span></div>
         <ItemPicker large autoFocus onPick={(i, v) => cart.addItem(i, v)} hint="Scan an item, or type a name or code. Scanning an item already in the bill adds one." />
         {s.notice && <p role="status" className="mt-2 rounded border border-teal bg-success-bg p-2 text-sm">{s.notice}</p>}
         <div className="mt-4">

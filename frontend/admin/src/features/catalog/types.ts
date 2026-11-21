@@ -185,17 +185,21 @@ export type HsnRule = z.infer<typeof hsnRuleDto>;
 export const importSheet = z.object({ name: z.string(), rows: z.number().int(), columns: z.array(z.string()) });
 export const IMPORT_TARGETS = [{ key: 'items', label: 'Items and stock' }] as const;
 export const IMPORT_FIELDS = [
-  { key: 'code', label: 'Item Code', required: true },
+  { key: 'code', label: 'Item Code (generated when empty)', required: false },
   { key: 'name', label: 'Item name', required: true },
-  { key: 'category', label: 'Product Category', required: true },
+  { key: 'category', label: 'Product Category', required: false },
   { key: 'brand', label: 'Brand', required: false },
-  { key: 'model', label: 'Model/Style No', required: true },
-  { key: 'size', label: 'Size', required: true },
-  { key: 'hsn', label: 'HSN Code', required: true },
-  { key: 'qty', label: 'Opening quantity', required: true },
+  { key: 'model', label: 'Model/Style No', required: false },
+  { key: 'size', label: 'Size', required: false },
+  { key: 'color', label: 'Colour', required: false },
+  { key: 'hsn', label: 'HSN Code', required: false },
+  { key: 'qty', label: 'Opening quantity', required: false },
   { key: 'cost', label: 'Base Cost', required: false },
   { key: 'rate', label: 'Selling rate', required: false },
-  { key: 'mrp', label: 'Retail MRP', required: true },
+  { key: 'mrp', label: 'Retail MRP', required: false },
+  { key: 'batchRef', label: 'Batch number (generated when empty)', required: false },
+  { key: 'barcode', label: 'Barcode', required: false },
+  { key: 'bin', label: 'Bin location', required: false },
 ] as const;
 export type ImportFieldKey = (typeof IMPORT_FIELDS)[number]['key'];
 

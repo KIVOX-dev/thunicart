@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { idParam, listQuery, listResponse, okResponse, objectId, resetPasswordBody, userCreateBody, userDto, userUpdateBody } from '@thunikart/shared';
 import { defineRoute } from '../../lib/route';
 import * as svc from './users.service';
@@ -38,7 +39,7 @@ export const userRoutes = [
   }),
   defineRoute({
     method: 'POST', path: '/users/:id/reset-password', summary: 'Set a new password and end all their sessions', tags: ['Users'],
-    permission: 'users.edit', params: idParam, body: resetPasswordBody, response: okResponse, errors: [400, 404],
-    handler: async ({ params, body, audit }) => { await svc.resetPassword(params.id, body.password, audit); return { ok: true as const }; },
+    permission: 'users.edit', params: idParam, body: resetPasswordBody, response: okResponse.extend({ credentialsEmailed: z.boolean().optional() }), errors: [400, 404],
+    handler: async ({ params, body, audit }) => { const r = await svc.resetPassword(params.id, body.password, audit); return { ok: true as const, credentialsEmailed: r.credentialsEmailed }; },
   }),
 ];

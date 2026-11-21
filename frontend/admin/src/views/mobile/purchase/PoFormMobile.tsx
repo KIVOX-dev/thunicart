@@ -53,7 +53,7 @@ function Editor({ po }: { po?: Po }) {
         })}
       </ul>
       <PoTotals totals={d.totals} />
-      <div className="fixed inset-x-0 bottom-14 z-30 flex gap-2 border-t-2 border-navy-100 bg-white p-3">
+      <div className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 flex gap-2 border-t-2 border-navy-100 bg-white p-3">
         {draft && can(po ? 'purchase.edit' : 'purchase.create') && <Button variant={po?.status === 'draft' ? 'secondary' : 'primary'} size="lg" className="min-h-12 flex-1" loading={d.save.isPending} onClick={save}>{po ? 'Save' : 'Create order'}</Button>}
         {po?.status === 'draft' && can('purchase.approve') && <Button variant="primary" size="lg" className="min-h-12 flex-1" loading={action.isPending} onClick={() => run('approve')}>Approve</Button>}
         {po?.status === 'approved' && <Button variant="primary" size="lg" className="min-h-12 flex-1" loading={action.isPending} onClick={() => run('send')}>Send</Button>}

@@ -21,7 +21,7 @@ export function MobileShell() {
         <h1 className="text-xl">{title}</h1>
         <Logo variant="mark" tile className="h-9 w-9 !p-0.5" />
       </header>
-      <main id="main" className="flex-1 px-4 pb-24 pt-4"><Suspense fallback={<ListSkeleton label="Loading screen" />}><Outlet /></Suspense></main>
+      <main id="main" className="flex-1 px-4 pb-44 pt-4"><Suspense fallback={<ListSkeleton label="Loading screen" />}><Outlet /></Suspense></main>
       <nav aria-label="Main tabs" className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 flex gap-1 rounded-full bg-white p-1.5 shadow-lift ring-2 ring-navy-100">
         {tabs.map((t) => (
           <NavLink key={t.key} to={t.path} className={({ isActive }) => `${tab} ${isActive ? 'bg-navy text-white' : 'text-navy'}`}>

@@ -6,6 +6,7 @@ Two installable apps (APK files) that open the live websites in a Trusted Web Ac
 |---|---|---|
 | Thunikart Admin | `thunikart-admin.apk` | https://thunicart-frontend.vercel.app/admin/ (admin, stock, Billing center) |
 | Thunikart | `thunikart-shop.apk` | https://thunicart-frontend.vercel.app/ (customer shop) |
+| Thunikart Billing | `thunikart-billing.apk` | https://thunicart-frontend.vercel.app/billing (billing counter only) |
 
 ## Get the APK
 GitHub builds them (`.github/workflows/android.yml`): Actions tab, **Android apps**, **Run workflow**. It also runs when this folder changes.

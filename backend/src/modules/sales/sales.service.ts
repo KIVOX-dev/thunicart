@@ -396,7 +396,29 @@ export async function listReturns(q: ListQuery) {
 }
 
 // ---------- shifts ----------
-const shiftDto = (s: any) => ({ id: String(s._id), storeId: String(s.storeId), status: s.status, openingCash: s.openingCash, openedAt: iso(s.openedAt)!, closedAt: iso(s.closedAt), expectedCash: s.expectedCash ?? null, countedCash: s.countedCash ?? null, difference: s.difference ?? 0 });
+/** The calendar date in India (YYYY-MM-DD). A day belongs to the date it was opened, whatever time it is closed. */
+const istDate = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+/** Bills, cash sales and cash refunds of one day. Used on the screen while the day is open, and to work out the expected cash when it closes. */
+async function shiftTotals(s: any) {
+  const until = s.closedAt ?? new Date();
+  const bills: any[] = await SalesBill.find({ shiftId: s._id, status: { $in: ['finalized', 'cancelled'] } }, { tenders: 1, status: 1 }).lean();
+  const cashSales = bills.reduce((a, b) => a + (b.tenders ?? []).filter((t: any) => t.mode === 'cash').reduce((x: number, t: any) => x + t.amount, 0), 0);
+  const rets: any[] = await SalesReturn.find({ createdBy: s.cashierId, createdAt: { $gte: s.openedAt, $lte: until } }, { refunds: 1 }).lean();
+  const cashRefunds = rets.reduce((a, r) => a + (r.refunds ?? []).filter((x: any) => x.mode === 'cash').reduce((y: number, x: any) => y + x.amount, 0), 0);
+  return { bills: bills.filter((b) => b.status === 'finalized').length, cashSales, cashRefunds };
+}
+const shiftDto = async (s: any, names?: Map<string, string>) => {
+  const t = await shiftTotals(s);
+  const businessDate = istDate(new Date(s.openedAt));
+  const cashier = names?.get(String(s.cashierId)) ?? ((await User.findById(s.cashierId, { name: 1 }).lean()) as any)?.name ?? '';
+  return {
+    id: String(s._id), storeId: String(s.storeId), status: s.status, openingCash: s.openingCash, openedAt: iso(s.openedAt)!, closedAt: iso(s.closedAt),
+    expectedCash: s.expectedCash ?? (s.status === 'open' ? s.openingCash + t.cashSales - t.cashRefunds : null), countedCash: s.countedCash ?? null, difference: s.difference ?? 0,
+    businessDate, cashier, bills: t.bills, cashSales: t.cashSales, cashRefunds: t.cashRefunds,
+    /** True when the day was opened on an earlier date and never closed, so bills may be going into the wrong date. */
+    stale: s.status === 'open' && businessDate < istDate(new Date()),
+  };
+};
 export async function openShiftFor(user: AuthUser, input: any, audit: Audit) {
   if (await openShift(user, input.storeId)) throw businessRule('You already have an open shift at this store', 'SHIFT_OPEN');
   const s: any = await Shift.create({ storeId: input.storeId, cashierId: user.id, openingCash: input.openingCash });
@@ -408,16 +430,21 @@ export async function closeShiftFor(user: AuthUser, id: string, input: any, audi
   const s: any = await Shift.findOne({ _id: id, status: 'open' });
   if (!s) throw notFound('Open shift');
   if (String(s.cashierId) !== user.id && !user.isAdmin) throw forbidden('This is another cashier\'s shift');
-  const bills: any[] = await SalesBill.find({ shiftId: s._id, status: { $in: ['finalized', 'cancelled'] } }, { tenders: 1, invoiceNumber: 1 }).lean();
-  const cashIn = bills.reduce((a, b) => a + b.tenders.filter((t: any) => t.mode === 'cash').reduce((x: number, t: any) => x + t.amount, 0), 0);
-  const rets: any[] = await SalesReturn.find({ createdBy: user.id, createdAt: { $gte: s.openedAt } }, { refunds: 1 }).lean();
-  const cashOut = rets.reduce((a, r) => a + (r.refunds ?? []).filter((x: any) => x.mode === 'cash').reduce((y: number, x: any) => y + x.amount, 0), 0);
+  const { cashSales: cashIn, cashRefunds: cashOut } = await shiftTotals(s);
   s.status = 'closed'; s.closedAt = new Date(); s.countedCash = input.countedCash; s.expectedCash = s.openingCash + cashIn - cashOut; s.difference = input.countedCash - s.expectedCash; s.note = input.note;
   await s.save();
   audit({ entity: 'shift', entityId: id, action: 'close', after: { expected: s.expectedCash, counted: s.countedCash, difference: s.difference } });
   return shiftDto(s.toObject());
 }
-export async function currentShift(user: AuthUser, storeId: string) { const s = await openShift(user, storeId); return s ? shiftDto(s) : null; }
+export async function currentShift(user: AuthUser, storeId: string) { const s = await openShift(user, storeId); return s ? await shiftDto(s) : null; }
+/** Closed days, newest first. An Admin sees every cashier's days, anyone else only their own. */
+export async function listShifts(user: AuthUser, storeId: string) {
+  const f: any = { storeId, status: 'closed' }; if (!user.isAdmin) f.cashierId = user.id;
+  const rows: any[] = await Shift.find(f).sort({ openedAt: -1 }).limit(30).lean();
+  const users: any[] = await User.find({ _id: { $in: [...new Set(rows.map((r) => String(r.cashierId)))] } }, { name: 1 }).lean();
+  const names = new Map(users.map((u) => [String(u._id), u.name as string]));
+  return Promise.all(rows.map((r) => shiftDto(r, names)));
+}
 
 // ---------- loyalty ----------
 export async function redeemLoyalty(customerId: string, points: number, audit: Audit) {

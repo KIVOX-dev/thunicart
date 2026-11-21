@@ -13,6 +13,7 @@ import { BillDiscount, PosTotals } from '../../../components/pos/PosTotals';
 import { SwipeRow } from '../../../components/pos/SwipeRow';
 import { TenderPanel } from '../../../components/pos/TenderPanel';
 import { useCan } from '../../../features/auth/permissions';
+import { useSession } from '../../../features/auth/use-session';
 import { usePosScreen } from '../../../features/pos/use-pos-screen';
 
 /** Scan first billing on a phone: a big Scan button, a card list you swipe to remove, a sticky Pay bar, and a full screen payment sheet. */
@@ -23,11 +24,13 @@ export function PosMobile() {
   const [payOpen, setPayOpen] = useState(false);
   const [custOpen, setCustOpen] = useState(false);
   const pv = cart.preview;
+  const { data: me } = useSession();
   if (s.shift.isPending) return <ListSkeleton label="Loading POS" />;
   if (!s.shift.data) return <div className="pt-4">{can('pos.create') ? <DayOpen big /> : <EmptyState title="The day is not open" body="Ask someone with POS access to open the day." />}</div>;
 
   return (
     <div className="flex flex-col gap-3 pb-40" aria-label="Point of sale">
+      {me && <p className="flex items-center justify-between rounded-full bg-mist px-4 py-2 text-sm" data-testid="billing-employee"><span className="text-muted">Billing employee</span><strong className="truncate pl-2">{me.name} <span className="font-normal text-muted">· {me.role.name}</span></strong></p>}
       <ItemPicker large onPick={(i, v) => cart.addItem(i, v)} />
       {s.notice && <p role="status" className="rounded border border-teal bg-success-bg p-2 text-sm">{s.notice}</p>}
       <div className="flex gap-2">
@@ -66,7 +69,7 @@ export function PosMobile() {
       {pv?.approvalNeeded && <Badge tone="warning" className="self-start">Discount above your limit. A manager must approve.</Badge>}
       {cart.previewError && <ErrorBanner message={cart.previewError.message} requestId={cart.previewError.requestId} />}
 
-      <div className="fixed inset-x-0 bottom-14 z-30 flex items-center gap-3 border-t-2 border-navy-100 bg-white p-3">
+      <div className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 flex items-center gap-3 border-t-2 border-navy-100 bg-white p-3">
         <div className="min-w-0 flex-1"><p className="text-xs text-muted">Total</p><p className="text-xl font-semibold" data-testid="bar-total">{pv ? formatPaise(pv.totals.grandTotal) : formatPaise(0)}</p></div>
         <Button variant="primary" size="lg" className="min-h-12 min-w-32" disabled={!pv || pv.totals.grandTotal === 0} onClick={() => setPayOpen(true)}>Pay</Button>
       </div>

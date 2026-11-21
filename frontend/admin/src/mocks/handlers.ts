@@ -47,6 +47,7 @@ export const handlers: HttpHandler[] = [
     await delay(300);
     return HttpResponse.json({ ok: true });
   }),
+  http.post(p('/auth/reset-password'), async () => { await delay(300); return HttpResponse.json({ ok: true }); }),
   http.get(p('/auth/sessions'), guarded(null, ({ user }) => HttpResponse.json([
     { id: nextId(), createdAt: user.lastLoginAt ?? new Date().toISOString(), lastUsedAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 7 * 864e5).toISOString(), ip: '127.0.0.1', userAgent: navigator.userAgent, current: true },
   ]))),

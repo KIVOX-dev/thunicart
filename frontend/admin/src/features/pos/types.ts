@@ -52,6 +52,8 @@ export type Held = z.infer<typeof heldDto>;
 export const shiftDto = z.object({
   id: z.string(), openedAt: z.string(), openingCash: z.number().int(), closedAt: z.string().nullable(), bills: z.number().int(), cashSales: z.number().int(), cashRefunds: z.number().int(),
   expectedCash: z.number().int().nullable(), countedCash: z.number().int().nullable(), difference: z.number().int().nullable(),
+  /** The India date the day was opened on, who opened it, and whether it was left open from an earlier date. */
+  businessDate: z.string().default(''), cashier: z.string().default(''), stale: z.boolean().default(false),
 });
 export type Shift = z.infer<typeof shiftDto>;
 

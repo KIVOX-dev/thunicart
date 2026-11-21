@@ -31,7 +31,7 @@ export function TransferDetailMobile() {
         </>
       )}
       <ScanLinesCards lines={lines.map((l) => ({ id: l.id, code: l.code, name: l.name, size: l.size, expected: l.qty, qty: t.status === 'requested' ? l.qty : l.receivedQty, warning: t.status === 'in-transit' ? (l.receivedQty < l.qty ? 'SHORT' : l.receivedQty > l.qty ? 'OVER' : null) : null }))} qtyLabel={t.status === 'requested' ? 'Quantity' : 'Received'} expectedLabel={t.status === 'requested' ? undefined : 'Sent'} flashId={d.feedback.flash} readOnly={t.status !== 'in-transit'} onSetQty={(lineId, qty) => d.setReceived.mutate({ lineId, qty })} />
-      <div className="fixed inset-x-0 bottom-14 z-30 flex gap-2 border-t-2 border-navy-100 bg-white p-3">
+      <div className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 flex gap-2 border-t-2 border-navy-100 bg-white p-3">
         {t.status === 'requested' && can('stock.edit') && <Button variant="primary" size="lg" className="min-h-12 flex-1" loading={d.dispatch.isPending} onClick={async () => { await d.dispatch.mutateAsync(); toast('Dispatched. Stock is now in transit.', 'success'); }}>Dispatch</Button>}
         {t.status === 'in-transit' && can('stock.edit') && <Button variant="primary" size="lg" className="min-h-12 flex-1" loading={d.receive.isPending} disabled={received === 0} onClick={async () => { await d.receive.mutateAsync(); toast('Transfer received. Stock updated.', 'success'); }}>Finish receiving</Button>}
         {(t.status === 'received' || t.status === 'cancelled') && <Link to="/stock/transfers" className="flex-1"><Button size="lg" block className="min-h-12">Back to transfers</Button></Link>}

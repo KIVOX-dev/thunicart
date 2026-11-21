@@ -34,7 +34,7 @@ export function VendorReturns({ compact }: { compact?: boolean }) {
         </Table>
       )}
       <Pager page={pv.page} total={pv.total} pageSize={pv.pageSize} onPage={pv.setPage} />
-      {compact && add && <div className="fixed inset-x-0 bottom-14 z-30 border-t-2 border-navy-100 bg-white p-3">{add}</div>}
+      {compact && add && <div className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 border-t-2 border-navy-100 bg-white p-3">{add}</div>}
       <Sheet open={open} onClose={() => setOpen(false)} title="New vendor return"><ReturnForm onDone={() => { setOpen(false); toast('Return created. Stock updated and credit noted against the vendor.', 'success'); }} /></Sheet>
     </div>
   );

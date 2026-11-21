@@ -5,7 +5,7 @@ One Vercel project, two services, one domain. The backend is not part of this pr
 | Service | Folder | Public path | Framework |
 |---|---|---|---|
 | `storefront` | `frontend/storefront` | everything except `/admin` | Next.js |
-| `admin` | `frontend/admin` | `/admin` (the ERP, POS and `/admin/billing` counter) | Vite single page app |
+| `admin` | `frontend/admin` | `/admin` (the ERP and POS), plus `/billing` (the counter) | Vite single page app |
 
 Config: [`frontend/vercel.json`](../frontend/vercel.json). Set the project's **Root Directory** to `frontend`, and keep **Include source files outside of the Root Directory** switched on: both apps use the workspace packages `@thunikart/ui` and `@thunikart/shared`.
 

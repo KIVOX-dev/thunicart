@@ -1,11 +1,12 @@
 import { z } from 'zod';
 import {
-  dataQualityQuery, dataQualityResponse, idParam, importCommitBody, importCommitResponse, importCreateBody, importDto, importMappingBody, importPreviewResponse,
+  dataQualityQuery, dataQualityResponse, idParam, importProcessedResponse, importCommitBody, importCommitResponse, importCreateBody, importDto, importMappingBody, importPreviewResponse,
   importRollbackResponse, listQuery, listResponse, mappingDto, reviewBulkBody, reviewBulkResponse, reviewItemDto, reviewQuery,
 } from '@thunikart/shared';
 import { defineRoute } from '../../lib/route';
 import * as svc from './imports.service';
 import * as review from './review.service';
+import { processedPage, processedWorkbook } from './processed';
 
 export const importRoutes = [
   // Static paths first so they are not read as :id
@@ -64,6 +65,21 @@ export const importRoutes = [
     method: 'GET', path: '/imports/:id/preview', summary: 'Step 3: dry run. Counts of new, updated, skipped and failed rows, totals, and the first error rows. Writes nothing.', tags: ['Imports'],
     permission: 'authenticated', params: idParam, response: importPreviewResponse, errors: [403, 404, 422],
     handler: async ({ user, params, audit }) => { await svc.assertBatchPermission(user, params.id); return svc.previewImport(params.id, audit); },
+  }),
+  defineRoute({
+    method: 'GET', path: '/imports/:id/processed',
+    summary: 'Review: every sheet row as the import sees it, with the generated product code and batch number, size, colour, quantity, prices and extra attributes. Writes nothing.', tags: ['Imports'],
+    permission: 'authenticated', params: idParam, query: listQuery, response: importProcessedResponse, errors: [403, 404, 422],
+    handler: async ({ user, params, query }) => { await svc.assertBatchPermission(user, params.id); return processedPage(await svc.loadBatch(params.id), query.page, query.pageSize); },
+  }),
+  defineRoute({
+    method: 'GET', path: '/imports/:id/export', summary: 'Download the uploaded sheet with the generated product codes, batch numbers, barcodes and row status added (xlsx)', tags: ['Imports'],
+    permission: 'authenticated', params: idParam, response: z.any(), responseContentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', errors: [403, 404, 422],
+    handler: async ({ user, reply, params }) => {
+      await svc.assertBatchPermission(user, params.id);
+      const buf = await processedWorkbook(await svc.loadBatch(params.id));
+      reply.header('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet').header('content-disposition', `attachment; filename="import-${params.id}-processed.xlsx"`).send(buf);
+    },
   }),
   defineRoute({
     method: 'GET', path: '/imports/:id/errors', summary: 'Download the error and skipped row list (CSV with row numbers)', tags: ['Imports'], permission: 'authenticated',

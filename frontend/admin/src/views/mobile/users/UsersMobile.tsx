@@ -42,7 +42,7 @@ function UsersTab() {
       )}
       {users.hasNextPage && <Button size="lg" onClick={() => users.fetchNextPage()} loading={users.isFetchingNextPage}>Load more</Button>}
       {can('users.create') && (
-        <div className="fixed inset-x-0 bottom-14 z-30 border-t-2 border-navy-100 bg-white p-3"><Button variant="primary" size="lg" block className="min-h-12" onClick={() => setDialog({ kind: 'create' })}>Add user</Button></div>
+        <div className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 border-t-2 border-navy-100 bg-white p-3"><Button variant="primary" size="lg" block className="min-h-12" onClick={() => setDialog({ kind: 'create' })}>Add user</Button></div>
       )}
       <BottomSheet open={dialog?.kind === 'create'} onClose={() => setDialog(null)} title="Add user"><CreateUserForm onDone={() => close('User added')} /></BottomSheet>
       <BottomSheet open={dialog?.kind === 'edit'} onClose={() => setDialog(null)} title="Edit user">{dialog?.kind === 'edit' && <EditUserForm user={dialog.user} onDone={() => close('User saved')} />}</BottomSheet>

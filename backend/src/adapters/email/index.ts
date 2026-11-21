@@ -20,16 +20,15 @@ const brevo = (): EmailAdapter => ({
       method: 'POST', headers: { 'api-key': config().BREVO_API_KEY, 'content-type': 'application/json' },
       body: JSON.stringify({ sender: { name: config().BREVO_SENDER_NAME, email: config().BREVO_SENDER_EMAIL }, to: [{ email: m.to }], subject: m.subject, htmlContent: m.html, textContent: m.text }),
     });
-    if (!r.ok) throw new Error(`Brevo ${r.status}`);
+    if (!r.ok) {
+      // Brevo says why in the body: an unverified sender, a wrong key, a daily limit. That reason goes in the log, never to the person.
+      const why = await r.text().catch(() => '');
+      throw new Error(`Brevo ${r.status}: ${why.slice(0, 300)}`);
+    }
   },
 });
 let cached: EmailAdapter | undefined;
 export const email = () => (cached ??= config().mock.email ? consoleAdapter : brevo());
 
-const NAVY = '#0B1B54';
-const ORANGE = '#F67025';
-/** Thunikart branded email template. */
-export const brandedMail = (to: string, subject: string, heading: string, bodyHtml: string, text?: string): Mail => ({
-  to, subject, text: text ?? `${heading}\n${bodyHtml.replace(/<[^>]+>/g, ' ')}`,
-  html: `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border:1px solid #e5e7eb"><div style="background:${NAVY};color:#fff;padding:16px 20px;font-size:20px;font-weight:bold">Thunikart</div><div style="padding:20px;color:#111"><h2 style="margin:0 0 12px;color:${NAVY}">${heading}</h2>${bodyHtml}</div><div style="background:${ORANGE};height:4px"></div><div style="padding:10px 20px;font-size:12px;color:#666">Thunikart by Krishnas Orchids, Coimbatore</div></div>`,
-});
+/** The branded layout and every template live in lib/emailTemplates.ts (logo, colours, address). */
+export { brandedMail } from '../../lib/emailTemplates';

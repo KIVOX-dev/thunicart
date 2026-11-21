@@ -49,3 +49,12 @@ export const Session = defineModel('Session', 'sessions', {
   [{ userId: 1, revokedAt: 1 }],
   [{ expiresAt: 1 }, { expireAfterSeconds: 86400 }], // TTL: remove a day after expiry
 ]);
+
+/** A password reset asked for by email. Only the hash of the secret in the link is kept, and the row is removed once it has expired. */
+export const PasswordReset = defineModel('PasswordReset', 'password_resets', {
+  userId: { ...oid('User', true) },
+  tokenHash: { type: String, required: true },
+  expiresAt: { type: Date, required: true },
+  usedAt: { type: Date, default: null },
+  ip: { type: String, default: null },
+}, [[{ tokenHash: 1 }, { unique: true }], [{ userId: 1, createdAt: -1 }], [{ expiresAt: 1 }, { expireAfterSeconds: 0 }]]);

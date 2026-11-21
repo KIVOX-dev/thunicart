@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Modal, useToast } from '@thunikart/ui';
 import { capi } from '@/lib/client-api';
+import { formatPaise } from '@/lib/format';
 import type { DeliveryCheck, Product } from '@/lib/types';
 import { Icon } from './Icon';
 import { Price } from './Price';
@@ -30,14 +31,15 @@ export function ProductBuy({ p }: { p: Product }) {
   useEffect(() => { wish.seen(p.id); }, [p.id]);
   const sizes = useMemo(() => [...new Set(p.variants.map((v) => v.size))], [p]);
   const variantFor = (s: string, c = color) => p.variants.find((v) => v.size === s && v.color === c);
-  const chosen = size ? variantFor(size) : undefined;
+  const only = sizes.length === 1 ? sizes[0]! : '';
+  const chosen = size || only ? variantFor(size || only) : undefined;
   const shown = chosen ?? p.variants.filter((v) => v.color === color && v.stock > 0)[0] ?? p.variants[0]!;
   const colorSoldOut = !p.variants.some((v) => v.color === color && v.stock > 0);
   const liked = wish.has(p.id);
   const compared = wish.compare.includes(p.id);
 
   const check = async () => { setChecking(true); try { setDc(await capi<DeliveryCheck>('GET', `/delivery/check?pincode=${pin}`)); } finally { setChecking(false); } };
-  const requireSize = () => { if (!chosen) { setWarn('Choose a size first.'); return null; } if (chosen.stock < 1) { setWarn('This size is sold out.'); return null; } setWarn(null); return chosen; };
+  const requireSize = () => { if (!chosen) { setWarn('Choose a size first.'); toast('Choose a size first', 'error'); document.getElementById('size-picker')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); return null; } if (chosen.stock < 1) { setWarn('This size is sold out.'); return null; } setWarn(null); return chosen; };
   const add = () => { const v = requireSize(); if (v) { cart.add(v.id); toast(`Added ${p.name} to your bag`, 'success'); } };
   const buy = () => { const v = requireSize(); if (v) { cart.add(v.id); cart.setDrawerOpen(false); router.push('/checkout'); } };
   const stockMsg = chosen ? (chosen.stock < 1 ? 'Out of stock' : chosen.stock <= 3 ? `Only ${chosen.stock} left` : 'In stock') : colorSoldOut ? 'Out of stock in this colour' : p.lowStock ? 'Selling fast' : 'In stock';
@@ -56,9 +58,9 @@ export function ProductBuy({ p }: { p: Product }) {
       <fieldset><legend className="mb-2 text-xs">Colour: <span className="font-semibold normal-case tracking-normal">{color}</span></legend>
         <ul className="flex flex-wrap gap-2">{p.colors.map((c) => <li key={c.name}><button type="button" aria-pressed={color === c.name} aria-label={`Colour ${c.name}`} onClick={() => { setColor(c.name); setSize(''); }} className={`flex h-11 w-11 items-center justify-center rounded-full border-2 ${color === c.name ? 'border-navy' : 'border-navy-100'}`}><span className="h-7 w-7 rounded-full border-2 border-navy-100" style={{ background: c.hex }} /></button></li>)}</ul></fieldset>
 
-      <fieldset><div className="mb-2 flex items-center justify-between"><legend className="text-xs">Size</legend><button type="button" onClick={() => setChart(true)} className="min-h-11 text-xs underline">Size chart</button></div>
+      <fieldset id="size-picker"><div className="mb-2 flex items-center justify-between"><legend className="text-xs">Size</legend><button type="button" onClick={() => setChart(true)} className="min-h-11 text-xs underline">Size chart</button></div>
         <ul className="flex flex-wrap gap-2">{sizes.map((s) => { const v = variantFor(s); const out = !v || v.stock < 1; return (
-          <li key={s}><button type="button" aria-pressed={size === s} aria-disabled={out} aria-label={out ? `Size ${s}, sold out` : `Size ${s}`} onClick={() => { if (!out) { setSize(s); setWarn(null); } }} className={`relative flex h-12 min-w-12 items-center justify-center rounded-full border-2 px-4 text-sm tk-press ${size === s ? 'border-navy bg-navy text-white font-bold' : 'border-navy-100'} ${out ? 'cursor-not-allowed text-muted line-through decoration-2' : 'hover:border-navy'}`}>{s}</button></li>
+          <li key={s}><button type="button" aria-pressed={(size || only) === s} aria-disabled={out} aria-label={out ? `Size ${s}, sold out` : `Size ${s}`} onClick={() => { if (!out) { setSize(s); setWarn(null); } }} className={`relative flex h-12 min-w-12 items-center justify-center rounded-full border-2 px-4 text-sm tk-press ${size === s ? 'border-navy bg-navy text-white font-bold' : 'border-navy-100'} ${out ? 'cursor-not-allowed text-muted line-through decoration-2' : 'hover:border-navy'}`}>{s}</button></li>
         ); })}</ul>
         {warn && <p role="alert" className="mt-2 text-sm text-danger">{warn}</p>}
       </fieldset>
@@ -87,9 +89,11 @@ export function ProductBuy({ p }: { p: Product }) {
       </form>
 
       {/* Phones: the sticky Add to cart bar sits above the bottom bar. */}
-      <div className="fixed inset-x-0 bottom-14 z-30 flex gap-2 border-t-2 border-navy-100 bg-white p-3 md:hidden">
-        <button type="button" onClick={add} className="tk-press min-h-12 flex-1 rounded-full bg-orange text-base font-extrabold text-navy shadow-lift">Add to cart</button>
-        <button type="button" onClick={buy} className="min-h-12 rounded-full font-semibold tk-press hover:bg-navy hover:text-white border-2 border-navy px-5 text-sm font-semibold">Buy now</button>
+      <div aria-hidden className="h-20 md:hidden" />
+      <div className="fixed inset-x-3 bottom-[calc(5.75rem+env(safe-area-inset-bottom))] z-50 flex items-center gap-2 rounded-3xl bg-white p-2.5 shadow-overlay ring-2 ring-navy-100 md:hidden">
+        <p className="min-w-0 shrink-0 pl-1 leading-tight"><span className="block text-lg font-extrabold">{formatPaise(shown.offer ?? shown.price)}</span><span className="block text-[11px] text-muted">{chosen ? `Size ${chosen.size}` : 'Pick a size'}</span></p>
+        <button type="button" onClick={add} className="tk-press min-h-12 flex-1 rounded-full bg-orange px-3 text-base font-extrabold text-navy shadow-lift">Add to cart</button>
+        <button type="button" onClick={buy} className="min-h-12 rounded-full font-semibold tk-press hover:bg-navy hover:text-white border-2 border-navy px-4 text-sm font-semibold">Buy now</button>
       </div>
 
       <Modal open={chart} onClose={() => setChart(false)} title="Size chart">

@@ -36,7 +36,7 @@ export function CashEntries({ kind, compact }: { kind: CashKind; compact?: boole
           <TBody>{data.map((e) => <Tr key={e.id}><Td>{formatDate(e.date)}</Td><Td>{e.category}</Td><Td>{e.payee}</Td><Td>{e.mode}</Td><Td>{e.note}</Td><Td>{e.receiptKey ? 'Attached' : '–'}</Td><Td className="text-right">{formatPaise(e.amount)}</Td></Tr>)}</TBody></Table>
       )}
       <Pager page={pv.page} total={pv.total} pageSize={pv.pageSize} onPage={pv.setPage} />
-      {compact && add && <div className="fixed inset-x-0 bottom-14 z-30 border-t-2 border-navy-100 bg-white p-3">{add}</div>}
+      {compact && add && <div className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 border-t-2 border-navy-100 bg-white p-3">{add}</div>}
       <Sheet open={open} onClose={() => setOpen(false)} title={`Add ${word}`}><ExpenseForm big={compact} kind={kind} onDone={() => { setOpen(false); toast(`${word[0]!.toUpperCase()}${word.slice(1)} saved`, 'success'); }} /></Sheet>
     </div>
   );

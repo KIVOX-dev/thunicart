@@ -10,6 +10,10 @@
         {
           "source": "/admin/:path*",
           "destination": "/admin/index.html"
+        },
+        {
+          "source": "/billing/:path*",
+          "destination": "/admin/index.html"
         }
       ]
     },
@@ -29,6 +33,12 @@
     },
     {
       "source": "/admin/:path*",
+      "destination": {
+        "service": "admin"
+      }
+    },
+    {
+      "source": "/billing/:path*",
       "destination": {
         "service": "admin"
       }

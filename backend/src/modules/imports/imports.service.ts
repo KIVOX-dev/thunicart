@@ -3,12 +3,12 @@ import { Brand, Category, Customer, ImportBatch, ImportEffect, ImportMapping, It
 import { AppError, badRequest, businessRule, forbidden, notFound } from '../../lib/errors';
 import { readSheetRows, readWorkbook, type SheetMeta } from '../../lib/excel/read';
 import { withTransaction } from '../../lib/transaction';
-import { bumpSeriesTo } from '../../lib/numberSeries';
+import { bumpSeriesTo, nextNumber } from '../../lib/numberSeries';
 import { nextBatchNumber, noteBatchRef } from '../../lib/batchNumber';
 import { iso } from '../../lib/list';
 import type { AuthUser } from '../../middleware/auth';
 import type { AuditEntry } from '../../middleware/audit';
-import { FIELDS, autoMap, suggestMapping, type Target } from './targets';
+import { FIELDS, autoMap, isAttrField, suggestMapping, type Target } from './targets';
 import { applyStockUnits, planStock, prepareStockRows, type Prepared, type StockRow, type Unit } from './stock';
 import { applyParties, planParties, preparePartyRows, type PartyPrepared } from './partiesImport';
 
@@ -49,7 +49,7 @@ export function batchDto(b: any) {
   };
 }
 
-async function loadBatch(id: string): Promise<any> {
+export async function loadBatch(id: string): Promise<any> {
   const b = await ImportBatch.findById(id);
   if (!b) throw notFound('Import');
   return b;
@@ -78,16 +78,27 @@ export async function setMapping(id: string, input: any, audit: Audit) {
   if (['committing', 'committed', 'rolled_back'].includes(b.status)) throw businessRule('This import has already been committed', 'IMPORT_LOCKED');
   const sheet: SheetMeta | undefined = b.sheets.find((s: any) => s.name === input.sheet);
   if (!sheet) throw badRequest('Sheet not found in this file', [{ path: 'sheet', message: `Choose one of: ${b.sheets.map((s: any) => s.name).join(', ')}` }]);
-  const { headers } = readSheetRows(readWorkbook(await fileOf(b)).wb, input.sheet, input.headerRow);
+  const book = readWorkbook(await fileOf(b));
+  let headerRow: number = input.headerRow;
+  let { headers } = readSheetRows(book.wb, input.sheet, headerRow);
+  // The caller does not have to know where the headers are: when the columns are not found on the row it named, the row detected on upload is tried.
+  const detected = book.sheets.find((s) => s.name === input.sheet)?.headerRow;
+  if (detected && detected !== headerRow) {
+    const wanted = Object.values<string>(input.mapping).map((c) => c.trim());
+    const missing = (hs: string[]) => wanted.filter((c) => !hs.some((h) => h.trim() === c)).length;
+    const alt = readSheetRows(book.wb, input.sheet, detected);
+    if (missing(alt.headers) < missing(headers)) { headers = alt.headers; headerRow = detected; }
+  }
   const have = new Set(headers.map((h) => h.trim()));
   const errs: { path: string; message: string }[] = [];
   for (const [field, col] of Object.entries<string>(input.mapping)) {
-    if (!FIELDS[b.target as Target].some((f) => f.key === field)) errs.push({ path: `mapping.${field}`, message: 'Unknown target field' });
+    const extra = (b.target === 'items' || b.target === 'opening_stock') && isAttrField(field); // "attr:Fabric": any extra column, kept as a product attribute
+    if (!extra && !FIELDS[b.target as Target].some((f) => f.key === field)) errs.push({ path: `mapping.${field}`, message: 'Unknown target field' });
     else if (!have.has(col.trim())) errs.push({ path: `mapping.${field}`, message: `Column "${col}" is not in sheet ${input.sheet}` });
   }
   for (const f of FIELDS[b.target as Target]) if (f.required && !input.mapping[f.key]) errs.push({ path: `mapping.${f.key}`, message: `${f.label} must be mapped` });
   if (errs.length) throw badRequest('Column mapping is not valid', errs);
-  b.sheet = input.sheet; b.headerRow = input.headerRow; b.mapping = input.mapping; b.status = 'mapped'; b.preview = null;
+  b.sheet = input.sheet; b.headerRow = headerRow; b.mapping = input.mapping; b.status = 'mapped'; b.preview = null;
   // A saved mapping can carry options (the Krishnas Orchids stock sheet is dated 7 Nov 2026). Use them unless the caller gave their own.
   const sug = b.options?.suggested;
   const sameAsSuggested = sug && JSON.stringify(sug.mapping) === JSON.stringify(input.mapping);
@@ -115,14 +126,46 @@ async function rowsLeft(b: any, rows: StockRow[]): Promise<StockRow[]> {
   return rows.filter((r) => !skip.has(r.code));
 }
 
-async function prepare(b: any): Promise<Ready> {
+/** The next product code that no variant, barcode or other row of this sheet uses. */
+async function freeItemCode(taken: Set<string>): Promise<string> {
+  for (;;) {
+    const code = await nextNumber('ITEM');
+    if (taken.has(code)) continue;
+    if (await Variant.exists({ $or: [{ itemCode: code }, { sku: code }, { barcode: code }] })) continue;
+    taken.add(code);
+    return code;
+  }
+}
+
+/**
+ * Reads the chosen sheet. Rows without a product code get one generated, but only when `allocate` is true (the real import).
+ * The codes are kept on the batch, so a resumed import and the downloaded Excel file show the very same codes. A dry run never takes a number.
+ */
+export async function readStockSheet(b: any, allocate = false) {
   if (!b.sheet || !Object.keys(b.mapping ?? {}).length) throw badRequest('Choose the sheet and map the columns first', [{ path: 'mapping', message: 'Mapping is missing' }]);
-  const { rows } = readSheetRows(readWorkbook(await fileOf(b)).wb, b.sheet, b.headerRow);
+  const { headers, rows } = readSheetRows(readWorkbook(await fileOf(b)).wb, b.sheet, b.headerRow);
+  let stock = prepareStockRows(rows, b.mapping, { autoCodes: b.options?.autoCodes });
+  if (allocate) {
+    const have: Record<string, string> = { ...(b.options?.autoCodes ?? {}) };
+    const need = stock.rows.filter((x) => x.autoCode && !have[String(x.row)]);
+    if (need.length) {
+      const taken = new Set<string>([...stock.rows.filter((x) => !x.autoCode).map((x) => x.code), ...Object.values(have)]);
+      for (const x of need) have[String(x.row)] = await freeItemCode(taken);
+      b.options = { ...(b.options ?? {}), autoCodes: have }; b.markModified('options'); await b.save();
+      stock = prepareStockRows(rows, b.mapping, { autoCodes: have });
+    }
+  }
+  return { headers, rows, stock };
+}
+
+async function prepare(b: any, allocate = false): Promise<Ready> {
+  if (!b.sheet || !Object.keys(b.mapping ?? {}).length) throw badRequest('Choose the sheet and map the columns first', [{ path: 'mapping', message: 'Mapping is missing' }]);
   if (b.target === 'items' || b.target === 'opening_stock') {
-    const stock = prepareStockRows(rows, b.mapping);
+    const { rows, stock } = await readStockSheet(b, allocate);
     const plan = await planStock(await rowsLeft(b, stock.rows), b.target === 'opening_stock');
     return { kind: 'stock', stock, units: plan.units, plan, totalRows: rows.length };
   }
+  const { rows } = readSheetRows(readWorkbook(await fileOf(b)).wb, b.sheet, b.headerRow);
   const parties = await preparePartyRows(b.target, rows, b.mapping);
   const plan = await planParties(b.target, parties.rows);
   return { kind: 'parties', parties, units: parties.rows, plan, totalRows: rows.length };
@@ -202,7 +245,7 @@ export async function commitImport(id: string, user: AuthUser, maxSeconds: numbe
     throw businessRule('Choose the sheet and map the columns first', 'MAPPING_REQUIRED');
   }
   try {
-    const r = await prepare(b);
+    const r = await prepare(b, true);
     const first = (b.progress?.processed ?? 0) === 0;
     // Batch numbers: one automatic number for this import (kept if the import is resumed), and the series moves past any number the sheet brought.
     if (r.kind === 'stock') {
