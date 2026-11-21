@@ -2,12 +2,14 @@ import { z } from 'zod';
 import mongoose from 'mongoose';
 import { defineRoute } from '../../lib/route';
 import { AppError } from '../../lib/errors';
+import { config } from '../../config/env';
 
 export const healthRoutes = [
   defineRoute({
     method: 'GET', path: '/health', root: true, summary: 'Is the process up? (used by AppSail and uptime checks)', tags: ['Health'],
-    permission: 'public', response: z.object({ status: z.literal('ok'), time: z.string() }),
-    handler: async () => ({ status: 'ok' as const, time: new Date().toISOString() }),
+    permission: 'public', response: z.object({ status: z.literal('ok'), time: z.string(), email: z.enum(['live', 'mock']) }),
+    // email is only a label: "mock" means the Brevo keys are missing or REPLACE_ME, so login codes are printed in the server log and never sent.
+    handler: async () => ({ status: 'ok' as const, time: new Date().toISOString(), email: config().mock.email ? ('mock' as const) : ('live' as const) }),
   }),
   defineRoute({
     method: 'GET', path: '/ready', root: true, summary: 'Is the database reachable?', tags: ['Health'],

@@ -4138,11 +4138,19 @@
                     },
                     "time": {
                       "type": "string"
+                    },
+                    "email": {
+                      "type": "string",
+                      "enum": [
+                        "live",
+                        "mock"
+                      ]
                     }
                   },
                   "required": [
                     "status",
-                    "time"
+                    "time",
+                    "email"
                   ],
                   "additionalProperties": false
                 }

@@ -5549,6 +5549,8 @@ export interface operations {
                         /** @constant */
                         status: "ok";
                         time: string;
+                        /** @enum {string} */
+                        email: "live" | "mock";
                     };
                 };
             };
