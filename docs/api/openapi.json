@@ -4145,12 +4145,19 @@
                         "live",
                         "mock"
                       ]
+                    },
+                    "emailError": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
                     "status",
                     "time",
-                    "email"
+                    "email",
+                    "emailError"
                   ],
                   "additionalProperties": false
                 }
@@ -45451,6 +45458,16 @@
           },
           "429": {
             "description": "Rate limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Error",
             "content": {
               "application/json": {
                 "schema": {

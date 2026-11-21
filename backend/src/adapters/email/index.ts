@@ -27,8 +27,17 @@ const brevo = (): EmailAdapter => ({
     }
   },
 });
+/** The last send failure (status and Brevo's own short reason, never keys), so /health can say why no mail arrives. Cleared by the next success. */
+let lastError: string | null = null;
+export const emailLastError = () => lastError;
+const tracked = (a: EmailAdapter): EmailAdapter => ({
+  kind: a.kind,
+  async send(m) {
+    try { await a.send(m); lastError = null; } catch (e) { lastError = (e instanceof Error ? e.message : String(e)).replace(/\s+/g, ' ').slice(0, 200); throw e; }
+  },
+});
 let cached: EmailAdapter | undefined;
-export const email = () => (cached ??= config().mock.email ? consoleAdapter : brevo());
+export const email = () => (cached ??= tracked(config().mock.email ? consoleAdapter : brevo()));
 
 /** The branded layout and every template live in lib/emailTemplates.ts (logo, colours, address). */
 export { brandedMail } from '../../lib/emailTemplates';

@@ -49,7 +49,12 @@ export async function sendOtp(emailAddr: string, ip: string) {
   const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
   const minutes = config().OTP_EXPIRY_MINUTES;
   await CustomerOtp.findOneAndUpdate({ email: emailAddr }, { $set: { codeHash: hashCode(emailAddr, code), attempts: 0, lastSentAt: new Date(), expiresAt: new Date(Date.now() + minutes * 60000) } }, { upsert: true });
-  try { await mailer().send(loginCodeMail(emailAddr, code, minutes)); } catch (e) { console.error('[email] login code not sent:', e instanceof Error ? e.message : e); }
+  try { await mailer().send(loginCodeMail(emailAddr, code, minutes)); } catch (e) {
+    console.error('[email] login code not sent:', e instanceof Error ? e.message : e);
+    // Never say "we sent a code" when we did not. The customer can try again at once, so the resend wait is cleared.
+    await CustomerOtp.updateOne({ email: emailAddr }, { $unset: { lastSentAt: 1 } });
+    throw new AppError(502, 'EMAIL_FAILED', 'We could not send the code right now. Please try again in a moment.');
+  }
   return { sent: true as const, expiresInMinutes: minutes, resendAfterSeconds: 30 };
 }
 
