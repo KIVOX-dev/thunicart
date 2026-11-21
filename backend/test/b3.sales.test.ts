@@ -257,8 +257,9 @@ describe('B2B counter, shifts, loyalty and inbound orders', () => {
     expect((await h.post(`/pos/bills/${d2.id}/finalize`, { tenders: [{ mode: 'cash', amount: d2.grandTotal }] }, { token: cashier })).body.code).toBe('SHIFT_REQUIRED');
     await h.put('/settings/operations', { allowNegativeStock: false, poApprovalLimit: 5000000, reorderTargetMultiplier: 2, requireOpenShift: false });
   });
-  it('loyalty is off by default; when on, points are earned, redeemed into the wallet, and never negative', async () => {
+  it('loyalty is on by default (1 point per Rs 100); when switched off it is refused, and when on, points are earned, redeemed into the wallet, and never negative', async () => {
     const c = (await h.post('/customers', { accountGroup: 'Retail Walk-in', name: 'Loyal', mobile: '9811100003', stateCode: '33' })).body;
+    await h.put('/settings/operations', { allowNegativeStock: false, poApprovalLimit: 5000000, reorderTargetMultiplier: 2, loyalty: { enabled: false, pointsPer100: 0, pointValuePaise: 0, minRedeem: 0, expiryDays: 0 } });
     expect((await h.post(`/customers/${c.id}/loyalty/redeem`, { points: 10 })).body.code).toBe('LOYALTY_OFF');
     await h.put('/settings/operations', { allowNegativeStock: false, poApprovalLimit: 5000000, reorderTargetMultiplier: 2, loyalty: { enabled: true, pointsPer100: 1, pointValuePaise: 100, minRedeem: 5, expiryDays: 0 } });
     const d = await draft([{ variantId: fx.tee.id, qty: 2 }], { customerId: c.id });
