@@ -43,7 +43,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <SideMenu categories={categories} />
           <SearchPanel />
           <CartDrawer />
-          <main id="main" className="min-h-[60vh]">{children}</main>
+          <main id="main" className="min-h-[60vh] pb-24 md:pb-0">{children}</main>
           <Footer categories={categories} contact={home?.contact ?? FALLBACK} />
           <BottomBar />
         </Providers>
