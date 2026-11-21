@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import {
   addressBody, addressDto, adminOrderPatchBody, adminOrderQuery, bannerBody, blogBody, cancelOrderBody, cartAddBody, cartCouponBody, cartPatchBody, checkoutPayBody, checkoutStartBody, cmsPageBody, couponBody,
-  customerSession, googleBody, idParam, listQuery, looseDto, objectId, okResponse, orderReturnBody, otpSendBody, otpVerifyBody, productsQuery, profileBody, returnDecisionBody, returnRefundBody, storeSettingsBody, homeLayoutBody, wishlistBody, patchOf } from '@thunikart/shared';
+  customerSession, googleBody, passwordLoginBody, setPasswordBody, idParam, listQuery, looseDto, objectId, okResponse, orderReturnBody, otpSendBody, otpVerifyBody, productsQuery, profileBody, returnDecisionBody, returnRefundBody, storeSettingsBody, homeLayoutBody, wishlistBody, patchOf } from '@thunikart/shared';
 import { defineRoute } from '../../lib/route';
 import { crudRoutes } from '../../lib/crud';
 import { AppError } from '../../lib/errors';
@@ -36,6 +36,10 @@ const authRoutes = [
   defineRoute({ method: 'POST', path: '/customer/auth/otp/send', summary: 'Email a 6 digit login code (valid 5 minutes, 3 attempts, resend after 30 seconds, rate limited per email and IP)', tags: ['Customer'], permission: 'public', body: otpSendBody, response: loose, errors: [429, 502], handler: async ({ req, body }) => svc.sendOtp(body.email, req.ip) }),
   defineRoute({ method: 'POST', path: '/customer/auth/otp/verify', summary: 'Log in with the emailed code. Merges the guest cart. One customer per verified email.', tags: ['Customer'], permission: 'public', body: otpVerifyBody, response: customerSession, errors: [401, 429], rateLimit: { name: 'otp-verify', limit: 30, windowSec: 600 },
     handler: async ({ req, reply, body }) => { const r = await svc.verifyOtp(body.email, body.code, req.cookies[CART_COOKIE]); reply.setCookie(STORE_COOKIE, r.cookie, cookieOpts('/api/v1/customer/auth', STORE_REFRESH_SECONDS)); reply.clearCookie(CART_COOKIE, { path: '/' }); return { accessToken: r.accessToken, expiresInSeconds: r.expiresInSeconds, customer: r.customer }; } }),
+  defineRoute({ method: 'POST', path: '/customer/auth/login', summary: 'Log in with email and password. Merges the guest cart. Rate limited per email and IP.', tags: ['Customer'], permission: 'public', body: passwordLoginBody, response: customerSession, errors: [401, 429],
+    handler: async ({ req, reply, body }) => { const r = await svc.passwordLogin(body.email, body.password, req.ip, req.cookies[CART_COOKIE]); reply.setCookie(STORE_COOKIE, r.cookie, cookieOpts('/api/v1/customer/auth', STORE_REFRESH_SECONDS)); reply.clearCookie(CART_COOKIE, { path: '/' }); return { accessToken: r.accessToken, expiresInSeconds: r.expiresInSeconds, customer: r.customer }; } }),
+  defineRoute({ method: 'PUT', path: '/customer/password', summary: 'Set or change my shop password (sign up and forgot password both finish here, after the emailed code)', tags: ['Customer'], permission: 'customer', body: setPasswordBody, response: okResponse, errors: [400],
+    handler: async ({ customer, body, audit }) => svc.setPassword(customer.id, body.password, audit) }),
   defineRoute({ method: 'POST', path: '/customer/auth/google', summary: 'Log in with Google (mock mode accepts mock:email@example.com)', tags: ['Customer'], permission: 'public', body: googleBody, response: customerSession, errors: [401],
     handler: async ({ req, reply, body }) => { const r = await svc.googleLogin(body.idToken, req.cookies[CART_COOKIE]); reply.setCookie(STORE_COOKIE, r.cookie, cookieOpts('/api/v1/customer/auth', STORE_REFRESH_SECONDS)); reply.clearCookie(CART_COOKIE, { path: '/' }); return { accessToken: r.accessToken, expiresInSeconds: r.expiresInSeconds, customer: r.customer }; } }),
   defineRoute({ method: 'POST', path: '/customer/auth/refresh', summary: 'New access token from the storefront refresh cookie', tags: ['Customer'], permission: 'public', response: loose, errors: [401],

@@ -21,7 +21,7 @@ export interface CartPricing {
   unavailable: Array<{ variantId: string; name: string; size: string; message: string }>; pieces: number;
 }
 export interface Address { id: string; name: string; mobile: string; line1: string; line2: string; city: string; state: string; pincode: string; isDefault: boolean }
-export interface User { id: string; email: string; name: string; mobile: string; wallet: number }
+export interface User { id: string; email: string; name: string; mobile: string; wallet: number; hasPassword?: boolean; profileComplete?: boolean }
 export interface WalletEntry { id: string; at: string; note: string; amount: number; balance: number }
 export type OrderStatus = 'pending-payment' | 'paid' | 'packed' | 'shipped' | 'delivered' | 'cancelled' | 'return-requested' | 'returned';
 export interface Order {

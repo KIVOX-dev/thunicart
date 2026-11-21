@@ -22,6 +22,8 @@ export const Customer = defineModel('Customer', 'customers', {
   accountGroup: { type: String, enum: ['Retail Walk-in', 'E-commerce B2C', 'B2B Trade'], required: true },
   name: { type: String, required: true },
   email: { type: String, default: '' },
+  // Argon2 hash of the shop password. Never selected by default, so no list or export can leak it; login asks for it with +passwordHash.
+  passwordHash: { type: String, default: null, select: false },
   mobile: { type: String, required: true },
   address: { type: String, default: '' },
   city: { type: String, default: '' },
@@ -32,7 +34,7 @@ export const Customer = defineModel('Customer', 'customers', {
   glAccount: { type: String, default: '' },
   creditLimit: { ...paise },
   active: { type: Boolean, default: true },
-  gender: { type: String, enum: ['Male', 'Female', ''], default: '' },
+  gender: { type: String, enum: ['Male', 'Female', 'Prefer not to say', ''], default: '' },
   dob: { type: Date, default: null },
 }, [
   [{ customerId: 1 }, { unique: true }],

@@ -8,6 +8,9 @@ export const looseDto = z.looseObject({});
 // ---- customer account ----
 export const otpSendBody = z.object({ email: z.string().trim().toLowerCase().email() });
 export const otpVerifyBody = z.object({ email: z.string().trim().toLowerCase().email(), code: z.string().regex(/^\d{6}$/, 'The code is 6 digits') });
+export const passwordLoginBody = z.object({ email: z.string().trim().toLowerCase().email(), password: z.string().min(1, 'Enter your password').max(200) });
+/** A new shop password: 8 to 72 characters with a letter and a number. (72 is the longest that is hashed in full.) */
+export const setPasswordBody = z.object({ password: z.string().min(8, 'Use at least 8 characters').max(72, 'Use 72 characters or fewer').regex(/[A-Za-z]/, 'Include a letter').regex(/\d/, 'Include a number') });
 export const googleBody = z.object({ idToken: z.string().min(5) });
 export const customerSession = z.object({ accessToken: z.string(), expiresInSeconds: z.number().int(), customer: z.looseObject({ id: objectId, email: z.string(), name: z.string() }) });
 const dobRule = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Enter your date of birth').refine((d) => { const t = Date.parse(d); return t > Date.parse('1900-01-01') && t < Date.now(); }, 'Enter a valid date of birth');
@@ -15,7 +18,7 @@ const dobRule = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Enter your date of birt
 export const profileBody = z.object({
   name: z.string().trim().min(2).max(100).optional(),
   mobile: z.string().trim().regex(/^[6-9]\d{9}$/, 'Enter a 10 digit mobile number').optional(),
-  gender: z.enum(['Male', 'Female']).optional(),
+  gender: z.enum(['Male', 'Female', 'Prefer not to say']).optional(),
   dob: dobRule.optional(),
   address: z.object({
     line1: z.string().trim().min(3).max(150), line2: z.string().trim().max(150).default(''), city: z.string().trim().min(2).max(60),

@@ -9,12 +9,12 @@ export interface Req { method: string; path: string[]; query: URLSearchParams; b
 export interface Res { status: number; json: unknown; cookies?: Array<{ name: string; value: string; maxAge?: number; httpOnly?: boolean }> }
 
 interface Db {
-  users: Array<User & { createdAt: string }>; sessions: Record<string, string>; otps: Record<string, number>; addresses: Record<string, Address[]>; wishlist: Record<string, string[]>;
+  users: Array<User & { createdAt: string }>; passes: Record<string, string>; sessions: Record<string, string>; otps: Record<string, number>; addresses: Record<string, Address[]>; wishlist: Record<string, string[]>;
   wallet: Record<string, WalletEntry[]>; orders: Order[]; seq: number; stock: Record<string, number>; payAt: Record<string, number>; gstOn: boolean;
 }
 const g = globalThis as unknown as { __tkdb?: Db };
 function db(): Db {
-  g.__tkdb ??= { users: [], sessions: {}, otps: {}, addresses: {}, wishlist: {}, wallet: {}, orders: [], seq: 0, stock: Object.fromEntries(PRODUCTS.flatMap((p) => p.variants.map((v) => [v.id, v.stock]))), payAt: {}, gstOn: process.env.NEXT_PUBLIC_MOCK_GST === 'on' };
+  g.__tkdb ??= { users: [], passes: {}, sessions: {}, otps: {}, addresses: {}, wishlist: {}, wallet: {}, orders: [], seq: 0, stock: Object.fromEntries(PRODUCTS.flatMap((p) => p.variants.map((v) => [v.id, v.stock]))), payAt: {}, gstOn: process.env.NEXT_PUBLIC_MOCK_GST === 'on' };
   return g.__tkdb;
 }
 export const resetMockDb = () => { g.__tkdb = undefined; };
@@ -109,7 +109,7 @@ function userOf(cookies: Record<string, string>): User | null {
   const u = db().users.find((x) => x.id === id);
   if (!u) return null;
   const entries = db().wallet[u.id] ?? [];
-  return { id: u.id, email: u.email, name: u.name, mobile: u.mobile, wallet: entries[0]?.balance ?? 0 };
+  return { id: u.id, email: u.email, name: u.name, mobile: u.mobile, wallet: entries[0]?.balance ?? 0, hasPassword: !!db().passes[u.email] };
 }
 const walletAdd = (userId: string, amount: number, note: string) => {
   const list = (db().wallet[userId] ??= []);
@@ -198,7 +198,23 @@ export async function handle(req: Req): Promise<Res> {
       db().sessions[token] = u.id;
       return ok({ ok: true }, 200, [{ name: 'tk_session', value: token, httpOnly: true, maxAge: 60 * 60 * 24 * 30 }]);
     }
+    if (b === 'login' && m === 'POST') {
+      const email = String(body.email ?? '').trim().toLowerCase();
+      const u = db().users.find((x) => x.email === email);
+      if (!u || !db().passes[email] || db().passes[email] !== String(body.password ?? '')) return err(401, 'INVALID_CREDENTIALS', 'Email or password is not right. If you signed up with a code before, use "Forgot password" to set one.');
+      const token = `s${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
+      db().sessions[token] = u.id;
+      return ok({ ok: true }, 200, [{ name: 'tk_session', value: token, httpOnly: true, maxAge: 60 * 60 * 24 * 30 }]);
+    }
     if (b === 'logout') { delete db().sessions[req.cookies.tk_session ?? '']; return ok({ ok: true }, 200, [{ name: 'tk_session', value: '', maxAge: 0, httpOnly: true }]); }
+  }
+  if (a === 'password' && m === 'PUT') {
+    if (!user) return err(401, 'UNAUTHENTICATED', 'Please sign in.');
+    const pw = String(body.password ?? '');
+    const bad = pw.length < 8 ? 'Use at least 8 characters' : !/[A-Za-z]/.test(pw) ? 'Include a letter' : !/\d/.test(pw) ? 'Include a number' : null;
+    if (bad) return err(422, 'VALIDATION', bad, [{ path: 'password', message: bad }]);
+    db().passes[user.email] = pw;
+    return ok({ ok: true });
   }
   if (a === 'me' && !b) {
     if (!user) return err(401, 'UNAUTHENTICATED', 'Please sign in.');

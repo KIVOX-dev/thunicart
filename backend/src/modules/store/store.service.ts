@@ -1,4 +1,5 @@
 import { createHash, randomInt } from 'node:crypto';
+import argon2 from 'argon2';
 import mongoose from 'mongoose';
 import { config } from '../../config/env';
 import { Address, Banner, BlogPost, Brand, Cart, Category, CmsPage, Coupon, CouponUse, Customer, CustomerOtp, Item, Order, StockBalance, StockLedger, Store, StoreSession, StoreSettings, Variant, Wishlist, WalletLedger } from '../../models';
@@ -84,6 +85,24 @@ export async function verifyOtp(emailAddr: string, code: string, cartCookie?: st
   await CustomerOtp.deleteOne({ _id: o._id });
   return finishLogin(emailAddr, undefined, cartCookie);
 }
+let dummyHash: Promise<string> | undefined;
+const getDummy = () => (dummyHash ??= argon2.hash('not-a-real-password-for-timing'));
+/** Sign in with email and password. Unknown email, no password yet and a wrong password all give the same answer, after the same work. */
+export async function passwordLogin(emailAddr: string, password: string, ip: string, cartCookie?: string) {
+  await rateLimitHit('login-ip', ip, 30, 600); await rateLimitHit('login-email', emailAddr, 10, 600);
+  const c: any = await Customer.findOne({ email: emailAddr, accountGroup: 'E-commerce B2C' }).select('+passwordHash').lean();
+  const ok = c?.passwordHash ? await argon2.verify(c.passwordHash, password).catch(() => false) : (await argon2.verify(await getDummy(), password).catch(() => false), false);
+  if (!c || !ok) throw new AppError(401, 'INVALID_CREDENTIALS', 'Email or password is not right. If you signed up with a code before, use "Forgot password" to set one.');
+  if (!c.active) throw forbidden('This account is not active');
+  return finishLogin(emailAddr, undefined, cartCookie);
+}
+/** Set or change the shop password of the signed in customer. Reached only after an emailed code (sign up, forgot password) or while signed in. */
+export async function setPassword(customerId: string, password: string, audit?: (e: any) => void) {
+  const r = await Customer.updateOne({ _id: customerId }, { $set: { passwordHash: await argon2.hash(password) } });
+  if (!r.matchedCount) throw notFound('Customer');
+  audit?.({ entity: 'customer', entityId: customerId, action: 'password_set' });
+  return { ok: true as const };
+}
 export async function googleLogin(idToken: string, cartCookie?: string) {
   const g = await verifyGoogleIdToken(idToken);
   if (!g) throw unauthorized('Google sign in could not be verified');
@@ -106,9 +125,9 @@ export async function refreshSession(cookie: string | undefined) {
 export async function logoutSession(cookie: string | undefined) { const sid = (cookie ?? '').split('.')[0]; if (sid && /^[a-f\d]{24}$/i.test(sid)) await StoreSession.updateOne({ _id: sid }, { $set: { revokedAt: new Date() } }); }
 
 export async function getProfile(customerId: string) {
-  const c: any = await Customer.findById(customerId).lean();
+  const c: any = await Customer.findById(customerId).select('+passwordHash').lean();
   const bal = await walletBalance(customerId);
-  return { ...customerDto(c), walletBalance: bal, currency: 'INR' as const };
+  return { ...customerDto(c), hasPassword: !!c.passwordHash, walletBalance: bal, currency: 'INR' as const };
 }
 export async function walletBalance(customerId: string) { const r = await WalletLedger.aggregate([{ $match: { customerId: oid(customerId) } }, { $group: { _id: null, p: { $sum: '$amount' } } }]); return (r[0]?.p ?? 0) as number; }
 
@@ -128,7 +147,7 @@ export async function setMobile(customerId: string, mobile: string): Promise<str
   other.email = myEmail; await other.save();
   return String(other._id);
 }
-export async function updateProfile(customerId: string, input: { name?: string; mobile?: string; gender?: 'Male' | 'Female'; dob?: string; address?: any }) {
+export async function updateProfile(customerId: string, input: { name?: string; mobile?: string; gender?: 'Male' | 'Female' | 'Prefer not to say'; dob?: string; address?: any }) {
   const set: Record<string, unknown> = {};
   if (input.name) set.name = input.name;
   if (input.gender) set.gender = input.gender;

@@ -14,7 +14,7 @@ export class ApiError extends Error {
  * On the live API the customer routes live under /customer and use a bearer token (the demo server used a cookie). This maps the screens' paths
  * to the live ones and keeps the token for the tab. When the token has run out, the refresh cookie gets a new one.
  */
-const LIVE_PATHS: Record<string, string> = { '/auth/otp/request': '/customer/auth/otp/send', '/auth/otp/verify': '/customer/auth/otp/verify', '/auth/logout': '/customer/auth/logout', '/me': '/customer/profile', '/addresses': '/customer/addresses', '/wallet': '/customer/wallet' };
+const LIVE_PATHS: Record<string, string> = { '/auth/otp/request': '/customer/auth/otp/send', '/auth/otp/verify': '/customer/auth/otp/verify', '/auth/login': '/customer/auth/login', '/password': '/customer/password', '/auth/logout': '/customer/auth/logout', '/me': '/customer/profile', '/addresses': '/customer/addresses', '/wallet': '/customer/wallet' };
 /**
  * The live backend names a few customer fields differently from what the screens use: the wallet comes as { balance, items }, addresses as
  * { items } with `phone`, and the profile as `walletBalance`. These adapters give the screens the shape they already expect, so one page
@@ -59,7 +59,7 @@ export async function capi<T>(method: string, path: string, body?: unknown, opts
   } catch { throw new ApiError(0, 'NETWORK', 'Cannot reach the store.'); }
   if (res.ok) {
     const data = (res.status === 204 ? undefined : await res.json()) as { accessToken?: string | null } | undefined;
-    if (live && real === '/customer/auth/otp/verify') setToken(data?.accessToken ?? null);
+    if (live && (real === '/customer/auth/otp/verify' || real === '/customer/auth/login')) setToken(data?.accessToken ?? null);
     if (live && real === '/customer/auth/logout') setToken(null);
     return (live ? adaptLive(real, data) : data) as T;
   }
