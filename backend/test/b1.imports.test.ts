@@ -225,6 +225,22 @@ describe('stock sheet import: the Krishnas Orchids rules', () => {
     expect(rb.status).toBe(200);
     expect(await Variant.countDocuments()).toBe(DATA.length + 1); // the re-import and the item added by hand are untouched
   });
+  it('review queue: a row split into sizes divides its stock between them, in one go', async () => {
+    const q = (code: string) => ReviewItem.findOne({ itemCode: code, status: 'open' }).lean() as Promise<any>;
+    // split one row into sizes and divide its 10 pieces: the first size keeps what is not given away
+    const toSplit = await q('KO1000369');
+    const origV: any = await Variant.findOne({ itemCode: 'KO1000369' }).lean();
+    const tooMany = await t.api('PATCH', `${A}/imports/review-queue/bulk`, { token: t.adminToken, body: { ids: [String(toSplit._id)], action: 'split_sizes', sizes: ['S', 'M', 'L'], quantities: [0, 8, 5] } });
+    expect(tooMany.status).toBe(400); // 13 pieces asked for, only 10 in stock
+    const split = await t.api('PATCH', `${A}/imports/review-queue/bulk`, { token: t.adminToken, body: { ids: [String(toSplit._id)], action: 'split_sizes', sizes: ['S', 'M', 'L'], quantities: [5, 3, 2] } });
+    expect(split.status).toBe(200);
+    const sibs: any[] = await Variant.find({ itemId: origV.itemId }).lean();
+    const onHand = async (v: any) => ((await StockBalance.aggregate([{ $match: { variantId: v._id } }, { $group: { _id: null, n: { $sum: '$onHand' } } }]))[0]?.n ?? 0) as number;
+    const bySize = new Map<string, number>(); for (const v of sibs) bySize.set(v.size, await onHand(v));
+    expect(Object.fromEntries(bySize)).toMatchObject({ S: 5, M: 3, L: 2 });
+    expect([...bySize.values()].reduce((a, b) => a + b, 0)).toBe(10); // nothing created or lost
+    expect(await StockLedger.countDocuments({ docType: 'SIZE_SPLIT' })).toBe(4);
+  });
   it('a failed row never sinks its batch: the rest is saved and the failure is reported', async () => {
     const dupBarcode = sheetBuffer({ Items: [['Item Code*', 'Barcode/UPC', 'Product Category*', 'Retail MRP*'], ['X-1', '123456789', 'Apparel', 100], ['X-2', '123456789', 'Apparel', 100], ['X-3', null, 'Apparel', 'abc']] });
     const r = await startImport(t, t.adminToken, 'items', 'items.xlsx', dupBarcode, undefined, { sheet: 'Items', map: { itemCode: 'Item Code*', barcode: 'Barcode/UPC', category: 'Product Category*', mrp: 'Retail MRP*', name: 'Item Code*' } });

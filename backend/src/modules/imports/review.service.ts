@@ -1,4 +1,6 @@
-import { Brand, Category, GstRate, Item, ReviewItem, Variant } from '../../models';
+import { Brand, Category, GstRate, Item, ReviewItem, StockBalance, Variant } from '../../models';
+import { withTransaction } from '../../lib/transaction';
+import { postStock } from '../../lib/stock';
 import type { ListQuery } from '@thunikart/shared';
 import { badRequest } from '../../lib/errors';
 import { checkHsn } from '../../lib/hsn';
@@ -29,12 +31,14 @@ export async function listReview(q: ListQuery & { reason?: string; batchId?: str
   if (!vids.length) return res;
   const vs: any[] = await Variant.find({ _id: { $in: vids } }, { itemId: 1, size: 1, mrp: 1, sellingPrice: 1 }).lean();
   const its: any[] = await Item.find({ _id: { $in: vs.map((v) => v.itemId) } }, { hsn: 1 }).lean();
+  const stock: any[] = await StockBalance.aggregate([{ $match: { variantId: { $in: vs.map((v) => v._id) } } }, { $group: { _id: '$variantId', onHand: { $sum: '$onHand' }, reserved: { $sum: '$reserved' } } }]);
+  const sm = new Map(stock.map((x) => [String(x._id), x.onHand - x.reserved]));
   const vm = new Map(vs.map((v) => [String(v._id), v])); const im = new Map(its.map((i) => [String(i._id), i]));
   return {
     ...res,
     items: res.items.map((i: any) => {
       const v = vm.get(i.variantId); if (!v) return i;
-      return { ...i, detail: { ...i.detail, mrp: v.mrp ?? 0, sellingPrice: v.sellingPrice ?? 0, size: i.detail?.size ?? v.size ?? '', hsn: i.detail?.hsn ?? im.get(String(v.itemId))?.hsn ?? '' } };
+      return { ...i, detail: { ...i.detail, mrp: v.mrp ?? 0, sellingPrice: v.sellingPrice ?? 0, size: i.detail?.size ?? v.size ?? '', hsn: i.detail?.hsn ?? im.get(String(v.itemId))?.hsn ?? '', onHand: sm.get(String(v._id)) ?? 0 } };
     }),
   };
 }
@@ -94,18 +98,35 @@ export async function bulkReview(input: any, userId: string, audit: Audit) {
       } else if (input.action === 'split_sizes') {
         const sizes: string[] = input.sizes ?? d.detail?.sizes ?? parseSizes(v.size).sizes;
         if (sizes.length < 2) { skipped++; continue; }
+        const quantities: number[] | undefined = input.quantities;
+        if (quantities && quantities.length !== sizes.length) throw badRequest('Give a quantity for every size', [{ path: 'quantities', message: 'One number for each size' }]);
         const [firstSize, ...rest] = sizes;
-        v.size = firstSize; await v.save();
-        for (const sz of rest) {
-          let code = await nextNumber('ITEM');
-          while (await Variant.exists({ itemCode: code })) code = await nextNumber('ITEM');
-          await Variant.create({ itemId: v.itemId, itemCode: code, sku: code, barcode: code, size: sz, color: v.color, mrp: v.mrp, sellingPrice: v.sellingPrice, offerPrice: v.offerPrice, baseCost: v.baseCost, reorderLevel: v.reorderLevel, binLocation: v.binLocation, batchRef: v.batchRef, active: true });
+        const give = quantities ? quantities.slice(1) : rest.map(() => 0);
+        const move = give.reduce((a2, b2) => a2 + b2, 0);
+        // Pieces for the new sizes come off the original row, from the store that holds the most of it.
+        const bal: any = move > 0 ? (await StockBalance.find({ variantId: v._id }).sort({ onHand: -1 }).limit(1).lean())[0] : null;
+        if (move > 0 && (!bal || bal.onHand - bal.reserved < move)) {
+          throw badRequest('Not enough stock to split', [{ path: 'quantities', message: `Only ${Math.max(0, (bal?.onHand ?? 0) - (bal?.reserved ?? 0))} in stock to give to the other sizes` }]);
         }
+        // The new size rows and the stock moving onto them are saved together or not at all.
+        await withTransaction(async (session) => {
+          v.size = firstSize; await v.save({ session });
+          for (const [i, sz] of rest.entries()) {
+            let code = await nextNumber('ITEM', { session });
+            while (await Variant.exists({ itemCode: code }).session(session)) code = await nextNumber('ITEM', { session });
+            const [nv]: any[] = await Variant.create([{ itemId: v.itemId, itemCode: code, sku: code, barcode: code, size: sz, color: v.color, mrp: v.mrp, sellingPrice: v.sellingPrice, offerPrice: v.offerPrice, baseCost: v.baseCost, reorderLevel: v.reorderLevel, binLocation: v.binLocation, batchRef: v.batchRef, active: true }], { session });
+            const q = give[i] ?? 0;
+            if (q > 0 && bal) {
+              await postStock({ variantId: String(v._id), storeId: String(bal.storeId), type: 'ADJUSTMENT', qty: -q, unitCost: v.baseCost ?? 0, docType: 'SIZE_SPLIT', docNumber: v.itemCode, userId, note: `Split: ${q} moved to size ${sz}` }, session);
+              await postStock({ variantId: String(nv._id), storeId: String(bal.storeId), type: 'ADJUSTMENT', qty: q, unitCost: v.baseCost ?? 0, docType: 'SIZE_SPLIT', docNumber: code, userId, note: `Split from ${v.itemCode}: size ${sz}` }, session);
+            }
+          }
+        });
       }
       touchedItems.add(String(item._id));
       if (JSON.stringify(before) !== JSON.stringify({ hsn: item.hsn, size: v.size, mrp: v.mrp, sellingPrice: v.sellingPrice }) || input.action === 'split_sizes') updated++;
       else skipped++;
-    } catch (e: any) { if (e?.status === 400) { skipped++; continue; } throw e; }
+    } catch (e: any) { if (e?.status === 400 && input.action !== 'split_sizes') { skipped++; continue; } throw e; } // a split that cannot be done says why, so the screen can show it
   }
   // Recalculate the open rows of every touched product, and apply dismissals.
   let resolved = 0, stillOpen = 0;

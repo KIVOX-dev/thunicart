@@ -78,6 +78,8 @@ export const reviewBulkBody = z.object({
   }).optional(),
   /** For split_sizes: the sizes this combined row should become. If omitted the detected sizes are used. */
   sizes: z.array(z.string().trim().min(1).max(30)).max(12).optional(),
+  /** For split_sizes: pieces for each size, in the same order as sizes. The first size keeps the original row and whatever is not given to the others. */
+  quantities: z.array(z.number().int().min(0)).max(12).optional(),
 });
 export const reviewBulkResponse = z.object({ updated: z.number().int(), resolved: z.number().int(), stillOpen: z.number().int(), skipped: z.number().int() });
 export const mappingDto = z.object({ id: objectId, name: z.string(), target: importTarget, mapping: z.record(z.string(), z.string()), builtin: z.boolean() });

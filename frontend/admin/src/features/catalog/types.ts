@@ -212,6 +212,8 @@ export const importBatch = z.object({
 export type ImportBatch = z.infer<typeof importBatch>;
 
 export const reviewRow = z.object({
+  /** Pieces in stock (on hand less reserved), for the split box. */
+  onHand: z.number().int().default(0),
   id: z.string(),
   itemId: z.string(),
   code: z.string(),

@@ -6,7 +6,7 @@ import { dataQuality, listEnvelope, reviewRow } from './types';
 interface ApiReview { id: string; itemId: string | null; itemCode: string; name: string; category: string | null; reasons: string[]; detail: Record<string, unknown>; suggestion: { hsn: string } | null }
 const toRow = (r: ApiReview) => reviewRow.parse({
   id: r.id, itemId: r.itemId ?? r.id, code: r.itemCode, name: r.name, category: r.category ?? '', issue: r.reasons[0] ?? '',
-  size: String(r.detail.size ?? ''), hsn: String(r.detail.hsn ?? ''), mrp: Number(r.detail.mrp ?? 0) | 0, suggestedHsn: r.suggestion?.hsn ?? null,
+  size: String(r.detail.size ?? ''), hsn: String(r.detail.hsn ?? ''), mrp: Number(r.detail.mrp ?? 0) | 0, onHand: Number(r.detail.onHand ?? 0) | 0, suggestedHsn: r.suggestion?.hsn ?? null,
   sizes: Array.isArray(r.detail.sizes) ? (r.detail.sizes as unknown[]).map(String) : [],
 });
 
@@ -44,7 +44,7 @@ export function useDataQuality() {
 }
 const refresh = (qc: ReturnType<typeof useQueryClient>) => Promise.all([qc.invalidateQueries({ queryKey: KEY }), qc.invalidateQueries({ queryKey: ['data-quality'] }), qc.invalidateQueries({ queryKey: ['items'] })]);
 
-export type FixAction = { action: 'apply_suggestion' | 'dismiss' } | { action: 'split_sizes'; sizes?: string[] } | { action: 'set'; set: { hsn?: string; size?: string; category?: string; brand?: string; model?: string; mrp?: number; sellingPrice?: number } };
+export type FixAction = { action: 'apply_suggestion' | 'dismiss' } | { action: 'split_sizes'; sizes?: string[]; quantities?: number[] } | { action: 'set'; set: { hsn?: string; size?: string; category?: string; brand?: string; model?: string; mrp?: number; sellingPrice?: number } };
 /** One fix on one review row. `id` is the review row's id. */
 export function useFixRow() {
   const qc = useQueryClient();
