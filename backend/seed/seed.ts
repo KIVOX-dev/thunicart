@@ -1,8 +1,8 @@
 import { randomBytes } from 'node:crypto';
 import argon2 from 'argon2';
-import { ACTIONS, ALL_PERMISSION_KEYS, MODULES } from '@thunikart/shared';
+import { ACTIONS, ALL_PERMISSION_KEYS, DEFAULT_PAGES, MODULES } from '@thunikart/shared';
 import hsnMaster from './hsn-master.json';
-import { BusinessProfile, GstRate, Hsn, ImportMapping, ExpenseCategory, LabelTemplate, NumberSeries, Permission, Role, RolePermission, Store, User } from '../src/models';
+import { BusinessProfile, CmsPage, GstRate, Hsn, ImportMapping, ExpenseCategory, LabelTemplate, NumberSeries, Permission, Role, RolePermission, Store, User } from '../src/models';
 import { BUILTIN_MAPPINGS } from '../src/modules/imports/targets';
 import { syncAllIndexes } from '../src/models/indexes';
 import { DEFAULT_SERIES } from '../src/lib/numberSeries';
@@ -55,6 +55,11 @@ export async function runSeed(opts: SeedOptions): Promise<SeedResult> {
   for (const series of DEFAULT_SERIES) {
     const { startAt, ...s } = series as any;
     await NumberSeries.updateOne({ key: s.key, financialYear: s.perFinancialYear ? fy : '' }, { $setOnInsert: { ...s, financialYear: s.perFinancialYear ? fy : '', counter: startAt ?? 0 } }, { upsert: true });
+  }
+
+  // Policy pages (privacy, terms, refunds, shipping, cookies). Only added when missing, so edits made in Online store, Content are never overwritten.
+  for (const pg of DEFAULT_PAGES) {
+    await CmsPage.updateOne({ slug: pg.slug }, { $setOnInsert: { slug: pg.slug, title: pg.title, body: pg.body, seoTitle: pg.seoTitle, seoDescription: pg.seoDescription, active: true } }, { upsert: true });
   }
 
   // HSN master (25 headings from the HSN Master sheet). The 5% up to Rs 1,000 and 12% above rule is UNCONFIRMED until an Admin confirms it.

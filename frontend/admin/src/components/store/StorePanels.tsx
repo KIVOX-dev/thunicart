@@ -107,7 +107,7 @@ function PageForm({ page, onDone, onSave }: { page: CmsPage; onDone: () => void;
   return (
     <form className="flex flex-col gap-4" aria-label="Page" onSubmit={async (e) => { e.preventDefault(); if (await onSave({ title, body, active }, page.id)) onDone(); }}>
       <Field label="Title">{(p) => <Input {...p} value={title} onChange={(e) => setTitle(e.target.value)} />}</Field>
-      <Field label="Text">{(p) => <textarea {...p} rows={10} className="w-full rounded border-2 border-navy-100 p-2 text-sm" value={body} onChange={(e) => setBody(e.target.value)} />}</Field>
+      <Field label="Text" hint="A blank line starts a new paragraph. Start a line with ## for a heading, and with - for a bullet point.">{(p) => <textarea {...p} rows={10} className="w-full rounded border-2 border-navy-100 p-2 text-sm" value={body} onChange={(e) => setBody(e.target.value)} />}</Field>
       <Checkbox label="Show on the website" checked={active} onChange={(e) => setActive(e.target.checked)} />
       <Button type="submit" variant="primary">Save page</Button>
     </form>

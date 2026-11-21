@@ -9,7 +9,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, Omit<ComponentProps<ty
     <div className="relative">
       <Input {...rest} ref={ref} type={shown ? 'text' : 'password'} className={`${className ?? ''} pr-12`} />
       <button
-        type="button" onClick={() => setShown((s) => !s)} aria-pressed={shown} aria-label={shown ? 'Hide password' : 'Show password'}
+        type="button" onClick={() => setShown((s) => !s)} aria-pressed={shown} aria-label={shown ? 'Hide' : 'Show'} title={shown ? 'Hide what you typed' : 'Show what you typed'}
         className="absolute inset-y-0 right-1 my-auto flex h-10 w-10 items-center justify-center rounded-full text-navy hover:bg-navy-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1"
       >
         {shown ? <EyeOff aria-hidden size={18} /> : <Eye aria-hidden size={18} />}

@@ -125,8 +125,9 @@ function Guard({ section, children }: { section: Section; children: ReactNode })
 export function StoreApp() {
   return (
     <Routes>
+      {/* This app is mounted on the splat route /store/*, so these paths are relative to /store (the same as in billing-app.tsx). */}
       <Route element={<AuthGate />}>
-        <Route path="/store" element={<StoreShell />}>
+        <Route element={<StoreShell />}>
           <Route index element={<StoreHome />} />
           <Route path="more" element={<More />} />
           {SECTIONS.map((s) => <Route key={s.key} path={s.key} element={<Guard section={s}><Page section={s} /></Guard>} />)}

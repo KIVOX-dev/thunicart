@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { Category, Contact } from '@/lib/types';
 import { Newsletter } from './Newsletter';
 import { SocialLinks } from './SocialLinks';
+import { CookieSettingsLink } from './ConsentBanner';
 
 /** Footer: logo and newsletter, then Quick Shop, Helpful Links and More. Contact details come from the business profile. */
 export function Footer({ categories, contact }: { categories: Category[]; contact: Contact }) {
@@ -16,14 +17,14 @@ export function Footer({ categories, contact }: { categories: Category[]; contac
           <Newsletter />
         </div>
         <nav aria-label="Quick shop"><h2 className="tk-eyebrow mb-2 text-teal">Quick shop</h2><ul className={col}>{categories.map((c) => <li key={c.slug}><Link className={a} href={`/c/${c.slug}`}>{c.name}</Link></li>)}<li><Link className={a} href="/c/sale">Sale</Link></li></ul></nav>
-        <nav aria-label="Helpful links"><h2 className="tk-eyebrow mb-2 text-teal">Helpful links</h2><ul className={col}>{[['About us', '/pages/about'], ['Contact', '/pages/contact'], ['Shipping policy', '/pages/shipping-policy'], ['Refund policy', '/pages/refund-policy'], ['Privacy policy', '/pages/privacy'], ['Terms of service', '/pages/terms']].map(([l, h]) => <li key={h}><Link className={a} href={h!}>{l}</Link></li>)}</ul></nav>
+        <nav aria-label="Helpful links"><h2 className="tk-eyebrow mb-2 text-teal">Helpful links</h2><ul className={col}>{[['About us', '/pages/about'], ['Contact', '/pages/contact'], ['Shipping policy', '/pages/shipping-policy'], ['Refund policy', '/pages/refund-policy'], ['Privacy policy', '/pages/privacy'], ['Cookie policy', '/pages/cookies'], ['Terms of service', '/pages/terms']].map(([l, h]) => <li key={h}><Link className={a} href={h!}>{l}</Link></li>)}</ul></nav>
         <div><h2 className="tk-eyebrow mb-2 text-teal">More</h2>
           <ul className={col}><li><Link className={a} href="/blog">Blog and lookbook</Link></li><li><Link className={a} href="/account/orders">Track my order</Link></li><li><Link className={a} href="/compare">Compare products</Link></li></ul>
           <address className="mt-3 text-sm not-italic text-white/85">{contact.address}<br /><a href={`tel:${contact.phone}`} className="underline">{contact.phone}</a><br />{contact.email}</address>
           <SocialLinks links={contact.social} />
         </div>
       </div>
-      <p className="border-t border-white/20 px-6 py-4 text-center text-xs text-white/80">© {new Date().getFullYear()} Thunikart by Krishnas Orchids. All rights reserved.</p>
+      <p className="border-t border-white/20 px-6 py-4 text-center text-xs text-white/80">© {new Date().getFullYear()} Thunikart by Krishnas Orchids. All rights reserved. <CookieSettingsLink className="ml-2 min-h-11 font-semibold underline" /></p>
     </footer>
   );
 }

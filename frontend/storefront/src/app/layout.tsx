@@ -13,6 +13,7 @@ import { MobileHeader } from '@/components/mobile/MobileHeader';
 import { AnnouncementBar } from '@/components/shared/AnnouncementBar';
 import { CartDrawer } from '@/components/shared/CartDrawer';
 import { Footer } from '@/components/shared/Footer';
+import { ConsentBanner } from '@/components/shared/ConsentBanner';
 import { Providers } from '@/components/shared/Providers';
 import { SearchPanel } from '@/components/shared/SearchBox';
 import { SideMenu } from '@/components/shared/SideMenu';
@@ -46,6 +47,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <main id="main" className="min-h-[60vh] pb-24 md:pb-0">{children}</main>
           <Footer categories={categories} contact={home?.contact ?? FALLBACK} />
           <BottomBar />
+          <ConsentBanner />
         </Providers>
       </body>
     </html>
