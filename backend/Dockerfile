@@ -38,6 +38,9 @@ RUN sed -i '/frontend/d' pnpm-workspace.yaml && pnpm install --filter @thunikart
 # ---- runtime ----
 FROM ${NODE_IMAGE} AS runtime
 ENV NODE_ENV=production
+# The deploy tells AppSail the app listens on 9000. If AppSail does not inject X_ZOHO_CATALYST_LISTEN_PORT, the app would fall back to 4000 and
+# AppSail would report "check the startup command or port". The injected variable still wins when it is present.
+ENV PORT=9000
 WORKDIR /app
 COPY --from=prod-deps /repo/backend/node_modules ./node_modules
 COPY --from=build /repo/backend/dist ./dist
