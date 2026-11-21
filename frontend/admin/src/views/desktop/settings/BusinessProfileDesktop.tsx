@@ -12,10 +12,10 @@ function ProfileForm({ profile }: { profile: BusinessProfile }) {
   const f = useBusinessProfileForm(profile);
   const { register, formState: { errors }, watch } = f.form;
   return (
-    <form onSubmit={f.submit} noValidate className="max-w-4xl space-y-8" aria-label="Business profile">
+    <form onSubmit={f.submit} noValidate className="max-w-5xl space-y-6" aria-label="Business profile">
       {f.banner && <ErrorBanner {...f.banner} />}
-      <fieldset disabled={!canEdit} className="grid grid-cols-2 gap-4">
-        <legend className="mb-3 text-xs">Business</legend>
+      <fieldset disabled={!canEdit} className="grid grid-cols-2 gap-4 rounded-xl border-2 border-navy-100 p-5">
+        <legend className="px-2 text-xs font-bold">Business</legend>
         <Field label="Legal name" required error={errors.legalName?.message}>{(p) => <Input {...p} {...register('legalName')} />}</Field>
         <Field label="Brand name" required error={errors.brandName?.message}>{(p) => <Input {...p} {...register('brandName')} />}</Field>
         <Field label="Address (one line per row)" className="col-span-2" error={errors.addressText?.message}>{(p) => <textarea {...p} rows={3} {...register('addressText')} className="w-full rounded border-2 border-navy-100 px-3 py-2 text-sm" />}</Field>
@@ -28,8 +28,8 @@ function ProfileForm({ profile }: { profile: BusinessProfile }) {
         <Field label="Website" error={errors.website?.message}>{(p) => <Input {...p} {...register('website')} />}</Field>
       </fieldset>
 
-      <fieldset disabled={!canEdit} className="grid grid-cols-2 gap-4 rounded border-2 border-navy-100 p-4">
-        <legend className="px-2 text-xs">Tax</legend>
+      <fieldset disabled={!canEdit} className="grid grid-cols-2 gap-4 rounded-xl border-2 border-navy-100 p-5">
+        <legend className="px-2 text-xs font-bold">Tax</legend>
         <div className="col-span-2 flex items-center gap-3">
           <Badge tone={f.gstLive ? 'success' : 'neutral'}>{f.gstLive ? 'GST is on' : 'GST is off'}</Badge>
           <span className="text-sm text-muted">{f.gstLive && profile.gstGoLiveAt ? `Live since ${formatDate(profile.gstGoLiveAt)}.` : 'Saving a valid GSTIN turns GST on. Leave it empty to keep GST off.'}</span>
@@ -38,8 +38,8 @@ function ProfileForm({ profile }: { profile: BusinessProfile }) {
         <Field label="PAN" error={errors.pan?.message}>{(p) => <Input {...p} autoCapitalize="characters" {...register('pan')} />}</Field>
       </fieldset>
 
-      <fieldset disabled={!canEdit} className="grid grid-cols-2 gap-4">
-        <legend className="mb-3 text-xs">Invoices</legend>
+      <fieldset disabled={!canEdit} className="grid grid-cols-2 gap-4 rounded-xl border-2 border-navy-100 p-5">
+        <legend className="px-2 text-xs font-bold">Invoices</legend>
         <Field label="Default print size" required error={errors.defaultPrintSize?.message}>{(p) => <Select {...p} {...register('defaultPrintSize')}>{PRINT_SIZES.map((s) => <option key={s} value={s}>{PRINT_SIZE_LABELS[s]}</option>)}</Select>}</Field>
         <Field label="Invoice footer line" error={errors.invoiceFooter?.message}>{(p) => <Input {...p} {...register('invoiceFooter')} />}</Field>
         <Field label="Terms" className="col-span-2" error={errors.termsText?.message}>{(p) => <textarea {...p} rows={3} {...register('termsText')} className="w-full rounded border-2 border-navy-100 px-3 py-2 text-sm" />}</Field>

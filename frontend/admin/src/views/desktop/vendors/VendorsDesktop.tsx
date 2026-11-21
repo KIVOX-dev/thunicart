@@ -45,7 +45,7 @@ export function VendorsDesktop() {
         </>
       )}
       <Drawer side="right" open={!!open} onClose={() => setOpen(null)} title={open ? open.name : ''}>{open && <VendorDetail vendor={open} onSaved={() => { setOpen(null); toast('Vendor saved', 'success'); }} />}</Drawer>
-      <Modal open={!!dlg} onClose={() => setDlg(null)} title={dlg?.vendor ? 'Edit vendor' : 'Add vendor'}>
+      <Modal className="!w-[min(94vw,46rem)] !max-h-[calc(100dvh-2rem)]" open={!!dlg} onClose={() => setDlg(null)} title={dlg?.vendor ? 'Edit vendor' : 'Add vendor'}>
         {dlg && <VendorForm key={dlg.vendor?.id ?? 'new'} vendor={dlg.vendor} onDone={() => { setDlg(null); toast('Vendor saved', 'success'); }} />}
       </Modal>
     </div>

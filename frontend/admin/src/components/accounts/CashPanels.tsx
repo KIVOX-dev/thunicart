@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { formatDate, formatPaise } from '@thunikart/shared';
 import { Badge, BottomSheet, Button, EmptyState, ListSkeleton, Modal, Table, TBody, Td, Th, THead, Tr, useToast } from '@thunikart/ui';
 import { ExportButton } from '../ExportButton';
+import { StatCard } from '../reports/StatCard';
 import { QueryError } from '../ErrorBanner';
 import { ExpenseForm, SettleForm } from '../reports/AccountForms';
 import { useCan } from '../../features/auth/permissions';
@@ -21,8 +22,8 @@ export function CashEntries({ kind, compact }: { kind: CashKind; compact?: boole
   const add = can('accounts.create') && <Button variant="primary" className={compact ? 'min-h-12' : ''} block={compact} onClick={() => setOpen(true)}>Add {word}</Button>;
   return (
     <div className="flex flex-col gap-3 pb-2">
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="text-sm text-muted">This month: <strong data-testid={`${word}-month`}>{formatPaise(month.data ?? 0)}</strong></span>
+      <div className="flex flex-wrap items-start gap-3">
+        <dl className="w-full sm:w-64"><StatCard label={`${word === 'charge' ? 'Charges' : 'Expenses'} this month`} value={formatPaise(month.data ?? 0)} testId={`${word}-month`} /></dl>
         <span className="ml-auto flex items-start gap-2">{kind === 'expense' && <ExportButton dataset="expenses" sheet={compact} />}{!compact && add}</span>
       </div>
       {q.isPending ? <ListSkeleton label={`Loading ${word}s`} /> : q.isError ? <QueryError error={q.error} onRetry={() => q.refetch()} /> : data.length === 0 ? <EmptyState title={`No ${word}s yet`} body={kind === 'charge' ? 'Add bank charges, gateway fees, delivery charges and penalties.' : 'Add rent, salaries and other costs with a photo of the receipt.'} /> : compact ? data.map((e) => (

@@ -15,7 +15,7 @@ const reportRoutes = Object.entries(REPORTS).map(([name, def]) => defineRoute({
   handler: async ({ reply, query, user }) => {
     // Data scope from the permission matrix: Accounts and Admin see everything, Sales only their own sales, Buyer Purchase only purchase and stock reports.
     const full = user.isAdmin || user.permissions.has('accounts.view'); const seller = !full && user.permissions.has('sales.create');
-    if (!full && !seller && !['purchases', 'stock', 'mrp', 'non-moving', 'slow-moving'].includes(name)) throw forbidden('Your role can only see purchase and stock reports');
+    if (!full && !seller && !['purchases', 'stock', 'mrp', 'non-moving', 'slow-moving', 'vendors', 'items'].includes(name)) throw forbidden('Your role can only see purchase and stock reports');
     const rep = await def.run({ cashier: seller ? user.id : undefined, from: query.from, to: query.to, store: query.store, category: query.category, brand: query.brand, vendor: query.vendor, q: query.q, days: query.days, threshold: query.threshold, view: query.view });
     if (query.format === 'json') {
       const pg = pageOf(rep, query.page, query.pageSize);

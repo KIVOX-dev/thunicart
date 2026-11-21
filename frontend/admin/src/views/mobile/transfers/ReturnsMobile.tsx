@@ -11,7 +11,7 @@ export function ReturnsMobile() {
   const can = useCan();
   const items = [
     ...(can('purchase.view') ? [{ key: 'vendor', label: 'Vendor returns', panel: <VendorReturns compact /> }] : []),
-    { key: 'customer', label: 'Customer returns', panel: <CustomerReturns /> },
+    { key: 'customer', label: 'Customer returns', panel: <CustomerReturns compact /> },
     { key: 'transfers', label: 'Store transfers', panel: <TransfersPanel /> },
   ];
   return (

@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { formatDate, formatPaise } from '@thunikart/shared';
+import { ImagePlus } from 'lucide-react';
 import { Badge, BottomSheet, Button, Checkbox, EmptyState, Field, Input, ListSkeleton, Modal, Select, useToast } from '@thunikart/ui';
+import { KeyImage } from '../KeyImage';
 import { QueryError } from '../ErrorBanner';
 import { useCan } from '../../features/auth/permissions';
-import { EMPTY_FILTERS, useBulkItems, useItems } from '../../features/catalog/use-items';
+import { useMediaUploads } from '../../features/catalog/use-uploads';
+import { useStoreProducts, useUpdateProduct, type StoreProduct } from '../../features/store/use-products';
 import { ORDER_FLOW, uploadBannerImage, useBanners, useCmsPages, useMoveOrder, useStoreOrders, type Banner, type CmsPage } from '../../features/store/use-store';
 
 /** Website orders: filter by stage and move each one along (packed, shipped, delivered). Returns are handled under Return transfers. */
@@ -132,38 +135,84 @@ export function StoreContent({ compact }: { compact?: boolean }) {
   );
 }
 
-/** Products on the website. An item shows online when it is active and has stock; switch it on or off here. Full editing is in Items and labels. */
+/** Photos of one item, kept in the media bucket: add, put one first (the main photo), remove, then save. The first photo is the main one on the website. */
+function PhotoEditor({ product, onDone }: { product: StoreProduct; onDone: () => void }) {
+  const media = useMediaUploads({ imageKeys: product.images, videoKey: null, sizeChartKey: null });
+  const { update, saving, error } = useUpdateProduct();
+  const failed = media.entries.filter((e) => e.status === 'error');
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-sm text-muted">The first photo is the main one on the website. JPG, PNG or WebP, up to 5 MB each.</p>
+      {media.imageKeys.length === 0 ? <p className="rounded border border-dashed border-line p-4 text-center text-sm text-muted">No photos yet.</p> : (
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {media.imageKeys.map((k, i) => (
+            <li key={k} className="rounded border-2 border-navy-100 p-2">
+              <div className="aspect-[3/4] overflow-hidden rounded bg-mist"><KeyImage k={k} local={media.previewOf(k)} alt={`Photo ${i + 1}`} /></div>
+              <div className="mt-2 flex items-center justify-between gap-1 text-xs">
+                <span>{i === 0 ? 'Main photo' : `Photo ${i + 1}`}</span>
+                <span className="flex gap-1">
+                  {i > 0 && <button type="button" className="min-h-9 rounded px-2 underline" onClick={() => media.move(i, 0)}>Make main</button>}
+                  <button type="button" aria-label={`Remove photo ${i + 1}`} className="min-h-9 rounded px-2 text-danger underline" onClick={() => media.removeImage(k)}>Remove</button>
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+      {media.entries.filter((e) => e.status === 'uploading').map((e) => <p key={e.id} className="text-xs" role="status">Uploading {e.name}… {e.progress}%</p>)}
+      {failed.map((e) => <p key={e.id} role="alert" className="text-xs text-danger">{e.name}: {e.error} <button type="button" className="underline" onClick={() => media.retry(e.id)}>Retry</button> <button type="button" className="underline" onClick={() => media.dismiss(e.id)}>Dismiss</button></p>)}
+      {error && <p role="alert" className="text-sm text-danger">{error}</p>}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded border border-navy px-4 text-sm font-medium hover:bg-mist focus-within:outline focus-within:outline-2 focus-within:outline-offset-2">
+          <ImagePlus aria-hidden size={16} />Add photo
+          <input type="file" accept="image/jpeg,image/png,image/webp" multiple className="sr-only" aria-label="Add photo" onChange={(e) => { if (e.target.files) media.add(e.target.files, 'image'); e.target.value = ''; }} />
+        </label>
+        <Button variant="primary" loading={saving} disabled={media.busy} onClick={async () => { await update({ id: product.id, images: media.imageKeys }); onDone(); }}>Save photos</Button>
+      </div>
+    </div>
+  );
+}
+
+/** Items on the website. A product is live when it is switched on here, active, and has stock. Each one shows its main photo, with Add photo or Edit photos. */
 export function StoreProducts({ compact }: { compact?: boolean }) {
   const can = useCan();
   const { toast } = useToast();
   const [q, setQ] = useState('');
-  const [show, setShow] = useState('');
-  const list = useItems({ ...EMPTY_FILTERS, q, active: show === 'hidden' ? 'false' : show === 'online' ? 'true' : '' });
-  const bulk = useBulkItems();
+  const [show, setShow] = useState<'' | 'on' | 'off'>('');
+  const [photos, setPhotos] = useState<StoreProduct | null>(null);
+  const list = useStoreProducts(q, show);
+  const upd = useUpdateProduct();
   const rows = list.data?.pages.flatMap((p) => p.items) ?? [];
-  const toggle = async (id: string, on: boolean) => { await bulk.mutateAsync({ ids: [id], action: on ? 'activate' : 'deactivate' }); toast(on ? 'Shown on the website' : 'Hidden from the website', 'success'); };
+  const Sheet = compact ? BottomSheet : Modal;
+  const toggle = async (i: StoreProduct) => { await upd.update({ id: i.id, showOnWebsite: !i.showOnWebsite }); toast(i.showOnWebsite ? 'Hidden from the website' : 'Shown on the website', 'success'); };
   return (
     <div className="flex flex-col gap-3">
       <div className={compact ? 'flex flex-col gap-2' : 'flex flex-wrap items-center gap-3'}>
         <div className={compact ? '' : 'w-64'}><Input aria-label="Search products" placeholder="Name or code" className={compact ? 'min-h-12' : ''} value={q} onChange={(e) => setQ(e.target.value)} /></div>
-        <Select aria-label="Show" className={compact ? 'min-h-12' : 'w-44'} value={show} onChange={(e) => setShow(e.target.value)}><option value="">All products</option><option value="online">Switched on</option><option value="hidden">Hidden</option></Select>
-        {can('items.view') && <Link to="/items" className="text-xs underline">Edit photos, prices and sizes in Items and labels</Link>}
+        <Select aria-label="Show" className={compact ? 'min-h-12' : 'w-48'} value={show} onChange={(e) => setShow(e.target.value as typeof show)}><option value="">All products</option><option value="on">Switched on</option><option value="off">Not on the website</option></Select>
+        {can('items.view') && <Link to="/items" className="text-xs underline">Prices, sizes and details are in Items and labels</Link>}
       </div>
+      {upd.error && <p role="alert" className="text-sm text-danger">{upd.error}</p>}
       {list.isPending ? <ListSkeleton label="Loading products" /> : list.isError ? <QueryError error={list.error} onRetry={() => list.refetch()} /> : rows.length === 0 ? <EmptyState title="No products found" /> : (
         <ul className="flex flex-col gap-2">{rows.map((i) => {
-          const live = i.active && i.totalStock > 0;
+          const live = i.showOnWebsite && i.active && i.onHand > 0;
           return (
-            <li key={i.id} className="flex flex-wrap items-center justify-between gap-2 rounded border-2 border-navy-100 p-3 text-sm">
-              <span className="min-w-0"><strong>{i.name}</strong><span className="block text-xs text-muted">{i.code} · {i.category}{i.brand ? ` · ${i.brand}` : ''} · {i.totalStock} in stock</span></span>
-              <span className="flex items-center gap-2">
-                <Badge tone={live ? 'success' : i.active ? 'warning' : 'neutral'}>{live ? 'Live' : i.active ? 'No stock' : 'Hidden'}</Badge>
-                {can('items.edit') && <Button size="sm" disabled={bulk.isPending} onClick={() => toggle(i.id, !i.active)}>{i.active ? 'Hide' : 'Show'}</Button>}
+            <li key={i.id} className="flex flex-wrap items-center gap-3 rounded border-2 border-navy-100 p-3 text-sm">
+              <div className="h-16 w-12 shrink-0 overflow-hidden rounded bg-mist">{i.images[0] ? <KeyImage k={i.images[0]} alt={`${i.name} main photo`} /> : <span className="flex h-full w-full items-center justify-center text-muted"><ImagePlus aria-hidden size={18} /></span>}</div>
+              <span className="min-w-0 flex-1"><strong>{i.name}</strong><span className="block text-xs text-muted">{[i.model, i.categoryName, i.brandName].filter(Boolean).join(' · ')} · {i.onHand} in stock · {i.images.length} photo{i.images.length === 1 ? '' : 's'}</span></span>
+              <span className="flex flex-wrap items-center gap-2">
+                <Badge tone={live ? 'success' : i.showOnWebsite ? 'warning' : 'neutral'}>{live ? 'Live' : i.showOnWebsite ? (i.active ? 'On, no stock' : 'On, inactive') : 'Not on website'}</Badge>
+                {can('items.edit') && <Button size="sm" onClick={() => setPhotos(i)}>{i.images.length ? 'Edit photos' : 'Add photo'}</Button>}
+                {can('items.edit') && <Button size="sm" disabled={upd.saving} onClick={() => toggle(i)}>{i.showOnWebsite ? 'Hide' : 'Show'}</Button>}
               </span>
             </li>
           );
         })}</ul>
       )}
       {list.hasNextPage && <Button onClick={() => list.fetchNextPage()} loading={list.isFetchingNextPage}>Load more</Button>}
+      <Sheet open={!!photos} onClose={() => setPhotos(null)} title={photos ? `Photos: ${photos.name}` : ''}>
+        {photos && <PhotoEditor key={photos.id} product={photos} onDone={() => { setPhotos(null); toast('Photos saved', 'success'); }} />}
+      </Sheet>
     </div>
   );
 }

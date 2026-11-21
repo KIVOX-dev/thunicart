@@ -120,6 +120,23 @@ describe('reports: stock, margin, outstanding, daybook, dashboard', () => {
     expect((await h.get('/expenses?kind=charge')).body.items.every((e: any) => e.kind === 'charge')).toBe(true);
     expect((await h.get('/expenses?kind=expense')).body.items.some((e: any) => e.kind === 'charge')).toBe(false);
   });
+  it('list exports: vendors, customers, items and expenses download as Excel, CSV and a compact PDF', async () => {
+    for (const name of ['vendors', 'customers', 'items', 'expenses']) {
+      const j = await h.get(`/reports/${name}?format=json`);
+      expect(j.status).toBe(200);
+      expect(Array.isArray(j.body.rows)).toBe(true);
+      for (const fmt of ['xlsx', 'csv', 'pdf']) expect((await h.get(`/reports/${name}?format=${fmt}`)).status).toBe(200);
+    }
+    const pdf = await h.get('/reports/expenses?format=pdf');
+    expect(String(pdf.headers['content-type'])).toContain('pdf');
+  });
+  it('photos in the media bucket: a view link only for item photo keys', async () => {
+    expect((await h.get('/uploads/view?key=imports/2026/11/secret.xlsx')).status).toBe(400);
+    expect((await h.get('/uploads/view?key=images/../imports/x.jpg')).status).toBe(400);
+    const ok = await h.get('/uploads/view?key=images/2026/11/abc123-front.jpg');
+    expect(ok.status).toBe(200);
+    expect(typeof ok.body.url).toBe('string');
+  });
   it('outstanding: a B2B customer owes credit invoices less receipts, and the vendor side is included', async () => {
     const cust = (await h.get('/customers?q=Delhi')).body.items[0];
     expect((await h.get(`/customers/${cust.id}/outstanding`)).body).toMatchObject({ billed: 224000, outstanding: 224000 }); // the returned piece (112,000) went back to credit

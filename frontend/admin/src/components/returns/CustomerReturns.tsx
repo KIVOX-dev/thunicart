@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { formatDate, formatPaise } from '@thunikart/shared';
 import { Badge, Button, EmptyState, ListSkeleton, Select, Tabs, useToast } from '@thunikart/ui';
 import { QueryError } from '../ErrorBanner';
+import { ReturnPanel } from '../pos/ReturnPanel';
 import { useCan } from '../../features/auth/permissions';
 import { ONLINE_RETURN_STATUSES, useOfflineReturns, useOnlineReturns, useReturnStep, type OnlineReturn } from '../../features/inventory/use-customer-returns';
 
@@ -47,12 +47,11 @@ function Online() {
 }
 
 function Offline() {
-  const can = useCan();
   const q = useOfflineReturns();
   const rows = q.data?.pages.flatMap((p) => p.items) ?? [];
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-3"><p className="text-sm text-muted">Returns and exchanges taken at the counter. Each one has a credit note and the pieces go back to stock.</p>{can('sales.create') && <Link to="/billing/bills?tab=returns"><Button variant="primary">Take a return</Button></Link>}</div>
+      <p className="text-sm text-muted">Returns and exchanges that were taken. Each one has a credit note and the pieces went back to stock.</p>
       {q.isPending ? <ListSkeleton label="Loading counter returns" /> : q.isError ? <QueryError error={q.error} onRetry={() => q.refetch()} /> : rows.length === 0 ? <EmptyState title="No counter returns yet" /> : (
         <ul className="flex flex-col gap-2">{rows.map((r) => <li key={r.id} className="flex items-center justify-between rounded border-2 border-navy-100 p-3 text-sm"><span><strong>{r.creditNoteNumber}</strong>{r.invoiceNumber && <span className="block text-xs text-muted">Invoice {r.invoiceNumber}</span>}</span><strong>{formatPaise(r.refundTotal)}</strong></li>)}</ul>
       )}
@@ -62,7 +61,21 @@ function Offline() {
 }
 
 /** Customer returns: online (website orders, approve then refund) and offline (counter). Stock goes back up and the customer gets a refund or credit note. */
-export function CustomerReturns() {
-  const [kind, setKind] = useState('online');
-  return <Tabs value={kind} onChange={setKind} items={[{ key: 'online', label: 'Online orders', panel: <Online /> }, { key: 'offline', label: 'Counter (offline)', panel: <Offline /> }]} />;
+export function CustomerReturns({ compact }: { compact?: boolean }) {
+  const [kind, setKind] = useState('new');
+  return (
+    <Tabs value={kind} onChange={setKind} items={[
+      {
+        key: 'new', label: 'New return',
+        panel: (
+          <div className="flex flex-col gap-3">
+            <p className="text-sm text-muted">Take a return or exchange for any bill, counter (POS) or website (online). Scan the invoice barcode or type the bill number. Stock goes back up, and the customer gets a refund or a credit note.</p>
+            <ReturnPanel big={compact} sheet={compact} />
+          </div>
+        ),
+      },
+      { key: 'online', label: 'Online requests', panel: <Online /> },
+      { key: 'offline', label: 'Returns taken', panel: <Offline /> },
+    ]} />
+  );
 }

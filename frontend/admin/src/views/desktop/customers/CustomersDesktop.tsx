@@ -46,7 +46,7 @@ export function CustomersDesktop() {
           {list.hasNextPage && <div className="mt-3"><Button onClick={() => list.fetchNextPage()} loading={list.isFetchingNextPage}>Load more</Button></div>}
         </>
       )}
-      <Modal open={!!edit} onClose={() => setEdit(null)} title={edit?.customer ? 'Edit customer' : 'Add customer'}>
+      <Modal className="!w-[min(94vw,46rem)] !max-h-[calc(100dvh-2rem)]" open={!!edit} onClose={() => setEdit(null)} title={edit?.customer ? 'Edit customer' : 'Add customer'}>
         {edit && <CustomerForm key={edit.customer?.id ?? 'new'} customer={edit.customer} onDone={() => { setEdit(null); toast('Customer saved', 'success'); }} />}
       </Modal>
       <Modal open={dupes} onClose={() => setDupes(false)} title="Duplicate customers"><DuplicateCustomers onDone={() => setDupes(false)} /></Modal>

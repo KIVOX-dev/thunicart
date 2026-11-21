@@ -15,6 +15,8 @@ const label = (k: string) => REVIEW_LABELS[k] ?? k;
 
 const HSN = ['MISSING_HSN', 'INVALID_HSN', 'HSN_NO_RATE'];
 const TEXT_FIELD: Record<string, { key: 'category' | 'brand' | 'model'; label: string }> = { MISSING_CATEGORY: { key: 'category', label: 'Category' }, MISSING_BRAND: { key: 'brand', label: 'Brand' }, MISSING_MODEL: { key: 'model', label: 'Model' } };
+/** Sizes worth a single tap. Free Size first, because most of the rows here are items with no size at all. */
+const QUICK_SIZES = ['Free Size', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL'];
 const rupeesToInt = (v: string) => Math.round(Number(v) * 100);
 
 function Row({ r }: { r: ReviewRow }) {
@@ -22,6 +24,7 @@ function Row({ r }: { r: ReviewRow }) {
   const facets = useFacets().data;
   const [hsn, setHsn] = useState(r.hsn);
   const [size, setSize] = useState(r.size);
+  const [otherSize, setOtherSize] = useState(false);
   const [text, setText] = useState('');
   const [sizesText, setSizesText] = useState(((r.sizes ?? []).length ? r.sizes : [r.size]).filter(Boolean).join(', '));
   const [mrp, setMrp] = useState(r.mrp ? String(r.mrp / 100) : '');
@@ -45,9 +48,15 @@ function Row({ r }: { r: ReviewRow }) {
             <Button size="sm" variant="primary" disabled={!/^(\d{4}|\d{6}|\d{8})$/.test(hsn)} onClick={() => save({ action: 'set', set: { hsn } })}>Save</Button>
           </>)}
           {(r.issue === 'MISSING_SIZE' || r.issue === 'ODD_SIZE') && (<>
-            <Input aria-label={`Size for ${r.code}`} className="w-28" value={size} onChange={(e) => setSize(e.target.value)} />
-            <Button size="sm" onClick={() => save({ action: 'set', set: { size: 'Free Size' } })}>Free Size</Button>
-            <Button size="sm" variant="primary" disabled={!size.trim()} onClick={() => save({ action: 'set', set: { size: size.trim() } })}>Save</Button>
+            {/* One tap sets the size and saves. Typing is only for an unusual size, behind Other. */}
+            <div role="group" aria-label={`Choose the size for ${r.code}`} className="flex flex-wrap items-center gap-1">
+              {QUICK_SIZES.map((z) => <Button key={z} size="sm" disabled={fix.isPending} onClick={() => save({ action: 'set', set: { size: z } })} aria-label={`Set size ${z} for ${r.code}`}>{z}</Button>)}
+              <Button size="sm" variant={otherSize ? 'primary' : undefined} aria-expanded={otherSize} onClick={() => setOtherSize((o) => !o)}>Other</Button>
+            </div>
+            {otherSize && (<>
+              <Input aria-label={`Other size for ${r.code}`} className="w-28" autoFocus value={size} onChange={(e) => setSize(e.target.value)} />
+              <Button size="sm" variant="primary" disabled={!size.trim()} onClick={() => save({ action: 'set', set: { size: size.trim() } })}>Save</Button>
+            </>)}
           </>)}
           {r.issue === 'MULTI_SIZE' && (<>
             <Input aria-label={`Sizes for ${r.code}, separated by commas`} className="w-44" placeholder="S, M, L, XL" value={sizesText} onChange={(e) => setSizesText(e.target.value)} />

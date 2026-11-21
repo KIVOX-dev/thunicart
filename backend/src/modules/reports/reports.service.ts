@@ -143,6 +143,34 @@ export const REPORTS: Record<string, { title: string; run: Fn }> = {
       return { name: 'purchase-vs-sales', title: 'Purchase versus sales value (excluding tax)', columns: [{ key: 'month', label: 'Month' }, { key: 'netPurchases', label: 'Net purchases', type: 'paise' }, { key: 'netSales', label: 'Net sales', type: 'paise' }, { key: 'purchases', label: 'Purchases', type: 'paise' }, { key: 'purchaseReturns', label: 'Purchase returns', type: 'paise' }, { key: 'sales', label: 'Sales', type: 'paise' }, { key: 'salesReturns', label: 'Sales returns', type: 'paise' }], rows, totals: { netPurchases: sum(rows, 'netPurchases'), netSales: sum(rows, 'netSales') } };
     },
   },
+  // ---- list exports: the Export button on the Vendors, Customers, Items and Expenses lists ----
+  vendors: {
+    title: 'Vendors', run: async (q) => {
+      const rows = ((await Vendor.find().sort({ name: 1 }).lean()) as any[]).filter((v) => !q.q || `${v.name} ${v.vendorId} ${v.mobile}`.toLowerCase().includes(q.q.toLowerCase()))
+        .map((v) => ({ vendorId: v.vendorId, name: v.name, contactPerson: v.contactPerson ?? '', mobile: v.mobile, email: v.email, city: v.city ?? '', gstin: v.gstin ?? '', paymentTerms: v.paymentTerms ?? '', active: v.active ? 'Yes' : 'No' }));
+      return { name: 'vendors', title: 'Vendors', columns: [{ key: 'vendorId', label: 'Code' }, { key: 'name', label: 'Name' }, { key: 'contactPerson', label: 'Contact' }, { key: 'mobile', label: 'Mobile' }, { key: 'email', label: 'Email' }, { key: 'city', label: 'City' }, { key: 'gstin', label: 'GSTIN' }, { key: 'paymentTerms', label: 'Terms' }, { key: 'active', label: 'Active' }], rows };
+    },
+  },
+  customers: {
+    title: 'Customers', run: async (q) => {
+      const rows = ((await Customer.find().sort({ name: 1 }).lean()) as any[]).filter((c) => !q.q || `${c.name} ${c.customerId} ${c.mobile}`.toLowerCase().includes(q.q.toLowerCase()))
+        .map((c) => ({ customerId: c.customerId, name: c.name, mobile: c.mobile, email: c.email ?? '', city: c.city ?? '', accountGroup: c.accountGroup, source: c.accountGroup === 'E-commerce B2C' ? 'Online' : 'Offline', gstin: c.gstin ?? '', creditLimit: c.creditLimit ?? 0 }));
+      return { name: 'customers', title: 'Customers', columns: [{ key: 'customerId', label: 'Code' }, { key: 'name', label: 'Name' }, { key: 'mobile', label: 'Mobile' }, { key: 'email', label: 'Email' }, { key: 'city', label: 'City' }, { key: 'accountGroup', label: 'Group' }, { key: 'source', label: 'Source' }, { key: 'gstin', label: 'GSTIN' }, { key: 'creditLimit', label: 'Credit limit', type: 'paise' }], rows };
+    },
+  },
+  items: {
+    title: 'Items', run: async (q) => {
+      const rows = [...(await variantMeta()).values()].filter((m) => matches(m, q)).map((m) => ({ itemCode: m.itemCode, name: m.name, size: m.size ?? '', category: m.category, brand: m.brand, hsn: m.hsn, mrp: m.mrp, sellingPrice: m.sellingPrice, baseCost: m.baseCost }));
+      return { name: 'items', title: 'Items', columns: [{ key: 'itemCode', label: 'Item code' }, { key: 'name', label: 'Item' }, { key: 'size', label: 'Size' }, { key: 'category', label: 'Category' }, { key: 'brand', label: 'Brand' }, { key: 'hsn', label: 'HSN' }, { key: 'mrp', label: 'MRP', type: 'paise' }, { key: 'sellingPrice', label: 'Selling', type: 'paise' }, { key: 'baseCost', label: 'Cost', type: 'paise' }], rows };
+    },
+  },
+  expenses: {
+    title: 'Expenses and charges', run: async (q) => {
+      const d = dateFilter(q);
+      const rows = ((await Expense.find(d ? { date: d } : {}).sort({ date: -1 }).lean()) as any[]).map((e) => ({ date: ymd(e.date), kind: e.kind === 'charge' ? 'Charge' : 'Expense', category: e.category, payee: e.payee ?? '', mode: e.mode, amount: e.amount, notes: e.notes ?? '' }));
+      return { name: 'expenses', title: 'Expenses and charges', columns: [{ key: 'date', label: 'Date' }, { key: 'kind', label: 'Type' }, { key: 'category', label: 'Category' }, { key: 'payee', label: 'Paid to' }, { key: 'mode', label: 'Mode' }, { key: 'amount', label: 'Amount', type: 'paise' }, { key: 'notes', label: 'Note' }], rows, totals: { amount: sum(rows, 'amount') } };
+    },
+  },
 };
 
 /** B2B receivable = invoices on credit - credit notes to credit - receipts. */

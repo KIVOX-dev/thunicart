@@ -27,7 +27,7 @@ async function runJob(id: string) {
   try {
     let out: { body: Buffer; contentType: string; ext: string };
     if (job.kind === 'full') out = { body: await buildFullZip(), contentType: CT.zip, ext: 'zip' };
-    else { const r = REPORTS[job.kind]; if (!r) throw new Error(`Unknown report ${job.kind}`); out = await renderReport(await r.run(job.filters ?? {}), job.format, JSON.stringify(job.filters ?? {})); }
+    else { const r = REPORTS[job.kind]; if (!r) throw new Error(`Unknown report ${job.kind}`); out = await renderReport(await r.run(job.filters ?? {}), job.format, ''); }
     const filename = `${job.kind}-${new Date().toISOString().slice(0, 10)}.${out.ext}`; const key = `exports/${id}/${filename}`;
     await storage().putObject('backups', key, out.body, out.contentType);
     await ExportJob.updateOne({ _id: id }, { $set: { status: 'done', fileKey: key, filename, contentType: out.contentType, bytes: out.body.length } });

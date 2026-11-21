@@ -44,6 +44,17 @@ export const uploadRoutes = [
       return { key, uploadUrl: p.url, method: p.method, headers: p.headers, expiresInSeconds: expiresSec, maxBytes: rule.max };
     },
   }),
+  defineRoute({
+    method: 'GET', path: '/uploads/view', summary: 'A short lived link to look at a photo or size chart already in the media bucket (the bucket is private)', tags: ['Uploads'],
+    permission: 'authenticated', query: z.object({ key: z.string().min(3).max(300) }), response: z.object({ url: z.string(), expiresInSeconds: z.number().int() }), errors: [400, 403],
+    handler: async ({ user, query }) => {
+      // Only the media folders the upload route writes to. Never imports, backups or anything else in the other bucket.
+      if (!/^(images|size-charts)\/[\w./-]+$/.test(query.key) || query.key.includes('..')) throw badRequest('This is not a photo key', [{ path: 'key', message: 'Use a key from an item' }]);
+      if (!['items.view', 'cms.view', 'items.edit'].some((k) => user.permissions.has(k))) throw forbidden('You need items.view');
+      const expiresSec = 3600;
+      return { url: await storage().presignGet({ bucket: 'media', key: query.key, expiresSec }), expiresInSeconds: expiresSec };
+    },
+  }),
   // Mock twin of the B2 upload URL. Only exists while storage is in mock mode (keys are REPLACE_ME).
   defineRoute({
     method: 'PUT', path: '/uploads/local/:token', summary: 'Development only: receives a file when storage runs in mock mode', tags: ['Uploads'], permission: 'public',

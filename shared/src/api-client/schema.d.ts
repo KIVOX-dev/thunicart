@@ -1115,6 +1115,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/uploads/view": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A short lived link to look at a photo or size chart already in the media bucket (the bucket is private) */
+        get: operations["getApiV1UploadsView"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/uploads/local/{token}": {
         parameters: {
             query?: never;
@@ -2142,6 +2159,74 @@ export interface paths {
         };
         /** Purchase versus sales value by month. ?format=json (paged), xlsx, csv or pdf (everything, same data). */
         get: operations["getApiV1ReportsPurchaseVsSales"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/vendors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Vendors. ?format=json (paged), xlsx, csv or pdf (everything, same data). */
+        get: operations["getApiV1ReportsVendors"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/customers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Customers. ?format=json (paged), xlsx, csv or pdf (everything, same data). */
+        get: operations["getApiV1ReportsCustomers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Items. ?format=json (paged), xlsx, csv or pdf (everything, same data). */
+        get: operations["getApiV1ReportsItems"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/expenses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Expenses and charges. ?format=json (paged), xlsx, csv or pdf (everything, same data). */
+        get: operations["getApiV1ReportsExpenses"];
         put?: never;
         post?: never;
         delete?: never;
@@ -11757,6 +11842,58 @@ export interface operations {
             };
         };
     };
+    getApiV1UploadsView: {
+        parameters: {
+            query: {
+                key: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        url: string;
+                        expiresInSeconds: number;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     putApiV1UploadsLocalToken: {
         parameters: {
             query?: never;
@@ -18852,6 +18989,250 @@ export interface operations {
         };
     };
     getApiV1ReportsPurchaseVsSales: {
+        parameters: {
+            query?: {
+                from?: string;
+                to?: string;
+                store?: string;
+                category?: string;
+                brand?: string;
+                vendor?: string;
+                q?: string;
+                page?: number;
+                pageSize?: number;
+                format?: "json" | "xlsx" | "csv" | "pdf";
+                days?: number;
+                threshold?: number;
+                view?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getApiV1ReportsVendors: {
+        parameters: {
+            query?: {
+                from?: string;
+                to?: string;
+                store?: string;
+                category?: string;
+                brand?: string;
+                vendor?: string;
+                q?: string;
+                page?: number;
+                pageSize?: number;
+                format?: "json" | "xlsx" | "csv" | "pdf";
+                days?: number;
+                threshold?: number;
+                view?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getApiV1ReportsCustomers: {
+        parameters: {
+            query?: {
+                from?: string;
+                to?: string;
+                store?: string;
+                category?: string;
+                brand?: string;
+                vendor?: string;
+                q?: string;
+                page?: number;
+                pageSize?: number;
+                format?: "json" | "xlsx" | "csv" | "pdf";
+                days?: number;
+                threshold?: number;
+                view?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getApiV1ReportsItems: {
+        parameters: {
+            query?: {
+                from?: string;
+                to?: string;
+                store?: string;
+                category?: string;
+                brand?: string;
+                vendor?: string;
+                q?: string;
+                page?: number;
+                pageSize?: number;
+                format?: "json" | "xlsx" | "csv" | "pdf";
+                days?: number;
+                threshold?: number;
+                view?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getApiV1ReportsExpenses: {
         parameters: {
             query?: {
                 from?: string;

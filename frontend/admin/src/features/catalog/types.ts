@@ -120,10 +120,11 @@ export const vendorBody = z.object({
   address: z.string().trim().max(200),
   city: z.string().trim().max(80),
   stateCode: z.string().regex(/^\d{2}$/, 'Choose a state'),
-  gstin: z.string().trim().toUpperCase().regex(gstinFormat, 'GSTIN format is not valid'),
-  pan: z.string().trim().toUpperCase().regex(panFormat, 'PAN format is not valid'),
+  // Optional here: the server asks for a vendor GSTIN only while GST is on, and takes the PAN from the GSTIN when it is left empty.
+  gstin: z.string().trim().toUpperCase().regex(gstinFormat, 'GSTIN format is not valid').or(z.literal('')),
+  pan: z.string().trim().toUpperCase().regex(panFormat, 'PAN format is not valid').or(z.literal('')),
   paymentTerms: z.string().trim().min(1, 'Payment terms are required').max(20),
-  glAccount: z.string().trim().min(1, 'Reconciliation GL account is required').max(20),
+  glAccount: z.string().trim().max(20),
 });
 export type VendorBody = z.infer<typeof vendorBody>;
 
@@ -163,7 +164,7 @@ export const customerBody = z.object({
   stateCode: z.string().regex(/^\d{2}$/, 'Choose a state'),
   gstin: z.string().trim().toUpperCase().regex(gstinFormat, 'GSTIN format is not valid').or(z.literal('')),
   pan: z.string().trim().toUpperCase().regex(panFormat, 'PAN format is not valid').or(z.literal('')),
-  glAccount: z.string().trim().min(1, 'Reconciliation GL account is required').max(20),
+  glAccount: z.string().trim().max(20),
 });
 export type CustomerBody = z.infer<typeof customerBody>;
 

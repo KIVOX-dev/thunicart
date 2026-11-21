@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { ArrowDown, ArrowUp, Trash2 } from 'lucide-react';
 import { Button } from '@thunikart/ui';
 import type { useMediaUploads } from '../features/catalog/use-uploads';
+import { KeyImage } from './KeyImage';
 
 type Media = ReturnType<typeof useMediaUploads>;
 const fileName = (key: string) => key.split('/').pop() ?? key;
@@ -25,7 +26,7 @@ export function MediaManager({ media }: { media: Media }) {
             {media.imageKeys.map((k, i) => (
               <li key={k} draggable onDragStart={() => { drag.current = i; }} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (drag.current !== null) media.move(drag.current, i); drag.current = null; }} className="rounded border-2 border-navy-100 p-2">
                 <div className="flex aspect-[3/4] items-center justify-center overflow-hidden rounded bg-mist">
-                  {media.previewOf(k) ? <img src={media.previewOf(k)} alt={`Image ${i + 1}`} className="h-full w-full object-cover" /> : <span className="px-2 text-center text-xs text-muted">{fileName(k)}</span>}
+                  <KeyImage k={k} local={media.previewOf(k)} alt={`Image ${i + 1}: ${fileName(k)}`} />
                 </div>
                 <div className="mt-2 flex items-center justify-between">
                   <span className="text-xs">{i === 0 ? 'Main' : `#${i + 1}`}</span>
