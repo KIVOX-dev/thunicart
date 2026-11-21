@@ -6,7 +6,7 @@ import { dataQuality, listEnvelope, reviewRow } from './types';
 interface ApiReview { id: string; itemId: string | null; itemCode: string; name: string; category: string | null; reasons: string[]; detail: Record<string, unknown>; suggestion: { hsn: string } | null }
 const toRow = (r: ApiReview) => reviewRow.parse({
   id: r.id, itemId: r.itemId ?? r.id, code: r.itemCode, name: r.name, category: r.category ?? '', issue: r.reasons[0] ?? '',
-  size: String(r.detail.size ?? ''), hsn: String(r.detail.hsn ?? ''), mrp: Number(r.detail.mrp ?? 0) | 0, onHand: Number(r.detail.onHand ?? 0) | 0, suggestedHsn: r.suggestion?.hsn ?? null,
+  size: String(r.detail.size ?? ''), hsn: String(r.detail.hsn ?? ''), mrp: Number(r.detail.mrp ?? 0) | 0, onHand: Number(r.detail.onHand ?? 0) | 0, batch: String(r.detail.batchRef ?? ''), suggestedHsn: r.suggestion?.hsn ?? null,
   sizes: Array.isArray(r.detail.sizes) ? (r.detail.sizes as unknown[]).map(String) : [],
 });
 

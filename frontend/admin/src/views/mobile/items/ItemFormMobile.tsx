@@ -4,7 +4,7 @@ import { Badge, Button, Checkbox, Field, Input, ListSkeleton, useToast } from '@
 import { ErrorBanner, QueryError } from '../../../components/ErrorBanner';
 import { MediaManager } from '../../../components/MediaManager';
 import { statusTone } from '../../../components/StockCard';
-import { useCan } from '../../../features/auth/permissions';
+import { useCan, useGstMode } from '../../../features/auth/permissions';
 import type { Item } from '../../../features/catalog/types';
 import { emptyVariant, useFacets, useItem, useItemForm } from '../../../features/catalog/use-items';
 
@@ -17,11 +17,12 @@ function Form({ item }: { item?: Item }) {
   const { toast } = useToast();
   const canSave = useCan()(item ? 'items.edit' : 'items.create');
   const facets = useFacets().data;
+  const gst = useGstMode(); // HSN is only asked for while GST is on
   const [step, setStep] = useState(0);
   const { form, variants, media, submit, banner, saving } = useItemForm(item, (i) => { toast(item ? 'Item saved' : 'Item added', 'success'); nav(`/items/${i.id}`, { replace: true }); });
   const { register, trigger, formState: { errors: e }, watch } = form;
   const next = async () => {
-    const ok = await trigger(step === 0 ? ['code', 'name', 'category', 'model', 'type', 'hsn'] : undefined);
+    const ok = await trigger(step === 0 ? ['code', 'name', 'category', 'model', 'type', ...(gst === 'on' ? (['hsn'] as const) : [])] : undefined);
     if (ok) setStep((s) => s + 1);
   };
   return (
@@ -40,8 +41,8 @@ function Form({ item }: { item?: Item }) {
           <Field label="Brand" error={e.brand?.message}>{(p) => <Input {...p} className={big} {...register('brand')} />}</Field>
           <Field label="Model/Style No" required error={e.model?.message}>{(p) => <Input {...p} className={big} {...register('model')} />}</Field>
           <Field label="Type" required error={e.type?.message}>{(p) => <Input {...p} className={big} {...register('type')} />}</Field>
-          <Field label="HSN Code" hint="4, 6 or 8 digits" error={e.hsn?.message}>{(p) => <Input {...p} inputMode="numeric" className={big} {...register('hsn')} />}</Field>
-          {!watch('hsn') && <Badge tone="warning" className="self-start">No HSN. Add one before GST goes live.</Badge>}
+          {gst === 'on' && <Field label="HSN Code" hint="4, 6 or 8 digits" error={e.hsn?.message}>{(p) => <Input {...p} inputMode="numeric" className={big} {...register('hsn')} />}</Field>}
+          {gst === 'on' && !watch('hsn') && <Badge tone="warning" className="self-start">No HSN. GST invoices need one.</Badge>}
           <Checkbox label="Active" {...register('active')} />
           <datalist id="m-cats">{facets?.categories.map((c) => <option key={c} value={c} />)}</datalist>
         </fieldset>

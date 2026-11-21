@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Brand, Category, Customer, ImportEffect, Item, LoyaltyLedger, ReviewItem, StockBalance, StockLedger, Variant, Vendor } from '../src/models';
 import { setupTest, type TestCtx } from './helpers';
 import { sheetBuffer, startImport } from './b1.helpers';
+import { setGst } from './b2.helpers';
 
 let t: TestCtx;
 const A = '/api/v1';
@@ -43,6 +44,9 @@ function stockSheet() {
 }
 
 describe('stock sheet import: the Krishnas Orchids rules', () => {
+  // HSN problems are only shown while GST is on, and these rules are about them
+  beforeAll(async () => { await setGst(t, true); });
+  afterAll(async () => { await setGst(t, false); }); // the next group starts with GST off, as a new shop does
   let id: string;
   it('detects the sheet, suggests the saved Krishnas Orchids mapping, and previews without writing', async () => {
     const r = await startImport(t, t.adminToken, 'opening_stock', 'Master Sheet.xlsx', stockSheet());
@@ -131,6 +135,20 @@ describe('stock sheet import: the Krishnas Orchids rules', () => {
     // each row carries the live MRP from the database; a row with no price shows 0 so the screen can ask for one
     expect(by('KO1000409').detail.mrp).toBeGreaterThan(0);
     expect(by('KO1000408').detail.mrp).toBe(0);
+  });
+  it('while GST is off the HSN problems are not shown, and they come back when GST is switched on', async () => {
+    await setGst(t, false);
+    const off = await get('/imports/review-queue?pageSize=100');
+    const reasons = off.body.items.flatMap((i: any) => i.reasons);
+    expect(reasons.some((r: string) => r.includes('HSN'))).toBe(false);
+    expect(off.body.items.every((i: any) => i.reasons.length > 0 && i.suggestion === null)).toBe(true);
+    expect(off.body.items.find((i: any) => i.itemCode === 'KO1000404')).toBeUndefined(); // its only problem was a missing HSN
+    const dq = (await get('/imports/data-quality')).body;
+    expect(Object.keys(dq.summary).some((k) => k.includes('HSN'))).toBe(false);
+    expect(dq.hsnWithoutRate).toEqual([]);
+    await setGst(t, true);
+    const on = await get('/imports/review-queue?pageSize=100');
+    expect(on.body.items.find((i: any) => i.itemCode === 'KO1000404').reasons).toEqual(['MISSING_HSN']);
   });
   it('suggests an HSN from the same category with the count behind it, and never applies it silently', async () => {
     const q = await get('/imports/review-queue?reason=MISSING_HSN');

@@ -5,7 +5,7 @@ import { ErrorBanner, QueryError } from '../../../components/ErrorBanner';
 import { MediaManager } from '../../../components/MediaManager';
 import { PageHeader } from '../../../components/PageHeader';
 import { statusTone } from '../../../components/StockCard';
-import { useCan } from '../../../features/auth/permissions';
+import { useCan, useGstMode } from '../../../features/auth/permissions';
 import type { Item } from '../../../features/catalog/types';
 import { emptyVariant, useFacets, useItem, useItemForm } from '../../../features/catalog/use-items';
 
@@ -13,6 +13,7 @@ function Form({ item }: { item?: Item }) {
   const nav = useNavigate();
   const { toast } = useToast();
   const can = useCan();
+  const gst = useGstMode(); // HSN is only asked for while GST is on
   const canSave = can(item ? 'items.edit' : 'items.create');
   const facets = useFacets().data;
   const { form, variants, media, submit, banner, saving } = useItemForm(item, (i) => { toast(item ? 'Item saved' : 'Item added', 'success'); nav(`/items/${i.id}`, { replace: true }); });
@@ -36,8 +37,8 @@ function Form({ item }: { item?: Item }) {
         <Field label="Brand" error={e.brand?.message}>{(p) => <Input {...p} list="item-brands" {...register('brand')} />}</Field>
         <Field label="Model/Style No" required error={e.model?.message}>{(p) => <Input {...p} {...register('model')} />}</Field>
         <Field label="Type" required hint="For example Knitted or Woven/Not Knitted" error={e.type?.message}>{(p) => <Input {...p} {...register('type')} />}</Field>
-        <Field label="HSN Code" hint="4, 6 or 8 digits" error={e.hsn?.message}>{(p) => <Input {...p} inputMode="numeric" {...register('hsn')} />}</Field>
-        <div className="flex items-end gap-3 pb-2">{!hsn && <Badge tone="warning">No HSN. Add one before GST goes live.</Badge>}<Checkbox label="Active" {...register('active')} /></div>
+        {gst === 'on' && <Field label="HSN Code" hint="4, 6 or 8 digits" error={e.hsn?.message}>{(p) => <Input {...p} inputMode="numeric" {...register('hsn')} />}</Field>}
+        <div className="flex items-end gap-3 pb-2">{gst === 'on' && !hsn && <Badge tone="warning">No HSN. GST invoices need one.</Badge>}<Checkbox label="Active" {...register('active')} /></div>
         <Field label="Description" className="col-span-3" error={e.description?.message}>{(p) => <textarea {...p} rows={3} {...register('description')} className="w-full rounded border-2 border-navy-100 px-3 py-2 text-sm" />}</Field>
         <datalist id="item-cats">{facets?.categories.map((c) => <option key={c} value={c} />)}</datalist>
         <datalist id="item-brands">{facets?.brands.map((c) => <option key={c} value={c} />)}</datalist>

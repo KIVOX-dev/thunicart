@@ -1,5 +1,6 @@
 import { Brand, Category, GstRate, Item, ReviewItem, StockBalance, Variant } from '../../models';
 import { withTransaction } from '../../lib/transaction';
+import { isGstEnabled } from '../../lib/gst';
 import { postStock } from '../../lib/stock';
 import type { ListQuery } from '@thunikart/shared';
 import { badRequest } from '../../lib/errors';
@@ -20,16 +21,23 @@ export const reviewDto = (r: any) => ({
   suggestion: r.suggestion ?? null, status: r.status,
 });
 
+/** HSN only matters for GST invoices. While GST is off these problems are not shown, and they come back the day GST is switched on. */
+const HSN_REASONS = ['MISSING_HSN', 'INVALID_HSN', 'HSN_NO_RATE'];
+const withoutHsn = (r: any) => ({ ...r, reasons: (r.reasons ?? []).filter((x: string) => !HSN_REASONS.includes(x)), suggestion: null });
+
 export async function listReview(q: ListQuery & { reason?: string; batchId?: string; reviewStatus?: string }) {
   const f: any = { status: q.reviewStatus ?? 'open' };
+  const gstOn = await isGstEnabled();
   if (q.reason) f.reasons = q.reason;
+  else if (!gstOn) f.reasons = { $elemMatch: { $nin: HSN_REASONS } };
   if (q.batchId) f.batchId = q.batchId;
   if (q.q) { const r = new RegExp(escapeRegex(q.q), 'i'); f.$or = [{ itemCode: r }, { name: r }, { category: r }]; }
-  const res = await paginate(ReviewItem, f, q, parseSort(q.sort, ['rowNumber', 'itemCode', 'name'], { rowNumber: 1 }), reviewDto);
+  const res0 = await paginate(ReviewItem, f, q, parseSort(q.sort, ['rowNumber', 'itemCode', 'name'], { rowNumber: 1 }), reviewDto);
+  const res = gstOn ? res0 : { ...res0, items: res0.items.map(withoutHsn) };
   // The import only remembers what was wrong. The price, size and HSN to show come from the live records, so a fix made elsewhere shows too.
   const vids = res.items.map((i: any) => i.variantId).filter(Boolean);
   if (!vids.length) return res;
-  const vs: any[] = await Variant.find({ _id: { $in: vids } }, { itemId: 1, size: 1, mrp: 1, sellingPrice: 1 }).lean();
+  const vs: any[] = await Variant.find({ _id: { $in: vids } }, { itemId: 1, size: 1, mrp: 1, sellingPrice: 1, batchRef: 1 }).lean();
   const its: any[] = await Item.find({ _id: { $in: vs.map((v) => v.itemId) } }, { hsn: 1 }).lean();
   const stock: any[] = await StockBalance.aggregate([{ $match: { variantId: { $in: vs.map((v) => v._id) } } }, { $group: { _id: '$variantId', onHand: { $sum: '$onHand' }, reserved: { $sum: '$reserved' } } }]);
   const sm = new Map(stock.map((x) => [String(x._id), x.onHand - x.reserved]));
@@ -38,7 +46,7 @@ export async function listReview(q: ListQuery & { reason?: string; batchId?: str
     ...res,
     items: res.items.map((i: any) => {
       const v = vm.get(i.variantId); if (!v) return i;
-      return { ...i, detail: { ...i.detail, mrp: v.mrp ?? 0, sellingPrice: v.sellingPrice ?? 0, size: i.detail?.size ?? v.size ?? '', hsn: i.detail?.hsn ?? im.get(String(v.itemId))?.hsn ?? '', onHand: sm.get(String(v._id)) ?? 0 } };
+      return { ...i, detail: { ...i.detail, mrp: v.mrp ?? 0, sellingPrice: v.sellingPrice ?? 0, size: i.detail?.size ?? v.size ?? '', hsn: i.detail?.hsn ?? im.get(String(v.itemId))?.hsn ?? '', onHand: sm.get(String(v._id)) ?? 0, batchRef: v.batchRef ?? '' } };
     }),
   };
 }
@@ -151,15 +159,17 @@ export async function bulkReview(input: any, userId: string, audit: Audit) {
 // ---------- data quality report ----------
 export async function dataQuality(batchId?: string) {
   const f: any = { status: 'open' }; if (batchId) f.batchId = batchId;
+  const gstOn = await isGstEnabled();
+  if (!gstOn) f.reasons = { $elemMatch: { $nin: HSN_REASONS } }; // rows whose only problem is the HSN are left out while GST is off
   const rows: any[] = await ReviewItem.find(f).sort({ rowNumber: 1 }).limit(5000).lean();
   const summary: Record<string, number> = {};
-  for (const r of rows) for (const reason of r.reasons) summary[reason] = (summary[reason] ?? 0) + 1;
+  for (const r of rows) for (const reason of r.reasons) { if (!gstOn && HSN_REASONS.includes(reason)) continue; summary[reason] = (summary[reason] ?? 0) + 1; }
   // HSN codes in use that no GST rate rule covers (the HSN master only lists some headings).
   const hsns: any[] = await Item.aggregate([{ $match: { hsn: { $nin: [null, ''] } } }, { $group: { _id: { $substrBytes: ['$hsn', 0, 4] }, items: { $sum: 1 } } }]);
   const rated = new Set<string>((await GstRate.distinct('hsnCode')).map((c: string) => c.slice(0, 4)));
-  const hsnWithoutRate = hsns.filter((h) => checkHsn(String(h._id).padEnd(4, '0')).ok && !rated.has(String(h._id))).map((h) => ({ hsn: String(h._id), items: h.items })).sort((a, b) => b.items - a.items);
+  const hsnWithoutRate = !gstOn ? [] : hsns.filter((h) => checkHsn(String(h._id).padEnd(4, '0')).ok && !rated.has(String(h._id))).map((h) => ({ hsn: String(h._id), items: h.items })).sort((a, b) => b.items - a.items);
   const [totalVariants, flagged] = await Promise.all([Variant.countDocuments(), ReviewItem.countDocuments(f)]);
-  return { generatedAt: new Date().toISOString(), summary, rows: rows.map(reviewDto), hsnWithoutRate, totalVariants, flagged };
+  return { generatedAt: new Date().toISOString(), summary, rows: rows.map(reviewDto).map((r: any) => (gstOn ? r : withoutHsn(r))), hsnWithoutRate, totalVariants, flagged };
 }
 
 export function dataQualityCsv(rep: Awaited<ReturnType<typeof dataQuality>>) {

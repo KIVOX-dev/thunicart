@@ -10806,6 +10806,7 @@ export interface operations {
                         sellingPrice?: number;
                     };
                     sizes?: string[];
+                    quantities?: number[];
                 };
             };
         };

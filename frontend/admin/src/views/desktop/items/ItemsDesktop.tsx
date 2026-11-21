@@ -7,7 +7,7 @@ import { Pager } from '../../../components/Pager';
 import { ExportButton } from '../../../components/ExportButton';
 import { PageHeader } from '../../../components/PageHeader';
 import { statusTone } from '../../../components/StockCard';
-import { useCan } from '../../../features/auth/permissions';
+import { useCan, useGstMode } from '../../../features/auth/permissions';
 import { ISSUE_LABELS, STOCK_STATUSES } from '../../../features/catalog/types';
 import { priceSpan, useBulkItems, useFacets, useItemFilters, useItemsPage, ITEMS_PAGE_SIZE } from '../../../features/catalog/use-items';
 
@@ -28,6 +28,7 @@ function useColumnChoice() {
 
 export function ItemsDesktop() {
   const can = useCan();
+  const gst = useGstMode();
   const nav = useNavigate();
   const { toast } = useToast();
   const { filters, set, reset, activeCount } = useItemFilters();
@@ -68,7 +69,7 @@ export function ItemsDesktop() {
         {activeCount > 0 && <Button variant="ghost" onClick={reset}>Clear filters</Button>}
         <div className="relative ml-auto">
           <Button onClick={() => setShowCols((s) => !s)} aria-expanded={showCols}>Columns</Button>
-          {showCols && <div role="group" aria-label="Choose columns" className="absolute right-0 z-30 mt-1 w-48 rounded border-2 border-navy-100 bg-white p-3 shadow-overlay">{COLUMNS.map((c) => <div key={c.key} className="py-1"><Checkbox label={c.label} checked={has(c.key)} onChange={() => toggleCol(c.key)} /></div>)}</div>}
+          {showCols && <div role="group" aria-label="Choose columns" className="absolute right-0 z-30 mt-1 w-48 rounded border-2 border-navy-100 bg-white p-3 shadow-overlay">{COLUMNS.filter((c) => gst === 'on' || c.key !== 'hsn').map((c) => <div key={c.key} className="py-1"><Checkbox label={c.label} checked={has(c.key)} onChange={() => toggleCol(c.key)} /></div>)}</div>}
         </div>
       </div>
       {picked.size > 0 && (
@@ -86,7 +87,7 @@ export function ItemsDesktop() {
           <Table caption="Items">
             <THead><Tr>
               <Th className="w-10"><Checkbox aria-label="Select all shown" checked={allPicked} onChange={() => setPicked(allPicked ? new Set() : new Set(rows.map((r) => r.id)))} /></Th>
-              {COLUMNS.filter((c) => has(c.key)).map((c) => <Th key={c.key} className={c.key === 'price' || c.key === 'stock' ? 'text-right' : ''}>{c.label}</Th>)}
+              {COLUMNS.filter((c) => has(c.key) && (gst === 'on' || c.key !== 'hsn')).map((c) => <Th key={c.key} className={c.key === 'price' || c.key === 'stock' ? 'text-right' : ''}>{c.label}</Th>)}
             </Tr></THead>
             <TBody>
               {rows.map((i) => {
@@ -95,11 +96,11 @@ export function ItemsDesktop() {
                   <Tr key={i.id}>
                     <Td><Checkbox aria-label={`Select ${i.name}`} checked={picked.has(i.id)} onChange={() => setPicked((s) => { const n = new Set(s); if (n.has(i.id)) n.delete(i.id); else n.add(i.id); return n; })} /></Td>
                     {has('code') && <Td className="font-mono text-xs">{i.code}</Td>}
-                    {has('name') && <Td><Link to={`/items/${i.id}`} className="font-medium hover:underline">{i.name}</Link>{!i.hsn && <Badge tone="warning" className="ml-2">No HSN</Badge>}</Td>}
+                    {has('name') && <Td><Link to={`/items/${i.id}`} className="font-medium hover:underline">{i.name}</Link>{gst === 'on' && !i.hsn && <Badge tone="warning" className="ml-2">No HSN</Badge>}</Td>}
                     {has('category') && <Td>{i.category}</Td>}
                     {has('brand') && <Td>{i.brand}</Td>}
                     {has('sizes') && <Td>{i.variants.map((v) => v.size).join(', ')}</Td>}
-                    {has('hsn') && <Td>{i.hsn || '–'}</Td>}
+                    {gst === 'on' && has('hsn') && <Td>{i.hsn || '–'}</Td>}
                     {has('price') && <Td className="text-right">{pr.low ? (pr.low === pr.high ? formatPaise(pr.low) : `${formatPaise(pr.low)} to ${formatPaise(pr.high)}`) : <Badge tone="warning">No price</Badge>}</Td>}
                     {has('stock') && <Td className="text-right">{i.totalStock}</Td>}
                     {has('status') && <Td><Badge tone={statusTone(i.stockStatus)}>{i.stockStatus}</Badge></Td>}

@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Item, ReviewItem, StockBalance, StockLedger, Variant } from '../src/models';
 import { setupTest, type TestCtx } from './helpers';
 import { startImport } from './b1.helpers';
+import { setGst } from './b2.helpers';
 
 // The client's real stock file (as on 7 Nov 2026). Skipped when the file is not in docs/source.
 const FILE = resolve(__dirname, '../../docs/source/Master_Sheet_Krishnas_Orchids_Nov_2026.xlsb');
@@ -45,6 +46,7 @@ describe.skipIf(!has)('real stock file: Master Sheet Krishnas Orchids Nov 2026.x
     console.log('PRODUCTS', await Item.countDocuments(), 'VARIANTS', await Variant.countDocuments());
   });
   it('the review queue has the rows the brief expects', async () => {
+    await setGst(t, true); // the HSN problems are listed while GST is on
     const dq = await t.api('GET', `${A}/imports/data-quality`, { token: t.adminToken });
     console.log('SUMMARY', JSON.stringify(dq.body.summary), 'NO RATE', JSON.stringify(dq.body.hsnWithoutRate));
     expect(dq.body.summary.MISSING_SIZE).toBe(111); // "Primary" size

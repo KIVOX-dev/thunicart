@@ -1,52 +1,32 @@
 import type { ClientSession } from 'mongoose';
-import { Grn, NumberSeries, Variant } from '../models';
-import { bumpSeriesTo, nextNumber } from './numberSeries';
 
 /**
- * Batch numbers look like KO20261108: prefix KO, the calendar year, then a counter that only moves forward (it restarts with each year).
- * Every stock input (goods receipt, import, stock added by adjustment) takes the next one. The counter is one atomic increment,
- * so two people receiving stock at the same moment can never get the same number.
+ * Batch numbers look like TK20261121: TK, then the date the stock came in (year, month, day, India time).
+ * Every stock input (goods receipt, stock import, stock added by an adjustment) takes the batch number of its own day. Stock that arrived on
+ * the same day shares one batch, and an older date means older stock, so the number alone tells old stock from new.
+ * There is no counter: nothing is shared between two people receiving stock at the same moment, so nothing can clash.
+ * Numbers that were made earlier (for example KO20261108) stay exactly as they are.
  */
-const yearOf = (d: Date) => Number(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric' }).format(d));
-const keyOf = (year: number) => `BATCH${year}`;
-const pattern = (year: number) => new RegExp(`^KO${year}(\\d+)$`);
+const ymd = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d).replace(/-/g, '');
 
-/** The highest counter already used by a batch number from this year, so new numbers carry on after the ones that came with the first stock sheet. */
-async function highestUsed(year: number, session?: ClientSession): Promise<number> {
-  const re = pattern(year);
-  let max = 0;
-  const seen = (ref: unknown) => { const m = re.exec(String(ref ?? '')); if (m) max = Math.max(max, Number(m[1])); };
-  for (const v of await Variant.find({ batchRef: re }, { batchRef: 1 }).session(session ?? null).lean()) seen((v as any).batchRef);
-  for (const g of await Grn.find({ 'lines.batchRef': re }, { 'lines.batchRef': 1 }).session(session ?? null).lean()) for (const l of (g as any).lines ?? []) seen(l.batchRef);
-  return max;
-}
+/** The batch number for stock that comes in on this date (today when none is given). */
+export const batchNumberFor = (date: Date = new Date()): string => `TK${ymd(date)}`;
 
-/** Makes the year's series on first use. Inside a database transaction it is made inside it too, otherwise the transaction would not see it. */
-async function ensureSeries(year: number, session?: ClientSession): Promise<string> {
-  const key = keyOf(year);
-  if (await NumberSeries.exists({ key }).session(session ?? null)) return key;
-  const doc = { key, prefix: `KO${year}`, padding: 4, perFinancialYear: false, separator: '', financialYear: '', counter: await highestUsed(year, session) };
-  try {
-    await NumberSeries.create([doc], session ? { session } : {});
-  } catch (e: any) {
-    if (e?.code !== 11000) throw e; // another request created it first
-  }
-  return key;
-}
+/** True for a number made in this format. Older numbers and numbers typed by hand are valid too, so this is only for telling them apart. */
+export const isDateBatch = (ref: string | null | undefined): boolean => /^TK\d{8}$/.test(String(ref ?? ''));
 
-/** Set the year's counter up BEFORE a transaction starts: a counter created inside a running transaction by another request would not be visible to it. */
-export async function prepareBatchSeries(date: Date = new Date()): Promise<void> { await ensureSeries(yearOf(date)); }
+/** The date a TK batch number stands for (as YYYY-MM-DD), or null for any other kind of number. */
+export const batchDate = (ref: string | null | undefined): string | null => {
+  const m = /^TK(\d{4})(\d{2})(\d{2})$/.exec(String(ref ?? ''));
+  return m ? `${m[1]}-${m[2]}-${m[3]}` : null;
+};
 
 export async function nextBatchNumber(opts: { date?: Date; session?: ClientSession } = {}): Promise<string> {
-  const date = opts.date ?? new Date();
-  const key = await ensureSeries(yearOf(date), opts.session);
-  return nextNumber(key, { date, session: opts.session });
+  return batchNumberFor(opts.date);
 }
 
-/** A batch number that came from outside (a stock sheet, a typed value): the counter moves past it, so a later automatic number never repeats it. */
-export async function noteBatchRef(ref: string | null | undefined): Promise<void> {
-  const m = /^KO(\d{4})(\d+)$/.exec(String(ref ?? ''));
-  if (!m) return;
-  const key = await ensureSeries(Number(m[1]));
-  await bumpSeriesTo(key, Number(m[2]));
-}
+/** Kept so the callers did not have to change: a date based number needs no counter to set up. */
+export async function prepareBatchSeries(_date: Date = new Date()): Promise<void> { /* nothing to prepare */ }
+
+/** Kept for the same reason: a batch number typed by hand or brought by a sheet is stored as it is. */
+export async function noteBatchRef(_ref: string | null | undefined): Promise<void> { /* nothing to remember */ }
