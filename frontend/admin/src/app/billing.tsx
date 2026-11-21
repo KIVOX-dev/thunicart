@@ -1,4 +1,5 @@
 import { Suspense, type ComponentType, type LazyExoticComponent } from 'react';
+import { PasswordInput } from '../components/PasswordInput';
 import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Barcode, FileText, LogOut, Printer, Receipt, ScanLine, PauseCircle, WalletCards } from 'lucide-react';
 import { ListSkeleton, Button } from '@thunikart/ui';
@@ -104,7 +105,7 @@ export function BillingLogin() {
         <p className="text-center text-xs text-muted">For shop employees. Billing only.</p>
         {banner && <ErrorBanner {...banner} />}
         <Field label="Employee email" required error={errors.email?.message}>{(p) => <Input {...p} type="email" autoComplete="username" autoFocus className="min-h-12" {...register('email')} />}</Field>
-        <Field label="Password" required error={errors.password?.message}>{(p) => <Input {...p} type="password" autoComplete="current-password" className="min-h-12" {...register('password')} />}</Field>
+        <Field label="Password" required error={errors.password?.message}>{(p) => <PasswordInput {...p} autoComplete="current-password" className="min-h-12" {...register('password')} />}</Field>
         <Button type="submit" variant="primary" size="lg" className="min-h-12" loading={busy}>Sign in to billing</Button>
         {demoHint && <p className="rounded border-2 border-navy-100 bg-mist p-2 text-xs text-muted">Demo mode. Employee: <strong>sales@thunikart.test</strong> with password <strong>Thunikart@123</strong>.</p>}
       </form>

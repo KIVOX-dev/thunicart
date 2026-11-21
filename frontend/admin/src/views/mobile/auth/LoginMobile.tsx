@@ -1,4 +1,5 @@
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { PasswordInput } from '../../../components/PasswordInput';
 import { Button, Field, Input } from '@thunikart/ui';
 import { ErrorBanner } from '../../../components/ErrorBanner';
 import { Logo } from '../../../components/Logo';
@@ -22,7 +23,7 @@ export function LoginMobile() {
       <form onSubmit={submit} noValidate className="flex flex-1 flex-col gap-4 px-6 py-6" aria-label="Sign in">
         {banner && <ErrorBanner {...banner} />}
         <Field label="Email" required error={errors.email?.message}>{(p) => <Input {...p} type="email" inputMode="email" autoComplete="username" {...register('email')} className="min-h-12" />}</Field>
-        <Field label="Password" required error={errors.password?.message}>{(p) => <Input {...p} type="password" autoComplete="current-password" {...register('password')} className="min-h-12" />}</Field>
+        <Field label="Password" required error={errors.password?.message}>{(p) => <PasswordInput {...p} autoComplete="current-password" {...register('password')} className="min-h-12" />}</Field>
         <Button type="submit" variant="primary" size="lg" loading={busy} className="min-h-12">Sign in</Button>
         <Link to="/forgot-password" className="flex min-h-11 items-center justify-center text-sm underline underline-offset-2">Forgot password?</Link>
         {demoHint && <p className="rounded border-2 border-navy-100 bg-mist p-3 text-xs text-muted">Demo mode. Try <strong>admin@thunikart.test</strong> with password <strong>Thunikart@123</strong>. Also sales@, buyer@ and accounts@thunikart.test.</p>}

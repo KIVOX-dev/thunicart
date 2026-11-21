@@ -1,4 +1,5 @@
 import { Button, Checkbox, Field, Input, Select } from '@thunikart/ui';
+import { PasswordInput } from './PasswordInput';
 import { useRoles } from '../features/roles/use-roles';
 import { useCreateUserForm, useEditUserForm, useResetPasswordForm, type User } from '../features/users/use-users';
 import { ErrorBanner } from './ErrorBanner';
@@ -22,7 +23,7 @@ export function CreateUserForm({ onDone }: { onDone: () => void }) {
       <Field label="Name" required error={errors.name?.message}>{(p) => <Input {...p} {...register('name')} />}</Field>
       <Field label="Email" required error={errors.email?.message}>{(p) => <Input {...p} type="email" {...register('email')} />}</Field>
       <Field label="Mobile" hint="10 digit Indian mobile number" error={errors.mobile?.message}>{(p) => <Input {...p} inputMode="tel" {...register('mobile', { setValueAs: (v: string) => (v === '' ? undefined : v) })} />}</Field>
-      <Field label="Password" required hint="At least 10 characters with letters and digits" error={errors.password?.message}>{(p) => <Input {...p} type="password" autoComplete="new-password" {...register('password')} />}</Field>
+      <Field label="Password" required hint="At least 10 characters with letters and digits" error={errors.password?.message}>{(p) => <PasswordInput {...p} autoComplete="new-password" {...register('password')} />}</Field>
       <Field label="Role" required error={errors.roleId?.message}>{(p) => <RoleSelect p={p} reg={register('roleId')} />}</Field>
       <Checkbox label="Active" {...register('active')} />
       <Button type="submit" variant="primary" loading={saving}>Add user</Button>
@@ -52,7 +53,7 @@ export function ResetPasswordForm({ user, onDone }: { user: User; onDone: () => 
   return (
     <form onSubmit={submit} noValidate className="flex flex-col gap-4" aria-label={`Reset password for ${user.name}`}>
       {banner && <ErrorBanner {...banner} />}
-      <Field label="New password" required hint="At least 10 characters with letters and digits" error={errors.password?.message}>{(p) => <Input {...p} type="password" autoComplete="new-password" {...register('password')} />}</Field>
+      <Field label="New password" required hint="At least 10 characters with letters and digits" error={errors.password?.message}>{(p) => <PasswordInput {...p} autoComplete="new-password" {...register('password')} />}</Field>
       <Button type="submit" variant="primary" loading={saving}>Reset password</Button>
     </form>
   );

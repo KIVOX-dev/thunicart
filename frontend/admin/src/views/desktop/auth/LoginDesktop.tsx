@@ -1,4 +1,5 @@
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { PasswordInput } from '../../../components/PasswordInput';
 import { Button, Field, Input } from '@thunikart/ui';
 import { ErrorBanner } from '../../../components/ErrorBanner';
 import { Logo } from '../../../components/Logo';
@@ -27,7 +28,7 @@ export function LoginDesktop() {
           <h2 className="text-3xl">Sign in</h2>
           {banner && <ErrorBanner {...banner} />}
           <Field label="Email" required error={errors.email?.message}>{(p) => <Input {...p} type="email" autoComplete="username" autoFocus {...register('email')} />}</Field>
-          <Field label="Password" required error={errors.password?.message}>{(p) => <Input {...p} type="password" autoComplete="current-password" {...register('password')} />}</Field>
+          <Field label="Password" required error={errors.password?.message}>{(p) => <PasswordInput {...p} autoComplete="current-password" {...register('password')} />}</Field>
           <Button type="submit" variant="primary" size="lg" loading={busy}>Sign in</Button>
           <Link to="/forgot-password" className="text-sm text-navy underline underline-offset-2 hover:text-muted">Forgot password?</Link>
           {demoHint && (
