@@ -1,0 +1,49 @@
+plugins {
+    id 'com.android.application'
+}
+
+// One project, two apps. The build passes these in with -P (see .github/workflows/android.yml); the defaults build the admin app.
+def appIdValue = project.findProperty('appId') ?: 'in.thunikart.admin'
+def appLabel = project.findProperty('appLabel') ?: 'Thunikart Admin'
+def defaultUrl = project.findProperty('defaultUrl') ?: 'https://thunicart-frontend.vercel.app/admin/'
+def hostName = project.findProperty('hostName') ?: 'thunicart-frontend.vercel.app'
+def pathPrefix = project.findProperty('pathPrefix') ?: '/admin'
+
+android {
+    namespace 'in.thunikart.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId appIdValue
+        minSdk 21
+        targetSdk 34
+        versionCode (project.findProperty('versionCode') ?: '1').toInteger()
+        versionName (project.findProperty('versionName') ?: '1.0')
+        manifestPlaceholders = [appLabel: appLabel, defaultUrl: defaultUrl, hostName: hostName, pathPrefix: pathPrefix]
+    }
+
+    // The same key signs both apps and every update, so a new version installs over the old one.
+    signingConfigs {
+        release {
+            storeFile file('../thunikart.p12')
+            storeType 'pkcs12'
+            storePassword 'thunikart'
+            keyAlias 'thunikart'
+            keyPassword 'thunikart'
+        }
+    }
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
+}

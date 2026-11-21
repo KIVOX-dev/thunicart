@@ -1,0 +1,10 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": { "namespace": "android_app", "package_name": "in.thunikart.admin", "sha256_cert_fingerprints": ["ED:35:04:F6:23:3F:C5:24:97:8B:69:32:82:47:29:08:AF:43:7C:31:04:79:F4:DB:62:CE:F2:79:64:DD:55:9C"] }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": { "namespace": "android_app", "package_name": "in.thunikart.shop", "sha256_cert_fingerprints": ["ED:35:04:F6:23:3F:C5:24:97:8B:69:32:82:47:29:08:AF:43:7C:31:04:79:F4:DB:62:CE:F2:79:64:DD:55:9C"] }
+  }
+]

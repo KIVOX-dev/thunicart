@@ -128,6 +128,9 @@ describe('stock sheet import: the Krishnas Orchids rules', () => {
     expect(by('l').reasons).toEqual(expect.arrayContaining(['ODD_CODE', 'ODD_SIZE']));
     expect(by('KO1000401')).toBeUndefined(); // clean rows are not in the queue
     expect(by('KO1000404').rowNumber).toBe(7); // spreadsheet row number
+    // each row carries the live MRP from the database; a row with no price shows 0 so the screen can ask for one
+    expect(by('KO1000409').detail.mrp).toBeGreaterThan(0);
+    expect(by('KO1000408').detail.mrp).toBe(0);
   });
   it('suggests an HSN from the same category with the count behind it, and never applies it silently', async () => {
     const q = await get('/imports/review-queue?reason=MISSING_HSN');

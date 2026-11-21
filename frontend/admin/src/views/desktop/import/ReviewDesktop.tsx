@@ -28,6 +28,7 @@ function Row({ r }: { r: ReviewRow }) {
   const [text, setText] = useState('');
   const [sizesText, setSizesText] = useState(((r.sizes ?? []).length ? r.sizes : [r.size]).filter(Boolean).join(', '));
   const [mrp, setMrp] = useState(r.mrp ? String(r.mrp / 100) : '');
+  const [mrpNew, setMrpNew] = useState('');
   const [rate, setRate] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const save = async (a: FixAction) => {
@@ -83,7 +84,15 @@ function Row({ r }: { r: ReviewRow }) {
         </div>
         {err && <span role="alert" className="mt-1 block text-xs text-danger">{err}</span>}
       </Td>
-      <Td className="text-right text-xs text-muted">{r.mrp ? formatPaise(r.mrp) : '–'}</Td>
+      <Td className="text-right text-xs">
+        {r.mrp ? <span className="text-sm font-semibold">{formatPaise(r.mrp)}</span> : (
+          // No MRP in the database for this item: type it here and it is saved on the item.
+          <span className="inline-flex items-center justify-end gap-1">
+            <Input aria-label={`Type the MRP for ${r.code}`} className="w-24" placeholder="MRP ₹" inputMode="decimal" value={mrpNew} onChange={(e) => setMrpNew(e.target.value)} />
+            <Button size="sm" variant="primary" disabled={!Number(mrpNew) || fix.isPending} onClick={() => save({ action: 'set', set: { mrp: rupeesToInt(mrpNew) } })}>Save</Button>
+          </span>
+        )}
+      </Td>
     </Tr>
   );
 }

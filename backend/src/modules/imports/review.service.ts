@@ -23,7 +23,20 @@ export async function listReview(q: ListQuery & { reason?: string; batchId?: str
   if (q.reason) f.reasons = q.reason;
   if (q.batchId) f.batchId = q.batchId;
   if (q.q) { const r = new RegExp(escapeRegex(q.q), 'i'); f.$or = [{ itemCode: r }, { name: r }, { category: r }]; }
-  return paginate(ReviewItem, f, q, parseSort(q.sort, ['rowNumber', 'itemCode', 'name'], { rowNumber: 1 }), reviewDto);
+  const res = await paginate(ReviewItem, f, q, parseSort(q.sort, ['rowNumber', 'itemCode', 'name'], { rowNumber: 1 }), reviewDto);
+  // The import only remembers what was wrong. The price, size and HSN to show come from the live records, so a fix made elsewhere shows too.
+  const vids = res.items.map((i: any) => i.variantId).filter(Boolean);
+  if (!vids.length) return res;
+  const vs: any[] = await Variant.find({ _id: { $in: vids } }, { itemId: 1, size: 1, mrp: 1, sellingPrice: 1 }).lean();
+  const its: any[] = await Item.find({ _id: { $in: vs.map((v) => v.itemId) } }, { hsn: 1 }).lean();
+  const vm = new Map(vs.map((v) => [String(v._id), v])); const im = new Map(its.map((i) => [String(i._id), i]));
+  return {
+    ...res,
+    items: res.items.map((i: any) => {
+      const v = vm.get(i.variantId); if (!v) return i;
+      return { ...i, detail: { ...i.detail, mrp: v.mrp ?? 0, sellingPrice: v.sellingPrice ?? 0, size: i.detail?.size ?? v.size ?? '', hsn: i.detail?.hsn ?? im.get(String(v.itemId))?.hsn ?? '' } };
+    }),
+  };
 }
 
 /** Reasons that come from the data itself, so fixing the data clears them. */
