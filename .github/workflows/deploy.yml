@@ -51,6 +51,15 @@ jobs:
           CATALYST_ORG_ID: ${{ secrets.CATALYST_ORG_ID }}
         run: |
           # There is no catalyst.json in the repo, so the project is named here (repository secrets).
+          # A token pasted with quotes, a "CATALYST_TOKEN=" prefix, spaces or a line break makes the CLI fail with "unable to refresh access token".
+          # Clean those off, and report only its length (never the token itself).
+          TOKEN="$(printf '%s' "$CATALYST_TOKEN" | tr -d '[:space:]"' | tr -d "'")"
+          TOKEN="${TOKEN#CATALYST_TOKEN=}"
+          if [ -z "$TOKEN" ]; then echo "::error::CATALYST_TOKEN is empty. Save the output of 'catalyst token:generate' in the repository secret."; exit 1; fi
+          echo "::add-mask::$TOKEN"
+          echo "CATALYST_TOKEN: ${#TOKEN} characters after cleaning"
+          case "$TOKEN" in *=*) echo "::warning::CATALYST_TOKEN still contains an equals sign. Save only the token itself, not NAME=value.";; esac
+          export CATALYST_TOKEN="$TOKEN"
           EXTRA=""
           [ -n "$CATALYST_PROJECT_ID" ] && EXTRA="$EXTRA --project $CATALYST_PROJECT_ID"
           [ -n "$CATALYST_ORG_ID" ] && EXTRA="$EXTRA --org $CATALYST_ORG_ID"
