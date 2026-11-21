@@ -41,7 +41,10 @@ ENV NODE_ENV=production
 # The deploy tells AppSail the app listens on 9000. If AppSail does not inject X_ZOHO_CATALYST_LISTEN_PORT, the app would fall back to 4000 and
 # AppSail would report "check the startup command or port". The injected variable still wins when it is present.
 ENV PORT=9000
-WORKDIR /app
+# pnpm keeps every package in /repo/node_modules/.pnpm and links it from backend/node_modules. Both must be present at the same relative
+# places, or every import fails at start ("Cannot find package") and AppSail reports a failed start. So the layout is /repo/backend here too.
+WORKDIR /repo/backend
+COPY --from=prod-deps /repo/node_modules /repo/node_modules
 COPY --from=prod-deps /repo/backend/node_modules ./node_modules
 COPY --from=build /repo/backend/dist ./dist
 COPY backend/package.json ./package.json
