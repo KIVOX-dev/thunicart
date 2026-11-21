@@ -35,7 +35,7 @@ function OnlineRow({ o, stage }: { o: OnlineReturn; stage: string }) {
   );
 }
 
-function Online() {
+export function OnlineReturns() {
   const [stage, setStage] = useState<string>(ONLINE_RETURN_STATUSES[0].key);
   const q = useOnlineReturns(stage);
   const pv = usePagedView(q);
@@ -78,7 +78,7 @@ export function CustomerReturns({ compact }: { compact?: boolean }) {
           </div>
         ),
       },
-      { key: 'online', label: 'Online requests', panel: <Online /> },
+      { key: 'online', label: 'Online requests', panel: <OnlineReturns /> },
       { key: 'offline', label: 'Returns taken', panel: <Offline /> },
     ]} />
   );

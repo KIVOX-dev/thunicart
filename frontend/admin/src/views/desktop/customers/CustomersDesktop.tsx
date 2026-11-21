@@ -13,13 +13,14 @@ import { sourceOf, useCustomers } from '../../../features/catalog/use-parties';
 import { Pager } from '../../../components/Pager';
 import { usePagedView } from '../../../features/api/use-paged-view';
 
-export function CustomersDesktop() {
+/** onlyOnline: used inside the Online store module, where only website customers are shown. */
+export function CustomersDesktop({ onlyOnline }: { onlyOnline?: boolean } = {}) {
   const can = useCan();
   const { toast } = useToast();
   const [q, setQ] = useState('');
   const [edit, setEdit] = useState<{ customer?: Customer } | null>(null);
   const [view, setView] = useState<Customer | null>(null);
-  const [source, setSource] = useState<CustomerSource | ''>('');
+  const [source, setSource] = useState<CustomerSource | ''>(onlyOnline ? 'online' : '');
   const [dupes, setDupes] = useState(false);
   const list = useCustomers(q, source);
   const pv = usePagedView(list);
@@ -29,7 +30,7 @@ export function CustomersDesktop() {
       <PageHeader title="Customers" description="One list for online (website sign ups) and offline (counter) customers." actions={<><ExportButton dataset="customers" />{can('customers.create') && <Button variant="primary" onClick={() => setEdit({})}>Add customer</Button>}</>} />
       <div className="mb-3 flex flex-wrap items-center gap-3">
         <div className="w-72"><Input aria-label="Search customers" placeholder="Search name, mobile or code" value={q} onChange={(e) => setQ(e.target.value)} /></div>
-        <Select aria-label="Source" className="w-40" value={source} onChange={(e) => setSource(e.target.value as CustomerSource | '')}><option value="">All customers</option><option value="online">Online</option><option value="offline">Offline</option></Select>
+        {!onlyOnline && <Select aria-label="Source" className="w-40" value={source} onChange={(e) => setSource(e.target.value as CustomerSource | '')}><option value="">All customers</option><option value="online">Online</option><option value="offline">Offline</option></Select>}
         {can('customers.edit') && <Button className="ml-auto" onClick={() => setDupes(true)}>Find duplicates</Button>}
       </div>
       {list.isPending ? <ListSkeleton label="Loading customers" /> : list.isError ? <QueryError error={list.error} onRetry={() => list.refetch()} /> : rows.length === 0 ? <EmptyState title="No customers found" /> : (

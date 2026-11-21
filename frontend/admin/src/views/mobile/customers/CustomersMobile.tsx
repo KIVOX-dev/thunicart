@@ -10,20 +10,21 @@ import { useCan } from '../../../features/auth/permissions';
 import type { Customer, CustomerSource } from '../../../features/catalog/types';
 import { sourceOf, useCustomers } from '../../../features/catalog/use-parties';
 
-export function CustomersMobile() {
+/** onlyOnline: used inside the Online store module, where only website customers are shown. */
+export function CustomersMobile({ onlyOnline }: { onlyOnline?: boolean } = {}) {
   const can = useCan();
   const { toast } = useToast();
   const [q, setQ] = useState('');
   const [edit, setEdit] = useState<{ customer?: Customer } | null>(null);
   const [view, setView] = useState<Customer | null>(null);
-  const [source, setSource] = useState<CustomerSource | ''>('');
+  const [source, setSource] = useState<CustomerSource | ''>(onlyOnline ? 'online' : '');
   const [dupes, setDupes] = useState(false);
   const list = useCustomers(q, source);
   const rows = list.data?.pages.flatMap((p) => p.items) ?? [];
   return (
     <div className="flex flex-col gap-3 pb-20">
       <Input aria-label="Search customers" placeholder="Search name or mobile" value={q} onChange={(e) => setQ(e.target.value)} className="min-h-12" />
-      <Select aria-label="Source" className="min-h-12" value={source} onChange={(e) => setSource(e.target.value as CustomerSource | '')}><option value="">All customers</option><option value="online">Online</option><option value="offline">Offline</option></Select>
+      {!onlyOnline && <Select aria-label="Source" className="min-h-12" value={source} onChange={(e) => setSource(e.target.value as CustomerSource | '')}><option value="">All customers</option><option value="online">Online</option><option value="offline">Offline</option></Select>}
       <div className="flex gap-2"><ExportButton dataset="customers" sheet />{can('customers.edit') && <Button className="min-h-12" onClick={() => setDupes(true)}>Find duplicates</Button>}</div>
       {list.isPending ? <ListSkeleton label="Loading customers" /> : list.isError ? <QueryError error={list.error} onRetry={() => list.refetch()} /> : rows.length === 0 ? <EmptyState title="No customers found" /> : (
         <ul className="flex flex-col gap-3">

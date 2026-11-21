@@ -1,31 +1,13 @@
-import { Suspense, useEffect } from 'react';
-import { Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { Suspense } from 'react';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { ListSkeleton } from '@thunikart/ui';
 import { ForbiddenPage, NotFoundPage, StatusPage } from '../components/StatusPage';
-import { setAuthFailureHandler } from '../features/api/http';
-import { useCan, useGstMode, useIsCounterOnly } from '../features/auth/permissions';
-import { useSession } from '../features/auth/use-session';
+import { useCan, useGstMode } from '../features/auth/permissions';
+import { AuthGate } from './auth-gate';
 import { MODULES_REGISTRY, type AppModule } from './modules';
 import { DesktopShell } from './shell-desktop';
 import { MobileShell } from './shell-mobile';
 import { ResponsiveView, useView } from './view';
-
-function AuthGate() {
-  const { data: me, isPending, error } = useSession();
-  const counterOnly = useIsCounterOnly();
-  const nav = useNavigate();
-  const loc = useLocation();
-  useEffect(() => {
-    setAuthFailureHandler(() => nav('/login', { state: { from: loc.pathname }, replace: true }));
-    return () => setAuthFailureHandler(null);
-  }, [nav, loc.pathname]);
-  if (isPending) return <div className="p-6"><ListSkeleton label="Signing you in" /></div>;
-  if (error) return <StatusPage code="Oops" title="Cannot load your account" body="We could not reach the server. Check your connection and reload." />;
-  if (!me) return <Navigate to="/login" state={{ from: loc.pathname }} replace />;
-  // Counter staff only ever see the billing area.
-  if (counterOnly) return <Navigate to="/billing" replace />;
-  return <Outlet />;
-}
 
 function Shell() {
   return useView().view === 'mobile' ? <MobileShell /> : <DesktopShell />;

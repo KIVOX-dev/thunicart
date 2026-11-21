@@ -22,6 +22,7 @@ const fallback = <div className="p-6"><ListSkeleton label="Loading screen" /></d
 export const router = createBrowserRouter([
   // The Billing Center and the admin are two separate route groups, each loaded as its own chunk. Opening /billing never loads the admin shell.
   { path: '/billing/*', lazy: async () => ({ Component: (await import('./billing-app')).BillingApp, HydrateFallback: () => fallback }) },
+  { path: '/store/*', lazy: async () => ({ Component: (await import('./store-app')).StoreApp, HydrateFallback: () => fallback }) },
   { path: '/pos', element: <Forward to="/billing" /> },
   { path: '/sales', element: <Forward to="/billing/bills" /> },
   { path: '/sales/b2b', element: <Forward to="/billing/b2b" /> },
@@ -29,8 +30,8 @@ export const router = createBrowserRouter([
   // Moved or merged screens
   { path: '/settings/roles', element: <Forward to="/settings/users?tab=roles" /> },
   { path: '/exports', element: <Forward to="/reports" /> },
-  { path: '/cms', element: <Forward to="/store?tab=content" /> },
-  { path: '/orders', element: <Forward to="/store?tab=orders" /> },
+  { path: '/cms', element: <Forward to="/store/content" /> },
+  { path: '/orders', element: <Forward to="/store/orders" /> },
   { path: '/stock/transfers', element: <Forward to="/returns?tab=transfers" /> },
   { path: '/login', element: <Public><ResponsiveView desktop={<LoginDesktop />} mobile={<LoginMobile />} /></Public> },
   { path: '/forgot-password', element: <Public><ResponsiveView desktop={<ForgotDesktop />} mobile={<ForgotMobile />} /></Public> },
