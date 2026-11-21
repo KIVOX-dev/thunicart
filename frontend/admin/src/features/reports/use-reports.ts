@@ -228,7 +228,13 @@ export function useReceiptForm(onDone: () => void) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [banner, setBanner] = useState<{ message: string; requestId?: string } | null>(null);
   const [key] = useState(newIdempotencyKey);
-  const m = useMutation({ mutationFn: (b: unknown) => api.post('/accounts/receipts', b, { idempotencyKey: key }), onSuccess: () => Promise.all(['receipts', 'receivables', 'customers', 'report', 'dashboard'].map((k) => qc.invalidateQueries({ queryKey: [k] }))) });
+  const RECEIPT_MODE: Record<string, string> = { Cash: 'cash', UPI: 'upi', 'Bank Transfer': 'bank', Cheque: 'cheque', Card: 'card' };
+  const m = useMutation({
+    mutationFn: (b: { customerId: string; amount: number; mode: string; reference: string }) => (MOCK_MODE
+      ? api.post('/accounts/receipts', b, { idempotencyKey: key })
+      : api.post('/receipts', { customerId: b.customerId, amount: b.amount, mode: RECEIPT_MODE[b.mode] ?? b.mode.toLowerCase(), reference: b.reference, date: new Date().toISOString(), notes: '' }, { idempotencyKey: key })),
+    onSuccess: () => Promise.all(['receipts', 'receivables', 'customers', 'report', 'dashboard', 'billings', 'customers-owe', 'cashflow'].map((k) => qc.invalidateQueries({ queryKey: [k] }))),
+  });
   return {
     customerId, setCustomerId, amount, setAmount, mode, setMode, reference, setReference, errors, banner, saving: m.isPending,
     submit: async () => { setErrors({}); setBanner(null); try { await m.mutateAsync({ customerId, amount: rupeesToPaise(amount), mode, reference }); setAmount(''); setReference(''); onDone(); } catch (e) { const r = applyFieldIssues(e); setErrors(r.errors); setBanner(r.banner); } },

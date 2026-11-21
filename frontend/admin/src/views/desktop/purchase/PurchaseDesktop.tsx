@@ -11,9 +11,9 @@ import { PO_STATUSES, PO_STATUS_LABEL, poTone } from '../../../features/inventor
 import { useAgeing, useBills, usePayments } from '../../../features/inventory/use-billing';
 import { useGrns, useStartGrn } from '../../../features/inventory/use-grn';
 import { usePos, useReceivablePos } from '../../../features/inventory/use-purchase-orders';
+import { Pager } from '../../../components/Pager';
+import { usePagedView } from '../../../features/api/use-paged-view';
 
-const rows = <T,>(d?: { pages: Array<{ items: T[] }> }) => d?.pages.flatMap((p) => p.items) ?? [];
-const MoreBtn = ({ q }: { q: { hasNextPage: boolean; fetchNextPage: () => unknown; isFetchingNextPage: boolean } }) => (q.hasNextPage ? <div className="mt-3"><Button onClick={() => q.fetchNextPage()} loading={q.isFetchingNextPage}>Load more</Button></div> : null);
 
 function OrdersTab() {
   const can = useCan();
@@ -21,7 +21,8 @@ function OrdersTab() {
   const [status, setStatus] = useState('');
   const [q, setQ] = useState('');
   const list = usePos(status, q);
-  const data = rows(list.data);
+  const pv = usePagedView(list);
+  const data = pv.items;
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-end gap-3">
@@ -39,7 +40,7 @@ function OrdersTab() {
                 {gst === 'on' && <Td className="text-right">{p.totals.tax !== null ? formatPaise(p.totals.tax) : ''}</Td>}<Td className="text-right">{formatPaise(p.totals.total)}</Td></Tr>
             ))}</TBody>
           </Table>
-          <MoreBtn q={list} />
+          <Pager page={pv.page} total={pv.total} pageSize={pv.pageSize} onPage={pv.setPage} />
         </>
       )}
     </div>
@@ -54,7 +55,8 @@ function ReceiptsTab() {
   const start = useStartGrn();
   const [open, setOpen] = useState(false);
   const [poId, setPoId] = useState('');
-  const data = rows(list.data);
+  const pv = usePagedView(list);
+  const data = pv.items;
   return (
     <div>
       {can('purchase.create') && <div className="mb-3 flex justify-end"><Button variant="primary" onClick={() => setOpen(true)}>Start receiving</Button></div>}
@@ -64,7 +66,7 @@ function ReceiptsTab() {
             <THead><Tr><Th>Receipt</Th><Th>Order</Th><Th>Vendor</Th><Th>Into</Th><Th>Status</Th><Th className="text-right">Pieces</Th></Tr></THead>
             <TBody>{data.map((g) => <Tr key={g.id}><Td><Link className="font-medium underline" to={`/purchase/grn/${g.id}`}>{g.number}</Link></Td><Td>{g.poNumber}</Td><Td>{g.vendorName}</Td><Td>{g.storeName}</Td><Td><Badge tone={g.status === 'finished' ? 'success' : 'warning'}>{g.status === 'finished' ? 'Finished' : 'Receiving'}</Badge></Td><Td className="text-right">{g.pieces}</Td></Tr>)}</TBody>
           </Table>
-          <MoreBtn q={list} />
+          <Pager page={pv.page} total={pv.total} pageSize={pv.pageSize} onPage={pv.setPage} />
         </>
       )}
       <Modal open={open} onClose={() => setOpen(false)} title="Start receiving" footer={<><Button onClick={() => setOpen(false)}>Cancel</Button><Button variant="primary" disabled={!poId} loading={start.isPending} onClick={async () => { const g = await start.mutateAsync({ poId }); nav(`/purchase/grn/${g.id}`); }}>Start</Button></>}>
@@ -84,7 +86,8 @@ function BillsTab() {
   const [paymentStatus, setPaymentStatus] = useState<'' | 'unpaid' | 'partial' | 'paid'>('');
   const list = useBills({ paymentStatus });
   const [open, setOpen] = useState(false);
-  const data = rows(list.data);
+  const pv = usePagedView(list);
+  const data = pv.items;
   return (
     <div>
       <div className="mb-3 flex items-center justify-between gap-3">
@@ -108,7 +111,8 @@ function PaymentsTab() {
   const list = usePayments();
   const [open, setOpen] = useState(false);
   const [vendorId, setVendorId] = useState('');
-  const data = rows(list.data);
+  const pv = usePagedView(list);
+  const data = pv.items;
   return (
     <div>
       {can('accounts.create') && <div className="mb-3 flex justify-end"><Button variant="primary" onClick={() => setOpen(true)}>Pay vendor</Button></div>}

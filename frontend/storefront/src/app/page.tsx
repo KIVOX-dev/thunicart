@@ -3,6 +3,8 @@ import type { Metadata } from 'next';
 import { sget } from '@/lib/server-api';
 import type { HomeData } from '@/lib/types';
 import { HeroSlider } from '@/components/shared/HeroSlider';
+import { PillTabs } from '@/components/shared/PillTabs';
+import { TileRow } from '@/components/shared/TileRow';
 import { ProductRow } from '@/components/shared/ProductGrid';
 import { Photo, isDrawnArt } from '@/components/shared/Photo';
 import { isStandardSize, sortSizes } from '@/lib/sizes';
@@ -11,14 +13,7 @@ export const metadata: Metadata = { title: 'Thunikart by Krishnas Orchids | Kurt
 
 const wrap = 'mx-auto max-w-7xl px-4 pt-14 md:px-6 md:pt-20';
 const h2 = 'mb-5 text-2xl md:text-4xl';
-/** Colour blocks cycle through the three brand colours. Navy text sits on orange and teal, white text only on navy. */
-const BLOCKS = [
-  { bg: 'bg-navy text-white', chip: 'bg-orange text-navy' },
-  { bg: 'bg-orange text-navy', chip: 'bg-navy text-white' },
-  { bg: 'bg-teal text-navy', chip: 'bg-navy text-white' },
-];
 const SOFT = ['bg-orange-100', 'bg-teal-100', 'bg-navy-100'];
-const STRIP = ['Free shipping above ₹999', 'Easy returns in 7 days', 'New arrivals every week', 'Made for everyday comfort', 'Pattanam, Coimbatore'];
 
 /** Home: hero, colour strip, category tiles, shop by size, trending, shop by occasion, new arrivals and the lookbook. */
 export default async function Home() {
@@ -27,29 +22,13 @@ export default async function Home() {
   return (
     <>
       <HeroSlider banners={h.banners.filter((b) => !isDrawnArt(b.desktopImage) && !isDrawnArt(b.mobileImage))} />
-      <div aria-hidden className="mt-6 overflow-hidden bg-navy py-3 text-white md:mt-10">
-        <div className="tk-marquee">
-          {[...STRIP, ...STRIP, ...STRIP, ...STRIP].map((t, i) => <span key={i} className="mx-6 flex items-center gap-6 whitespace-nowrap text-sm font-extrabold uppercase tracking-widest md:text-base">{t}<span className={`h-3 w-3 rounded-full ${i % 2 ? 'bg-teal' : 'bg-orange'}`} /></span>)}
-        </div>
+      <div className="mx-3 mt-4 flex items-center justify-between gap-3 rounded-2xl bg-gradient-to-r from-orange-100 via-orange-50 to-teal-100 px-4 py-3 md:mx-auto md:max-w-7xl md:px-6">
+        <p className="text-sm font-bold md:text-base">Free shipping above ₹999 <span aria-hidden className="mx-1 text-navy/40">|</span> Easy returns in 7 days</p>
+        <p className="hidden text-xs text-navy/70 sm:block">New arrivals every week. Made for everyday comfort.</p>
       </div>
-      <section aria-label="Shop by category" className={wrap}>
-        <h2 className={h2}>Shop by category</h2>
-        <ul className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-          {h.categories.map((c, n) => {
-            const b = BLOCKS[n % BLOCKS.length]!;
-            return (
-              <li key={c.slug}>
-                <Link href={`/c/${c.slug}`} className={`tk-lift group relative flex min-h-36 items-end justify-between overflow-hidden rounded-xl p-4 md:min-h-44 md:p-5 ${b.bg}`}>
-                  {!isDrawnArt(c.image) && <Photo src={c.image} alt="" width={480} height={480} loading="lazy" className="absolute inset-y-0 right-0 h-full w-2/5 object-cover transition-transform duration-500 group-hover:scale-105" />}
-                  <span className="relative">
-                    <span className="block text-xl font-extrabold leading-tight tracking-tight md:text-2xl">{c.name}</span>
-                    <span className={`mt-3 inline-flex min-h-9 items-center gap-1 rounded-full px-3 text-xs font-bold ${b.chip}`}>Shop now <span aria-hidden>→</span></span>
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+      <section aria-label="Shop by category" className="mt-6">
+        <PillTabs label="Categories" active="all" tabs={[{ key: 'all', label: 'All', href: '/c/all' }, ...h.categories.map((c) => ({ key: c.slug, label: c.name, href: `/c/${c.slug}` }))]} />
+        <TileRow label="Shop by category" tiles={h.categories.map((c) => ({ key: c.slug, label: c.name, href: `/c/${c.slug}`, image: c.image }))} />
       </section>
       <section aria-label="Shop by size" className={wrap}>
         <h2 className={h2}>Shop by size</h2>

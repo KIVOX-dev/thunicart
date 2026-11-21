@@ -33,7 +33,7 @@ export function HeroSlider({ banners }: { banners: Banner[] }) {
   const ink = b.dark ? 'text-white' : 'text-navy';
   const arrow = 'tk-press absolute top-1/2 z-10 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-navy shadow-soft hover:bg-white md:flex';
   return (
-    <section aria-roledescription="carousel" aria-label="Featured" className="relative overflow-hidden">
+    <section aria-roledescription="carousel" aria-label="Featured" className="relative mx-3 mt-3 overflow-hidden rounded-3xl border-4 border-navy md:mx-auto md:max-w-7xl">
       <Link href={b.href} className={`relative block ${b.bg} ${ink}`} aria-label={`${b.title}. ${b.subtitle}`}>
         {b.art ? (
           <img src={b.art} alt={b.alt ?? b.title} width={2000} height={700} fetchPriority="high" className="aspect-[20/7] w-full object-cover" />

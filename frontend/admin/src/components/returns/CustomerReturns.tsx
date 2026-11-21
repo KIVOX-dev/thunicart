@@ -5,6 +5,8 @@ import { QueryError } from '../ErrorBanner';
 import { ReturnPanel } from '../pos/ReturnPanel';
 import { useCan } from '../../features/auth/permissions';
 import { ONLINE_RETURN_STATUSES, useOfflineReturns, useOnlineReturns, useReturnStep, type OnlineReturn } from '../../features/inventory/use-customer-returns';
+import { Pager } from '../Pager';
+import { usePagedView } from '../../features/api/use-paged-view';
 
 function OnlineRow({ o, stage }: { o: OnlineReturn; stage: string }) {
   const can = useCan();
@@ -36,26 +38,28 @@ function OnlineRow({ o, stage }: { o: OnlineReturn; stage: string }) {
 function Online() {
   const [stage, setStage] = useState<string>(ONLINE_RETURN_STATUSES[0].key);
   const q = useOnlineReturns(stage);
-  const rows = q.data?.pages.flatMap((p) => p.items) ?? [];
+  const pv = usePagedView(q);
+  const rows = pv.items;
   return (
     <div className="flex flex-col gap-3">
       <div className="w-64"><Select aria-label="Stage" value={stage} onChange={(e) => setStage(e.target.value)}>{ONLINE_RETURN_STATUSES.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}</Select></div>
       {q.isPending ? <ListSkeleton label="Loading online returns" /> : q.isError ? <QueryError error={q.error} onRetry={() => q.refetch()} /> : rows.length === 0 ? <EmptyState title="Nothing here" body="Return requests from website orders appear at each stage." /> : <ul className="flex flex-col gap-3">{rows.map((o) => <OnlineRow key={o.id} o={o} stage={stage} />)}</ul>}
-      {q.hasNextPage && <Button onClick={() => q.fetchNextPage()} loading={q.isFetchingNextPage}>Load more</Button>}
+      <Pager page={pv.page} total={pv.total} pageSize={pv.pageSize} onPage={pv.setPage} />
     </div>
   );
 }
 
 function Offline() {
   const q = useOfflineReturns();
-  const rows = q.data?.pages.flatMap((p) => p.items) ?? [];
+  const pv = usePagedView(q);
+  const rows = pv.items;
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-muted">Returns and exchanges that were taken. Each one has a credit note and the pieces went back to stock.</p>
       {q.isPending ? <ListSkeleton label="Loading counter returns" /> : q.isError ? <QueryError error={q.error} onRetry={() => q.refetch()} /> : rows.length === 0 ? <EmptyState title="No counter returns yet" /> : (
         <ul className="flex flex-col gap-2">{rows.map((r) => <li key={r.id} className="flex items-center justify-between rounded border-2 border-navy-100 p-3 text-sm"><span><strong>{r.creditNoteNumber}</strong>{r.invoiceNumber && <span className="block text-xs text-muted">Invoice {r.invoiceNumber}</span>}</span><strong>{formatPaise(r.refundTotal)}</strong></li>)}</ul>
       )}
-      {q.hasNextPage && <Button onClick={() => q.fetchNextPage()} loading={q.isFetchingNextPage}>Load more</Button>}
+      <Pager page={pv.page} total={pv.total} pageSize={pv.pageSize} onPage={pv.setPage} />
     </div>
   );
 }

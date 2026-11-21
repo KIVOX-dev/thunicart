@@ -1,10 +1,13 @@
 import Link from 'next/link';
 import { sget } from '@/lib/server-api';
-import type { ProductList } from '@/lib/types';
+import type { HomeData, ProductList } from '@/lib/types';
 import { FilterSidebar } from '../desktop/FilterSidebar';
 import { SortSelect } from '../desktop/SortSelect';
 import { FilterSheets } from '../mobile/FilterSheets';
 import { ProductGrid } from './ProductGrid';
+import { PillTabs } from './PillTabs';
+import { QuickFilters } from './QuickFilters';
+import { TileRow } from './TileRow';
 
 const KEYS = ['size', 'color', 'fabric', 'brand', 'occasion', 'price', 'discount', 'availability', 'sort', 'q'];
 
@@ -19,14 +22,25 @@ export async function Listing({ category, title, search, basePath }: { category?
   const query: Record<string, string> = { pages: String(pages) };
   for (const k of KEYS) { const v = one(k); if (v) query[k] = v; }
   if (category) query.category = category;
-  const data = await sget<ProductList>('/catalog/products', query);
+  const [data, home] = await Promise.all([sget<ProductList>('/catalog/products', query), sget<HomeData>('/cms/home')]);
   if (!data) return <p className="p-10 text-center text-sm">We could not load the products. Please try again.</p>;
   const next = new URLSearchParams(Object.entries(query).filter(([k]) => k !== 'category' && k !== 'pages'));
   next.set('pages', String((data.nextPage ?? pages)));
+  // Category tabs across the top (All and each main category), then the picture tiles for the open category's sub categories, or for every category.
+  const cats = home?.categories ?? [];
+  const open = cats.find((c) => c.slug === category);
+  const tabs = [{ key: 'all', label: 'All', href: '/c/all' }, ...cats.map((c) => ({ key: c.slug, label: c.name, href: `/c/${c.slug}` }))];
+  const tiles = open?.children?.length
+    ? open.children.map((c) => ({ key: c.slug, label: c.name, href: `/c/${c.slug}` }))
+    : cats.map((c) => ({ key: c.slug, label: c.name, href: `/c/${c.slug}`, image: c.image }));
   return (
+    <>
+      {cats.length > 0 && <PillTabs label="Categories" tabs={tabs} active={category && open ? open.slug : 'all'} />}
+      {tiles.length > 0 && <TileRow label={open ? `${open.name} categories` : 'Shop by category'} tiles={tiles} />}
+      <QuickFilters facets={data.facets} />
     <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-10">
-      <div className="mb-6 flex items-end justify-between gap-4 rounded-2xl bg-navy p-5 text-white md:p-8">
-        <div><h1 className="tk-display">{title}</h1><p className="mt-2 text-sm font-medium text-white/85" data-testid="result-count">{data.total} {data.total === 1 ? 'product' : 'products'}</p></div>
+      <div className="mb-6 flex items-end justify-between gap-4 rounded-3xl bg-gradient-to-br from-orange-100 to-teal-100 p-5 text-navy md:p-8">
+        <div><h1 className="tk-display">{title}</h1><p className="mt-2 text-sm font-medium text-navy/80" data-testid="result-count">{data.total} {data.total === 1 ? 'product' : 'products'}</p></div>
         <SortSelect />
       </div>
       <FilterSheets facets={data.facets} total={data.total} />
@@ -47,5 +61,6 @@ export async function Listing({ category, title, search, basePath }: { category?
         </div>
       </div>
     </div>
+    </>
   );
 }

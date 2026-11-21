@@ -13,12 +13,15 @@ import { ShiftPanel } from '../../../components/pos/ShiftPanel';
 import { useCan } from '../../../features/auth/permissions';
 import type { Invoice } from '../../../features/pos/types';
 import { fetchBill, useBills, useCreditNotes } from '../../../features/pos/use-pos-data';
+import { Pager } from '../../../components/Pager';
+import { usePagedView } from '../../../features/api/use-paged-view';
 
 function BillsTab() {
   const [q, setQ] = useState('');
   const [view, setView] = useState<Invoice | null>(null);
   const list = useBills(q);
-  const data = list.data?.pages.flatMap((p) => p.items) ?? [];
+  const pv = usePagedView(list);
+  const data = pv.items;
   return (
     <div>
       <div className="mb-3 w-72"><Input aria-label="Search bills" placeholder="Bill number, customer or mobile" value={q} onChange={(e) => setQ(e.target.value)} /></div>
@@ -28,7 +31,7 @@ function BillsTab() {
             <THead><Tr><Th>Bill</Th><Th>Date</Th><Th>Customer</Th><Th>Paid by</Th><Th className="text-right">Pieces</Th><Th className="text-right">Total</Th><Th><span className="sr-only">Actions</span></Th></Tr></THead>
             <TBody>{data.map((b) => <Tr key={b.id}><Td className="font-medium">{b.number}</Td><Td>{formatDate(b.date)} {b.time}</Td><Td>{b.customerName}</Td><Td>{b.tenders}</Td><Td className="text-right">{b.pieces}</Td><Td className="text-right">{formatPaise(b.total)}</Td><Td className="text-right"><Button size="sm" onClick={async () => setView(await fetchBill(b.id))} aria-label={`Reprint ${b.number}`}>Reprint</Button></Td></Tr>)}</TBody>
           </Table>
-          {list.hasNextPage && <div className="mt-3"><Button onClick={() => list.fetchNextPage()} loading={list.isFetchingNextPage}>Load more</Button></div>}
+          <Pager page={pv.page} total={pv.total} pageSize={pv.pageSize} onPage={pv.setPage} />
         </>
       )}
       <InvoiceViewer invoice={view} onClose={() => setView(null)} title="Bill" />
@@ -38,7 +41,8 @@ function BillsTab() {
 
 function CreditNotesTab() {
   const q = useCreditNotes();
-  const data = q.data?.pages.flatMap((p) => p.items) ?? [];
+  const pv = usePagedView(q);
+  const data = pv.items;
   if (q.isPending) return <ListSkeleton label="Loading credit notes" />;
   if (q.isError) return <QueryError error={q.error} onRetry={() => q.refetch()} />;
   if (!data.length) return <EmptyState title="No credit notes" body="A credit note is made for every return or exchange." />;

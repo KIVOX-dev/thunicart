@@ -9,6 +9,8 @@ import { RolesPanel } from '../../../components/roles/RolesPanel';
 import { CreateUserForm, EditUserForm, ResetPasswordForm } from '../../../components/UserForms';
 import { useCan } from '../../../features/auth/permissions';
 import { useUsers, type User } from '../../../features/users/use-users';
+import { Pager } from '../../../components/Pager';
+import { usePagedView } from '../../../features/api/use-paged-view';
 
 type Dialog = { kind: 'create' } | { kind: 'edit'; user: User } | { kind: 'reset'; user: User } | null;
 
@@ -18,7 +20,8 @@ function UsersTab() {
   const [dialog, setDialog] = useState<Dialog>(null);
   const { toast } = useToast();
   const users = useUsers(q);
-  const rows = users.data?.pages.flatMap((p) => p.items) ?? [];
+  const pv = usePagedView(users);
+  const rows = pv.items;
   const close = (msg: string) => { setDialog(null); toast(msg, 'success'); };
   return (
     <div>
@@ -45,7 +48,7 @@ function UsersTab() {
               ))}
             </TBody>
           </Table>
-          {users.hasNextPage && <div className="mt-3"><Button onClick={() => users.fetchNextPage()} loading={users.isFetchingNextPage}>Load more</Button></div>}
+          <Pager page={pv.page} total={pv.total} pageSize={pv.pageSize} onPage={pv.setPage} />
         </>
       )}
       <Modal open={dialog?.kind === 'create'} onClose={() => setDialog(null)} title="Add user"><CreateUserForm onDone={() => close('User added')} /></Modal>

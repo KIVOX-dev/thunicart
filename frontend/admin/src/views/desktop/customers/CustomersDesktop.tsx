@@ -10,6 +10,8 @@ import { CustomerForm } from '../../../components/PartyForms';
 import { useCan } from '../../../features/auth/permissions';
 import type { Customer, CustomerSource } from '../../../features/catalog/types';
 import { sourceOf, useCustomers } from '../../../features/catalog/use-parties';
+import { Pager } from '../../../components/Pager';
+import { usePagedView } from '../../../features/api/use-paged-view';
 
 export function CustomersDesktop() {
   const can = useCan();
@@ -20,7 +22,8 @@ export function CustomersDesktop() {
   const [source, setSource] = useState<CustomerSource | ''>('');
   const [dupes, setDupes] = useState(false);
   const list = useCustomers(q, source);
-  const rows = list.data?.pages.flatMap((p) => p.items) ?? [];
+  const pv = usePagedView(list);
+  const rows = pv.items;
   return (
     <div>
       <PageHeader title="Customers" description="One list for online (website sign ups) and offline (counter) customers." actions={<><ExportButton dataset="customers" />{can('customers.create') && <Button variant="primary" onClick={() => setEdit({})}>Add customer</Button>}</>} />
@@ -43,7 +46,7 @@ export function CustomersDesktop() {
               ))}
             </TBody>
           </Table>
-          {list.hasNextPage && <div className="mt-3"><Button onClick={() => list.fetchNextPage()} loading={list.isFetchingNextPage}>Load more</Button></div>}
+          <Pager page={pv.page} total={pv.total} pageSize={pv.pageSize} onPage={pv.setPage} />
         </>
       )}
       <Modal className="!w-[min(94vw,46rem)] !max-h-[calc(100dvh-2rem)]" open={!!edit} onClose={() => setEdit(null)} title={edit?.customer ? 'Edit customer' : 'Add customer'}>

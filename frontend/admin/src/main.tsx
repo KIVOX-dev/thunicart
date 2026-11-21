@@ -3,7 +3,6 @@ import '@fontsource/inter/500.css';
 import '@fontsource/inter/600.css';
 import '@thunikart/ui/tokens.css';
 import './styles.css';
-import './table-brutalism.css'; // EXPERIMENT: neo-brutalist tables. To undo: delete this line and src/table-brutalism.css (see CHANGES.md)
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';

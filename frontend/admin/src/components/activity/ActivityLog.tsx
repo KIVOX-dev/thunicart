@@ -3,6 +3,8 @@ import { Badge, Button, EmptyState, Input, ListSkeleton, Select } from '@thunika
 import { QueryError } from '../ErrorBanner';
 import { MODULE_OPTIONS, useActivity, type Activity } from '../../features/activity/use-activity';
 import { useAllUsers } from '../../features/users/use-users';
+import { Pager } from '../Pager';
+import { usePagedView } from '../../features/api/use-paged-view';
 
 const when = (a: Activity) => new Date(a.at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
 const show = (v: unknown) => JSON.stringify(v, null, 1);
@@ -27,7 +29,8 @@ export function ActivityLog({ compact }: { compact?: boolean }) {
   const [open, setOpen] = useState<string | null>(null);
   const users = useAllUsers();
   const q = useActivity({ userId, module, from, to });
-  const rows = q.data?.pages.flatMap((p) => p.items) ?? [];
+  const pv = usePagedView(q);
+  const rows = pv.items;
   return (
     <div className="flex flex-col gap-3">
       <div className={compact ? 'flex flex-col gap-2' : 'flex flex-wrap items-end gap-3'}>
@@ -48,7 +51,7 @@ export function ActivityLog({ compact }: { compact?: boolean }) {
           </li>
         ))}</ul>
       )}
-      {q.hasNextPage && <Button size={compact ? 'lg' : undefined} onClick={() => q.fetchNextPage()} loading={q.isFetchingNextPage}>Load more</Button>}
+      <Pager page={pv.page} total={pv.total} pageSize={pv.pageSize} onPage={pv.setPage} />
     </div>
   );
 }

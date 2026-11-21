@@ -14,8 +14,8 @@ export function ProductCard({ p, priority }: { p: Product; priority?: boolean })
   const wish = useWish();
   const liked = wish.has(p.id);
   return (
-    <article className="tk-lift group relative flex flex-col overflow-hidden rounded-xl bg-white p-2 ring-2 ring-navy-100 hover:ring-teal" data-testid="product-card" aria-label={p.name}>
-      <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-navy-50">
+    <article className="group relative flex flex-col overflow-hidden rounded-3xl bg-white p-1.5 transition-shadow hover:shadow-lift" data-testid="product-card" aria-label={p.name}>
+      <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-gradient-to-b from-orange-100 to-orange-50">
         {/* Phones: swipe between the two pictures. */}
         <Link href={`/p/${p.slug}`} className="md:hidden" aria-label={p.name}>
           <div className="flex h-full snap-x snap-mandatory overflow-x-auto [scrollbar-width:none]">
@@ -34,7 +34,7 @@ export function ProductCard({ p, priority }: { p: Product; priority?: boolean })
         <button type="button" onClick={() => wish.toggle(p.id)} aria-pressed={liked} aria-label={liked ? `Remove ${p.name} from wishlist` : `Add ${p.name} to wishlist`} className="tk-press absolute right-2 top-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-navy shadow-soft hover:bg-orange">
           <Icon name="heart" size={20} className={liked ? 'fill-orange text-orange' : ''} />
         </button>
-        {p.discountPct >= 10 && p.inStock && <span className="absolute left-2 top-2 -rotate-3 rounded-full bg-orange px-3 py-1 text-xs font-extrabold tracking-wide text-navy shadow-soft">SALE</span>}
+        {p.discountPct >= 10 && p.inStock && <span className="absolute left-2 top-2 rounded-full bg-white/90 px-3 py-1 text-xs font-extrabold tracking-wide text-orange-600 shadow-soft">SALE</span>}
         {!p.inStock && <span className="absolute inset-x-2 bottom-2 rounded-full bg-white py-1 text-center text-xs font-bold text-danger shadow-soft">Out of stock</span>}
       </div>
       <div className="mt-3 flex flex-col gap-0.5 px-1 pb-1">

@@ -5,6 +5,8 @@ import { QueryError } from '../ErrorBanner';
 import { ReturnForm } from '../PurchaseForms';
 import { useCan, useGstMode } from '../../features/auth/permissions';
 import { useReturns } from '../../features/inventory/use-billing';
+import { Pager } from '../Pager';
+import { usePagedView } from '../../features/api/use-paged-view';
 
 /**
  * Send stock back to a vendor. Saving a return takes the pieces off stock and makes a debit note, which comes off what the vendor is owed
@@ -16,7 +18,8 @@ export function VendorReturns({ compact }: { compact?: boolean }) {
   const { toast } = useToast();
   const list = useReturns();
   const [open, setOpen] = useState(false);
-  const data = list.data?.pages.flatMap((p) => p.items) ?? [];
+  const pv = usePagedView(list);
+  const data = pv.items;
   const Sheet = compact ? BottomSheet : Modal;
   const add = can('purchase.create') && <Button variant="primary" className={compact ? 'min-h-12' : ''} block={compact} onClick={() => setOpen(true)}>New vendor return</Button>;
   return (
@@ -30,7 +33,7 @@ export function VendorReturns({ compact }: { compact?: boolean }) {
           <TBody>{data.map((r) => <Tr key={r.id}><Td className="font-medium">{r.number}</Td><Td>{r.vendorName}</Td><Td>{r.reason}</Td><Td>{formatDate(r.date)}</Td><Td className="text-right">{r.lines.reduce((a, l) => a + l.qty, 0)}</Td>{gst === 'on' && <Td className="text-right">{r.totals.tax !== null ? formatPaise(r.totals.tax) : ''}</Td>}<Td className="text-right">{formatPaise(r.totals.total)}</Td></Tr>)}</TBody>
         </Table>
       )}
-      {list.hasNextPage && <Button onClick={() => list.fetchNextPage()} loading={list.isFetchingNextPage}>Load more</Button>}
+      <Pager page={pv.page} total={pv.total} pageSize={pv.pageSize} onPage={pv.setPage} />
       {compact && add && <div className="fixed inset-x-0 bottom-14 z-30 border-t-2 border-navy-100 bg-white p-3">{add}</div>}
       <Sheet open={open} onClose={() => setOpen(false)} title="New vendor return"><ReturnForm onDone={() => { setOpen(false); toast('Return created. Stock updated and credit noted against the vendor.', 'success'); }} /></Sheet>
     </div>

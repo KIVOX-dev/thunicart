@@ -9,6 +9,8 @@ import { VendorDetail } from '../../../components/VendorDetail';
 import { useCan } from '../../../features/auth/permissions';
 import type { Vendor } from '../../../features/catalog/types';
 import { useVendors } from '../../../features/catalog/use-parties';
+import { Pager } from '../../../components/Pager';
+import { usePagedView } from '../../../features/api/use-paged-view';
 
 export function VendorsDesktop() {
   const can = useCan();
@@ -17,7 +19,8 @@ export function VendorsDesktop() {
   const [dlg, setDlg] = useState<{ vendor?: Vendor } | null>(null);
   const [open, setOpen] = useState<Vendor | null>(null);
   const list = useVendors(q);
-  const rows = list.data?.pages.flatMap((p) => p.items) ?? [];
+  const pv = usePagedView(list);
+  const rows = pv.items;
   return (
     <div>
       <PageHeader title="Vendors" description="Suppliers you buy from." actions={<><ExportButton dataset="vendors" />{can('vendors.create') && <Button variant="primary" onClick={() => setDlg({})}>Add vendor</Button>}</>} />
@@ -41,7 +44,7 @@ export function VendorsDesktop() {
               ))}
             </TBody>
           </Table>
-          {list.hasNextPage && <div className="mt-3"><Button onClick={() => list.fetchNextPage()} loading={list.isFetchingNextPage}>Load more</Button></div>}
+          <Pager page={pv.page} total={pv.total} pageSize={pv.pageSize} onPage={pv.setPage} />
         </>
       )}
       <Drawer side="right" open={!!open} onClose={() => setOpen(null)} title={open ? open.name : ''}>{open && <VendorDetail vendor={open} onSaved={() => { setOpen(null); toast('Vendor saved', 'success'); }} />}</Drawer>

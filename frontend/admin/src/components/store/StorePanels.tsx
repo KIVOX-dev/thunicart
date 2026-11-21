@@ -9,6 +9,8 @@ import { useCan } from '../../features/auth/permissions';
 import { useMediaUploads } from '../../features/catalog/use-uploads';
 import { useStoreProducts, useUpdateProduct, type StoreProduct } from '../../features/store/use-products';
 import { ORDER_FLOW, uploadBannerImage, useBanners, useCmsPages, useMoveOrder, useStoreOrders, type Banner, type CmsPage } from '../../features/store/use-store';
+import { Pager } from '../Pager';
+import { usePagedView } from '../../features/api/use-paged-view';
 
 /** Website orders: filter by stage and move each one along (packed, shipped, delivered). Returns are handled under Return transfers. */
 export function StoreOrders() {
@@ -16,7 +18,8 @@ export function StoreOrders() {
   const [status, setStatus] = useState('');
   const q = useStoreOrders(status);
   const { move, saving, error } = useMoveOrder();
-  const rows = q.data?.pages.flatMap((p) => p.items) ?? [];
+  const pv = usePagedView(q);
+  const rows = pv.items;
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-3">
@@ -36,7 +39,7 @@ export function StoreOrders() {
           );
         })}</ul>
       )}
-      {q.hasNextPage && <Button onClick={() => q.fetchNextPage()} loading={q.isFetchingNextPage}>Load more</Button>}
+      <Pager page={pv.page} total={pv.total} pageSize={pv.pageSize} onPage={pv.setPage} />
     </div>
   );
 }
@@ -182,7 +185,8 @@ export function StoreProducts({ compact }: { compact?: boolean }) {
   const [photos, setPhotos] = useState<StoreProduct | null>(null);
   const list = useStoreProducts(q, show);
   const upd = useUpdateProduct();
-  const rows = list.data?.pages.flatMap((p) => p.items) ?? [];
+  const pv = usePagedView(list);
+  const rows = pv.items;
   const Sheet = compact ? BottomSheet : Modal;
   const toggle = async (i: StoreProduct) => { await upd.update({ id: i.id, showOnWebsite: !i.showOnWebsite }); toast(i.showOnWebsite ? 'Hidden from the website' : 'Shown on the website', 'success'); };
   return (
@@ -209,7 +213,7 @@ export function StoreProducts({ compact }: { compact?: boolean }) {
           );
         })}</ul>
       )}
-      {list.hasNextPage && <Button onClick={() => list.fetchNextPage()} loading={list.isFetchingNextPage}>Load more</Button>}
+      <Pager page={pv.page} total={pv.total} pageSize={pv.pageSize} onPage={pv.setPage} />
       <Sheet open={!!photos} onClose={() => setPhotos(null)} title={photos ? `Photos: ${photos.name}` : ''}>
         {photos && <PhotoEditor key={photos.id} product={photos} onDone={() => { setPhotos(null); toast('Photos saved', 'success'); }} />}
       </Sheet>

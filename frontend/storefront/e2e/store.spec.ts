@@ -19,7 +19,7 @@ test.describe('home and header', () => {
     await expect(page.getByRole('region', { name: 'Featured' })).toBeVisible();
     const order = await page.locator('main section[aria-label]').evaluateAll((els) => els.map((e) => e.getAttribute('aria-label')));
     expect(order.slice(0, 7)).toEqual(['Featured', 'Shop by category', 'Shop by size', 'Trending now', 'Shop by occasion', 'New arrivals', 'Lookbook']);
-    await expect(page.getByRole('region', { name: 'Shop by category' }).getByRole('link')).toHaveCount(2); // the store is for Men and Women only
+    await expect(page.getByRole('list', { name: 'Shop by category' }).getByRole('link')).toHaveCount(2); // the store is for Men and Women only
     await expect(page.getByRole('region', { name: 'Shop by category' })).toContainText('Women');
     await expect(page.getByRole('region', { name: 'Shop by category' })).toContainText('Men');
     await expect(page.getByRole('region', { name: 'Shop by size' }).getByRole('link', { name: 'M', exact: true })).toBeVisible();

@@ -8,6 +8,8 @@ import { QueryError } from '../ErrorBanner';
 import { ExpenseForm, SettleForm } from '../reports/AccountForms';
 import { useCan } from '../../features/auth/permissions';
 import { useExpenses, useMonthTotal, useSettlements, useVendorDues, type CashKind, type VendorDue } from '../../features/reports/use-reports';
+import { Pager } from '../Pager';
+import { usePagedView } from '../../features/api/use-paged-view';
 
 /** Money going out that is not a vendor payment: Expenses (rent, salary) or Charges (bank, gateway, delivery). */
 export function CashEntries({ kind, compact }: { kind: CashKind; compact?: boolean }) {
@@ -16,7 +18,8 @@ export function CashEntries({ kind, compact }: { kind: CashKind; compact?: boole
   const [open, setOpen] = useState(false);
   const q = useExpenses('', kind);
   const month = useMonthTotal(kind);
-  const data = q.data?.pages.flatMap((p) => p.items) ?? [];
+  const pv = usePagedView(q);
+  const data = pv.items;
   const word = kind === 'charge' ? 'charge' : 'expense';
   const Sheet = compact ? BottomSheet : Modal;
   const add = can('accounts.create') && <Button variant="primary" className={compact ? 'min-h-12' : ''} block={compact} onClick={() => setOpen(true)}>Add {word}</Button>;
@@ -32,7 +35,7 @@ export function CashEntries({ kind, compact }: { kind: CashKind; compact?: boole
         <Table caption={`${word}s`}><THead><Tr><Th>Date</Th><Th>Category</Th><Th>{kind === 'charge' ? 'Charged by' : 'Paid to'}</Th><Th>Paid by</Th><Th>Note</Th><Th>Receipt</Th><Th className="text-right">Amount</Th></Tr></THead>
           <TBody>{data.map((e) => <Tr key={e.id}><Td>{formatDate(e.date)}</Td><Td>{e.category}</Td><Td>{e.payee}</Td><Td>{e.mode}</Td><Td>{e.note}</Td><Td>{e.receiptKey ? 'Attached' : '–'}</Td><Td className="text-right">{formatPaise(e.amount)}</Td></Tr>)}</TBody></Table>
       )}
-      {q.hasNextPage && <Button onClick={() => q.fetchNextPage()} loading={q.isFetchingNextPage}>Load more</Button>}
+      <Pager page={pv.page} total={pv.total} pageSize={pv.pageSize} onPage={pv.setPage} />
       {compact && add && <div className="fixed inset-x-0 bottom-14 z-30 border-t-2 border-navy-100 bg-white p-3">{add}</div>}
       <Sheet open={open} onClose={() => setOpen(false)} title={`Add ${word}`}><ExpenseForm big={compact} kind={kind} onDone={() => { setOpen(false); toast(`${word[0]!.toUpperCase()}${word.slice(1)} saved`, 'success'); }} /></Sheet>
     </div>
@@ -88,7 +91,8 @@ export function VendorOutstanding({ compact }: { compact?: boolean }) {
 /** Every outstanding amount that was marked settled, with who and why. */
 export function Settlements({ compact }: { compact?: boolean }) {
   const q = useSettlements();
-  const data = q.data?.pages.flatMap((p) => p.items) ?? [];
+  const pv = usePagedView(q);
+  const data = pv.items;
   return (
     <div className="flex flex-col gap-3">
       {q.isPending ? <ListSkeleton label="Loading settlements" /> : q.isError ? <QueryError error={q.error} onRetry={() => q.refetch()} /> : data.length === 0 ? <EmptyState title="No settlements yet" body="Settle an open vendor bill from Outstanding to vendors." /> : compact ? data.map((s) => (
@@ -97,7 +101,7 @@ export function Settlements({ compact }: { compact?: boolean }) {
         <Table caption="Settlements"><THead><Tr><Th>Settlement</Th><Th>Date</Th><Th>Vendor</Th><Th>Bill</Th><Th>Type</Th><Th>Reason</Th><Th className="text-right">Amount</Th></Tr></THead>
           <TBody>{data.map((s) => <Tr key={s.id}><Td className="font-medium">{s.settlementNumber}</Td><Td>{formatDate(s.date)}</Td><Td>{s.vendorName}</Td><Td>{s.billNumber}</Td><Td><Badge tone={s.kind === 'full' ? 'success' : 'warning'}>{s.kind === 'full' ? 'Full' : 'Partial'}</Badge></Td><Td>{s.reason}</Td><Td className="text-right">{formatPaise(s.amount)}</Td></Tr>)}</TBody></Table>
       )}
-      {q.hasNextPage && <Button onClick={() => q.fetchNextPage()} loading={q.isFetchingNextPage}>Load more</Button>}
+      <Pager page={pv.page} total={pv.total} pageSize={pv.pageSize} onPage={pv.setPage} />
     </div>
   );
 }

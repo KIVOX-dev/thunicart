@@ -62,10 +62,3 @@ New endpoints: `GET/POST /vendor-settlements`, `GET /customers/duplicates`, `POS
 ## Not done / caveats
 - Mock (demo) mode: the new screens call the real API paths, so Accounts, Settlements, Store, Return transfers and Vendor history need the backend (same as the already migrated purchase and stock screens). Mock seed gets the Employee role and activity fields only.
 - Playwright e2e specs were updated for renamed screens but **not run**.
-
-## Experiment: neo-brutalist tables (remove if not liked)
-Tables only. Thick navy borders, square corners, hard offset shadow, orange header, yellow row hover, square buttons and badges inside tables.
-- All the styling lives in one file: `frontend/admin/src/table-brutalism.css`, loaded by one line in `frontend/admin/src/main.tsx`.
-- **To remove completely:** delete that file and that one `import './table-brutalism.css'` line. Nothing else depends on it.
-- The shared `Table` component only gained a harmless marker class, `tk-table`, which the CSS targets. It can stay.
-- To keep it, leave things as they are.

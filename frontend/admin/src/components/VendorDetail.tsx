@@ -1,11 +1,13 @@
 import { formatDate, formatPaise } from '@thunikart/shared';
-import { Badge, Button, EmptyState, ListSkeleton, Tabs } from '@thunikart/ui';
+import { Badge, EmptyState, ListSkeleton, Tabs } from '@thunikart/ui';
 import { useState } from 'react';
 import { QueryError } from './ErrorBanner';
 import { VendorForm } from './PartyForms';
 import { useCan } from '../features/auth/permissions';
 import type { Vendor } from '../features/catalog/types';
 import { useBills, useVendorOutstanding } from '../features/inventory/use-billing';
+import { Pager } from './Pager';
+import { usePagedView } from '../features/api/use-paged-view';
 
 const TONE = { unpaid: 'danger', 'part-paid': 'warning', paid: 'success' } as const;
 const LABEL = { unpaid: 'Unpaid', 'part-paid': 'Partially paid', paid: 'Paid' } as const;
@@ -14,7 +16,8 @@ const LABEL = { unpaid: 'Unpaid', 'part-paid': 'Partially paid', paid: 'Paid' } 
 export function PurchaseHistory({ vendor, compact }: { vendor: Vendor; compact?: boolean }) {
   const bills = useBills({ vendorId: vendor.id });
   const owed = useVendorOutstanding(vendor.id);
-  const rows = bills.data?.pages.flatMap((p) => p.items) ?? [];
+  const pv = usePagedView(bills);
+  const rows = pv.items;
   const o = owed.data;
   return (
     <div className="flex flex-col gap-4">
@@ -41,7 +44,7 @@ export function PurchaseHistory({ vendor, compact }: { vendor: Vendor; compact?:
           ))}</tbody>
         </table>
       )}
-      {bills.hasNextPage && <Button onClick={() => bills.fetchNextPage()} loading={bills.isFetchingNextPage}>Load more</Button>}
+      <Pager page={pv.page} total={pv.total} pageSize={pv.pageSize} onPage={pv.setPage} />
     </div>
   );
 }
