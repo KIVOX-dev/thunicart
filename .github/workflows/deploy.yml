@@ -49,6 +49,8 @@ jobs:
           CATALYST_TOKEN: ${{ secrets.CATALYST_TOKEN }}   # from `catalyst token:generate`
           CATALYST_PROJECT_ID: ${{ secrets.CATALYST_PROJECT_ID }}
           CATALYST_ORG_ID: ${{ secrets.CATALYST_ORG_ID }}
+          # A token only works against the data center of the account that made it (India accounts use in). Set the repository variable CATALYST_DC.
+          CATALYST_DC: ${{ vars.CATALYST_DC }}
         run: |
           # There is no catalyst.json in the repo, so the project is named here (repository secrets).
           # A token pasted with quotes, a "CATALYST_TOKEN=" prefix, spaces or a line break makes the CLI fail with "unable to refresh access token".
@@ -63,6 +65,8 @@ jobs:
           EXTRA=""
           [ -n "$CATALYST_PROJECT_ID" ] && EXTRA="$EXTRA --project $CATALYST_PROJECT_ID"
           [ -n "$CATALYST_ORG_ID" ] && EXTRA="$EXTRA --org $CATALYST_ORG_ID"
+          [ -n "$CATALYST_DC" ] && EXTRA="$EXTRA --dc $CATALYST_DC"
+          echo "Data center: ${CATALYST_DC:-not set (CLI default)}"
           catalyst deploy appsail --name thunikart-api --source docker://thunikart-backend:deploy --port 9000 -ni $EXTRA
       - name: Health check after deploy
         # Set the repository (or environment) variable BACKEND_HEALTH_URL, for example https://thunikart-api-xxxx.development.catalystappsail.in/health
