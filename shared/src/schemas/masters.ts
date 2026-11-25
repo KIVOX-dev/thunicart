@@ -104,10 +104,16 @@ export const itemDto = z.object({
   gstRateOverride: z.number().nullable(), gstOverrideReason: z.string().nullable(), images: z.array(z.string()), video: z.string().nullable(),
   sizeChart: z.string().nullable(), showOnWebsite: z.boolean(), slug: z.string().nullable(), active: z.boolean(),
   variantCount: z.number().int(), onHand: z.number().int(),
+  /** Lists only: the lowest normal price, and today's sale when one is running. */
+  priceFrom: z.number().int().nullable().optional(),
+  saleToday: z.object({ price: z.number().int(), until: z.string() }).nullable().optional(),
   /** Only returned for a single item, not in lists. */
   variants: z.array(variantDto).optional(),
 });
 export const itemListFilters = z.object({ section: z.enum(SECTIONS).optional(), active: z.enum(['true', 'false']).optional(), showOnWebsite: z.enum(['true', 'false']).optional() });
+
+/** One day sale price in paise for every size of an item. null ends the sale now. */
+export const saleTodayBody = z.object({ price: z.number().int().min(1).nullable() });
 
 export const barcodeBody = z.object({
   variantId: objectId.optional(),

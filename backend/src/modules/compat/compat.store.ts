@@ -38,7 +38,11 @@ const title = (s: string) => s.toLowerCase().replace(/\b[a-z]/g, (c) => c.toUppe
 
 export function registerStoreCompat(app: FastifyInstance) {
   const P = `${SHOP_PREFIX}/api/v1`;
-  const base = (req: FastifyRequest) => `${req.protocol}://${req.headers.host}`;
+  // Behind the host's proxy the request looks like http to "name:443", which a browser cannot load. Public hosts are always https.
+  const base = (req: FastifyRequest) => {
+    const host = String(req.headers.host ?? '').replace(/:(443|80)$/, '');
+    return `${/^(localhost|127\.|\[::1\])/.test(host) ? req.protocol : 'https'}://${host}`;
+  };
   const img = (req: FastifyRequest, key?: string) => (key ? (/^https?:/.test(key) ? key : `${base(req)}/media/${key}`) : '/api/img/product/1');
 
   /** An item's own photos when it has them. Otherwise (none) drawn pictures of the garment, no people. */
@@ -132,7 +136,9 @@ export function registerStoreCompat(app: FastifyInstance) {
     return reply.send({
       layout, stripCards,
       announcements: ['Free shipping on orders above Rs 999', 'Easy 7 day exchange'],
-      banners: top.slice(0, 3).map((c, i) => ({ id: `b${i + 1}`, title: c.name, subtitle: 'New styles in store now', mobileImage: c.image, desktopImage: c.image, href: `/c/${c.slug}` })),
+      banners: (biz.json?.banners ?? []).length
+        ? biz.json.banners.map((b: any) => ({ id: b.id, title: b.title || 'Thunikart', subtitle: '', mobileImage: img(req, b.imageKey), desktopImage: img(req, b.imageKey), href: b.link || '/c/all' }))
+        : top.slice(0, 3).map((c, i) => ({ id: `b${i + 1}`, title: c.name, subtitle: 'New styles in store now', mobileImage: c.image, desktopImage: c.image, href: `/c/${c.slug}` })),
       categories: cats, sizes: fresh.json?.facets?.sizes ?? [], occasions: occCards.map((o: any) => ({ name: o.title, image: o.image, href: o.link })), categoryCards: catCards,
       trending: popular.json?.items ?? [], newArrivals: fresh.json?.items ?? [],
       lookbook: lookCards.map((l: any) => ({ image: l.image, title: l.title, href: l.link })),

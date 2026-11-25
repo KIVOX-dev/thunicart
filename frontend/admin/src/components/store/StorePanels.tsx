@@ -4,10 +4,11 @@ import { formatDate, formatPaise } from '@thunikart/shared';
 import { ImagePlus } from 'lucide-react';
 import { Badge, BottomSheet, Button, Checkbox, EmptyState, Field, Input, ListSkeleton, Modal, Select, useToast } from '@thunikart/ui';
 import { KeyImage } from '../KeyImage';
+import { BuiltInBanners } from './BuiltInBanners';
 import { QueryError } from '../ErrorBanner';
 import { useCan } from '../../features/auth/permissions';
 import { useMediaUploads } from '../../features/catalog/use-uploads';
-import { useStoreProducts, useUpdateProduct, type StoreProduct } from '../../features/store/use-products';
+import { useProductExtras, useStoreCategories, useStoreProducts, useUpdateProduct, type StoreProduct } from '../../features/store/use-products';
 import { ORDER_FLOW, uploadBannerImage, useBanners, useCmsPages, useMoveOrder, useStoreOrders, type Banner, type CmsPage } from '../../features/store/use-store';
 import { Pager } from '../Pager';
 import { usePagedView } from '../../features/api/use-paged-view';
@@ -57,6 +58,7 @@ function BannerForm({ banner, onDone, onSave }: { banner?: Banner; onDone: () =>
       <Field label="Title">{(p) => <Input {...p} value={title} onChange={(e) => setTitle(e.target.value)} />}</Field>
       <Field label="Link (where it goes when tapped)">{(p) => <Input {...p} placeholder="/products/kurtis" value={link} onChange={(e) => setLink(e.target.value)} />}</Field>
       <Field label="Show order (small numbers first)">{(p) => <Input {...p} inputMode="numeric" value={order} onChange={(e) => setOrder(e.target.value)} />}</Field>
+      <p className="rounded bg-mist p-3 text-sm"><strong>Best size: 2000 × 700 pixels</strong> (wide). The whole picture is shown, so put any headline inside the picture.</p>
       <label className="inline-flex min-h-11 cursor-pointer items-center rounded border border-navy px-4 text-sm font-medium hover:bg-mist">
         {imageKey ? 'Change image' : 'Add banner image'}
         <input type="file" accept="image/*" className="sr-only" aria-label="Banner image" onChange={async (e) => { const f = e.target.files?.[0]; if (!f) return; setErr(''); try { setImageKey(await uploadBannerImage(f, setProgress)); } catch (x) { setErr((x as Error).message); } setProgress(null); }} />
@@ -83,7 +85,7 @@ export function StoreBanners({ compact }: { compact?: boolean }) {
     <div className="flex flex-col gap-3">
       {can('cms.create') && <div className="flex justify-end"><Button variant="primary" onClick={() => setEdit({})}>Add banner</Button></div>}
       {b.error && <p role="alert" className="text-sm text-danger">{b.error}</p>}
-      {b.list.isPending ? <ListSkeleton label="Loading banners" /> : b.list.isError ? <QueryError error={b.list.error} onRetry={() => b.list.refetch()} /> : rows.length === 0 ? <EmptyState title="No banners yet" body="Banners show at the top of the website home page." /> : (
+      {b.list.isPending ? <ListSkeleton label="Loading banners" /> : b.list.isError ? <QueryError error={b.list.error} onRetry={() => b.list.refetch()} /> : rows.length === 0 ? <BuiltInBanners canAdd={can('cms.create')} onCreate={b.create} /> : (
         <ul className="flex flex-col gap-2">{rows.map((x) => (
           <li key={x.id} className="flex flex-wrap items-center justify-between gap-2 rounded border-2 border-navy-100 p-3 text-sm">
             <span><strong>{x.title || '(no title)'}</strong><span className="block text-xs text-muted">Order {x.order}{x.link ? ` · ${x.link}` : ''}</span></span>
@@ -146,6 +148,7 @@ function PhotoEditor({ product, onDone }: { product: StoreProduct; onDone: () =>
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-muted">The first photo is the main one on the website. JPG, PNG or WebP, up to 5 MB each.</p>
+      <p className="rounded bg-mist p-3 text-sm"><strong>Best size: 900 × 1200 pixels</strong> (portrait, 3:4). The product card cuts off anything outside this shape, so keep the item in the middle.</p>
       {media.imageKeys.length === 0 ? <p className="rounded border border-dashed border-line p-4 text-center text-sm text-muted">No photos yet.</p> : (
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {media.imageKeys.map((k, i) => (
@@ -176,6 +179,47 @@ function PhotoEditor({ product, onDone }: { product: StoreProduct; onDone: () =>
   );
 }
 
+const problem = (e: unknown) => { const x = e as { fields?: { message: string }[]; friendly?: string; message?: string }; return x.fields?.[0]?.message ?? x.friendly ?? x.message ?? 'Could not save.'; };
+
+/** A sale price for today only: it applies to every size priced higher, on the website and at the counter, and ends at midnight. */
+function SaleEditor({ product, onDone }: { product: StoreProduct; onDone: (message: string) => void }) {
+  const { setSale, savingSale } = useProductExtras();
+  const [price, setPrice] = useState(product.saleToday ? String(product.saleToday.price / 100) : '');
+  const [error, setError] = useState<string | null>(null);
+  const save = async (value: number | null) => {
+    setError(null);
+    try { await setSale({ id: product.id, price: value }); onDone(value === null ? 'Sale ended' : 'Sale price set for today'); } catch (e) { setError(problem(e)); }
+  };
+  return (
+    <form className="flex flex-col gap-3" noValidate onSubmit={(e) => { e.preventDefault(); const v = Math.round(Number(price) * 100); if (!(v > 0)) { setError('Enter the sale price'); return; } void save(v); }}>
+      {product.priceFrom != null && <p className="text-sm">Current price from <strong>{formatPaise(product.priceFrom)}</strong></p>}
+      <Field label="Sale price for today (₹)" required error={error ?? undefined}>{(p) => <Input {...p} inputMode="decimal" className="min-h-11" value={price} onChange={(e) => setPrice(e.target.value)} autoFocus />}</Field>
+      <p className="text-xs text-muted">Ends by itself at midnight tonight. Used on the website and at the billing counter.</p>
+      <div className="flex flex-wrap justify-end gap-2">
+        {product.saleToday && <Button disabled={savingSale} onClick={() => void save(null)}>End sale now</Button>}
+        <Button type="submit" variant="primary" loading={savingSale}>Save sale price</Button>
+      </div>
+    </form>
+  );
+}
+
+function NewCategory({ onMade }: { onMade: (id: string) => Promise<void> }) {
+  const { addCategory, addingCategory } = useProductExtras();
+  const [name, setName] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const submit = async (e: { preventDefault: () => void }) => {
+    e.preventDefault(); setError(null);
+    if (!name.trim()) { setError('Enter the name'); return; }
+    try { const c = await addCategory(name.trim()); await onMade(c.id); } catch (x) { setError(problem(x)); }
+  };
+  return (
+    <form className="flex flex-col gap-3" noValidate onSubmit={(e) => void submit(e)}>
+      <Field label="Category name" required error={error ?? undefined}>{(p) => <Input {...p} className="min-h-11" value={name} onChange={(e) => setName(e.target.value)} autoFocus />}</Field>
+      <div className="flex justify-end"><Button type="submit" variant="primary" loading={addingCategory}>Add category</Button></div>
+    </form>
+  );
+}
+
 /** Items on the website. A product is live when it is switched on here, active, and has stock. Each one shows its main photo, with Add photo or Edit photos. */
 export function StoreProducts({ compact }: { compact?: boolean }) {
   const can = useCan();
@@ -185,6 +229,10 @@ export function StoreProducts({ compact }: { compact?: boolean }) {
   const [photos, setPhotos] = useState<StoreProduct | null>(null);
   const list = useStoreProducts(q, show);
   const upd = useUpdateProduct();
+  const cats = useStoreCategories().data ?? [];
+  const [sale, setSale] = useState<StoreProduct | null>(null);
+  const [newCatFor, setNewCatFor] = useState<StoreProduct | null>(null);
+  const setCategory = async (i: StoreProduct, categoryId: string) => { await upd.update({ id: i.id, categoryId: categoryId || null }); toast('Category saved', 'success'); };
   const pv = usePagedView(list);
   const rows = pv.items;
   const Sheet = compact ? BottomSheet : Modal;
@@ -205,6 +253,14 @@ export function StoreProducts({ compact }: { compact?: boolean }) {
               <div className="h-16 w-12 shrink-0 overflow-hidden rounded bg-mist">{i.images[0] ? <KeyImage k={i.images[0]} alt={`${i.name} main photo`} /> : <span className="flex h-full w-full items-center justify-center text-muted"><ImagePlus aria-hidden size={18} /></span>}</div>
               <span className="min-w-0 flex-1"><strong>{i.name}</strong><span className="block text-xs text-muted">{[i.model, i.categoryName, i.brandName].filter(Boolean).join(' · ')} · {i.onHand} in stock · {i.images.length} photo{i.images.length === 1 ? '' : 's'}</span></span>
               <span className="flex flex-wrap items-center gap-2">
+                {i.saleToday && <Badge tone="warning">Today {formatPaise(i.saleToday.price)}</Badge>}
+                {can('items.edit') && (
+                  <Select aria-label={`Category of ${i.name}`} className={compact ? 'min-h-12' : 'w-44'} disabled={upd.saving} value={i.categoryId ?? ''}
+                    onChange={(e) => { if (e.target.value === '__new') setNewCatFor(i); else void setCategory(i, e.target.value); }}>
+                    <option value="">No category</option>{cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}{can('items.create') && <option value="__new">+ New category…</option>}
+                  </Select>
+                )}
+                {can('items.edit') && <Button size="sm" onClick={() => setSale(i)}>{i.saleToday ? 'Edit sale' : 'Sale today'}</Button>}
                 <Badge tone={live ? 'success' : i.showOnWebsite ? 'warning' : 'neutral'}>{live ? 'Live' : i.showOnWebsite ? (i.active ? 'On, no stock' : 'On, inactive') : 'Not on website'}</Badge>
                 {can('items.edit') && <Button size="sm" onClick={() => setPhotos(i)}>{i.images.length ? 'Edit photos' : 'Add photo'}</Button>}
                 {can('items.edit') && <Button size="sm" disabled={upd.saving} onClick={() => toggle(i)}>{i.showOnWebsite ? 'Hide' : 'Show'}</Button>}
@@ -214,6 +270,12 @@ export function StoreProducts({ compact }: { compact?: boolean }) {
         })}</ul>
       )}
       <Pager page={pv.page} total={pv.total} pageSize={pv.pageSize} onPage={pv.setPage} />
+      <Sheet open={!!sale} onClose={() => setSale(null)} title={sale ? `Sale today: ${sale.name}` : ''}>
+        {sale && <SaleEditor key={sale.id} product={sale} onDone={(m) => { setSale(null); toast(m, 'success'); }} />}
+      </Sheet>
+      <Sheet open={!!newCatFor} onClose={() => setNewCatFor(null)} title="New category">
+        {newCatFor && <NewCategory key={newCatFor.id} onMade={async (id) => { await setCategory(newCatFor, id); setNewCatFor(null); }} />}
+      </Sheet>
       <Sheet open={!!photos} onClose={() => setPhotos(null)} title={photos ? `Photos: ${photos.name}` : ''}>
         {photos && <PhotoEditor key={photos.id} product={photos} onDone={() => { setPhotos(null); toast('Photos saved', 'success'); }} />}
       </Sheet>

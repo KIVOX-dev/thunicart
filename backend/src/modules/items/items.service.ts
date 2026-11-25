@@ -7,7 +7,7 @@ import { escapeRegex, paginate, parseSort } from '../../lib/list';
 import { slugify } from '../../lib/crud';
 import { nextNumber } from '../../lib/numberSeries';
 import { barcodeKind, generateEan13 } from '../../lib/barcode';
-import { effectivePrice, stockStatusOf } from '../../lib/stockStatus';
+import { effectivePrice, regularPrice, stockStatusOf } from '../../lib/stockStatus';
 import { checkHsn } from '../../lib/hsn';
 import { getGstStatus } from '../../lib/gst';
 import { resolveGstRate } from '../../lib/gstRate';
@@ -119,7 +119,7 @@ export async function listItems(q: ListQuery & { section?: string; active?: stri
   if (q.showOnWebsite) f.showOnWebsite = q.showOnWebsite === 'true';
   const res = await paginate(Item, f, q, parseSort(q.sort, ['name', 'createdAt', 'hsn'], { name: 1 }), (i) => i);
   const ids = res.items.map((i: any) => i._id);
-  const variants: any[] = await Variant.find({ itemId: { $in: ids } }, { itemId: 1 }).lean();
+  const variants: any[] = await Variant.find({ itemId: { $in: ids } }, { itemId: 1, active: 1, mrp: 1, sellingPrice: 1, offerPrice: 1, salePrice: 1, saleUntil: 1 }).lean();
   const stock = await stockTotals(variants.map((v) => String(v._id)));
   const per = new Map<string, { variantCount: number; onHand: number }>();
   for (const v of variants) {
@@ -127,7 +127,28 @@ export async function listItems(q: ListQuery & { section?: string; active?: stri
     cur.variantCount++; cur.onHand += stock.get(String(v._id))?.onHand ?? 0; per.set(k, cur);
   }
   const names = await namesFor(res.items);
-  return { ...res, items: res.items.map((i: any) => itemDto(i, names, undefined, undefined, per.get(String(i._id)) ?? { variantCount: 0, onHand: 0 })) };
+  return { ...res, items: res.items.map((i: any) => ({ ...itemDto(i, names, undefined, undefined, per.get(String(i._id)) ?? { variantCount: 0, onHand: 0 }), ...priceSummary(variants.filter((v) => String(v.itemId) === String(i._id) && v.active !== false)) })) };
+}
+
+function priceSummary(vs: any[]) {
+  const prices = vs.map((v) => regularPrice(v)).filter((p) => p > 0);
+  const on = vs.filter((v) => v.salePrice > 0 && v.saleUntil && new Date(v.saleUntil).getTime() >= Date.now());
+  return { priceFrom: prices.length ? Math.min(...prices) : null, saleToday: on.length ? { price: Math.min(...on.map((v) => v.salePrice as number)), until: new Date(on[0]!.saleUntil).toISOString() } : null };
+}
+
+/** The last moment of today in India. */
+export const endOfTodayIst = (now: number = Date.now()) => new Date(`${new Date(now + 5.5 * 3600_000).toISOString().slice(0, 10)}T23:59:59.999+05:30`);
+
+/** Set (or, with null, end) today's sale price on an item. It applies to every active size whose normal price is higher. */
+export async function setSaleToday(itemId: string, price: number | null, audit: Audit) {
+  if (!(await Item.exists({ _id: itemId }))) throw notFound('Item');
+  const variants: any[] = await Variant.find({ itemId, active: true }).lean();
+  const lower = price == null ? [] : variants.filter((v) => price < regularPrice(v));
+  if (price != null && !lower.length) throw badRequest('The sale price must be lower than the current price', [{ path: 'price', message: 'Enter a price below the current one' }]);
+  await Variant.updateMany({ itemId }, { $set: { salePrice: null, saleUntil: null } });
+  if (price != null) await Variant.updateMany({ _id: { $in: lower.map((v) => v._id) } }, { $set: { salePrice: price, saleUntil: endOfTodayIst() } });
+  audit({ entity: 'item', entityId: itemId, action: price == null ? 'sale_end' : 'sale_today', after: { price, sizes: lower.length } });
+  return { ok: true as const };
 }
 
 export async function getItem(id: string) {

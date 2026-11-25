@@ -57,5 +57,10 @@ describe('stock status and online price', () => {
     expect(effectivePrice({ offerPrice: 900, sellingPrice: 1000, mrp: 1200 })).toBe(900);
     expect(effectivePrice({ offerPrice: null, sellingPrice: 1000, mrp: 1200 })).toBe(1000);
     expect(effectivePrice({ offerPrice: null, sellingPrice: 0, mrp: 1200 })).toBe(1200);
+    // a one day sale counts only until it ends, and never raises the price
+    const sale = { offerPrice: null, sellingPrice: 1000, mrp: 1200, salePrice: 800, saleUntil: new Date(5000) };
+    expect(effectivePrice(sale, 4000)).toBe(800);
+    expect(effectivePrice(sale, 6000)).toBe(1000);
+    expect(effectivePrice({ ...sale, salePrice: 1100 }, 4000)).toBe(1000);
   });
 });

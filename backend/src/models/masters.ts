@@ -81,6 +81,9 @@ export const Variant = defineModel('Variant', 'variants', {
   mrp: { ...paise },
   sellingPrice: { ...paise },
   offerPrice: { ...paise, default: null },
+  /** A one day sale price. It counts only until saleUntil, then the normal prices apply again by themselves. */
+  salePrice: { ...paise, default: null },
+  saleUntil: { type: Date, default: null },
   baseCost: { ...paise }, // weighted average
   reorderLevel: { type: Number, default: 0 },
   binLocation: String,

@@ -749,6 +749,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/items/{id}/sale-today": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set a sale price that lasts until midnight (India), or end it with price null */
+        put: operations["putApiV1ItemsIdSaleToday"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/items/{id}/variants": {
         parameters: {
             query?: never;
@@ -2814,6 +2831,40 @@ export interface paths {
         put?: never;
         /** Log in with the emailed code. Merges the guest cart. One customer per verified email. */
         post: operations["postApiV1CustomerAuthOtpVerify"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customer/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Log in with email and password. Merges the guest cart. Rate limited per email and IP. */
+        post: operations["postApiV1CustomerAuthLogin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customer/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set or change my shop password (sign up and forgot password both finish here, after the emailed code) */
+        put: operations["putApiV1CustomerPassword"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -8562,6 +8613,11 @@ export interface operations {
                             active: boolean;
                             variantCount: number;
                             onHand: number;
+                            priceFrom?: number | null;
+                            saleToday?: {
+                                price: number;
+                                until: string;
+                            } | null;
                             variants?: {
                                 id: string;
                                 itemId: string;
@@ -8732,6 +8788,11 @@ export interface operations {
                         active: boolean;
                         variantCount: number;
                         onHand: number;
+                        priceFrom?: number | null;
+                        saleToday?: {
+                            price: number;
+                            until: string;
+                        } | null;
                         variants?: {
                             id: string;
                             itemId: string;
@@ -8852,6 +8913,11 @@ export interface operations {
                         active: boolean;
                         variantCount: number;
                         onHand: number;
+                        priceFrom?: number | null;
+                        saleToday?: {
+                            price: number;
+                            until: string;
+                        } | null;
                         variants?: {
                             id: string;
                             itemId: string;
@@ -8986,6 +9052,11 @@ export interface operations {
                         active: boolean;
                         variantCount: number;
                         onHand: number;
+                        priceFrom?: number | null;
+                        saleToday?: {
+                            price: number;
+                            until: string;
+                        } | null;
                         variants?: {
                             id: string;
                             itemId: string;
@@ -9116,6 +9187,73 @@ export interface operations {
             };
             /** @description Business rule broken */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    putApiV1ItemsIdSaleToday: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    price: number | null;
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        ok: true;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description No permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -21837,6 +21975,118 @@ export interface operations {
             };
         };
     };
+    postApiV1CustomerAuthLogin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Format: email */
+                    email: string;
+                    password: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        accessToken: string;
+                        expiresInSeconds: number;
+                        customer: {
+                            id: string;
+                            email: string;
+                            name: string;
+                        } & {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Rate limit */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    putApiV1CustomerPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    password: string & (string);
+                };
+            };
+        };
+        responses: {
+            /** @description Success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        ok: true;
+                    };
+                };
+            };
+            /** @description Validation error */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Not logged in */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     postApiV1CustomerAuthGoogle: {
         parameters: {
             query?: never;
@@ -21985,7 +22235,7 @@ export interface operations {
                     name?: string;
                     mobile?: string;
                     /** @enum {string} */
-                    gender?: "Male" | "Female";
+                    gender?: "Male" | "Female" | "Prefer not to say";
                     dob?: string;
                     address?: {
                         line1: string;

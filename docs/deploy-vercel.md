@@ -15,7 +15,7 @@ The admin build is told its base with `VITE_BASE=/admin/` (in the service's `bui
 Without `VITE_BASE` (local development, tests) nothing changes: the admin stays at the root of its own port.
 
 ## Environment variables (Project Settings)
-The browser only ever talks to the Vercel site. `frontend/vercel.json` forwards `/api/v1/...` and `/shop/api/v1/...` to the backend on Catalyst, so the login cookies are first party and CORS is not involved. Change the backend address in `vercel.json` if it ever moves.
+The browser only ever talks to the Vercel site. `frontend/vercel.json` forwards `/api/v1/...` and `/shop/api/v1/...` to the backend on Catalyst, so the login cookies are first party and CORS is not involved. The storefront's catalogue, CMS, bag pricing and delivery check go to the backend's `/shop/api/v1` routes; everything else under `/shop/api/v1` (sign in, account) goes to `/api/v1`. Change the backend address in `vercel.json` if it ever moves.
 
 | Variable | Used by | Value |
 |---|---|---|

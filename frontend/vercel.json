@@ -28,6 +28,22 @@
       "destination": "https://thunikart-api-50047658361.development.catalystappsail.in/api/v1/:path*"
     },
     {
+      "source": "/shop/api/v1/catalog/:path*",
+      "destination": "https://thunikart-api-50047658361.development.catalystappsail.in/shop/api/v1/catalog/:path*"
+    },
+    {
+      "source": "/shop/api/v1/cms/:path*",
+      "destination": "https://thunikart-api-50047658361.development.catalystappsail.in/shop/api/v1/cms/:path*"
+    },
+    {
+      "source": "/shop/api/v1/cart/price",
+      "destination": "https://thunikart-api-50047658361.development.catalystappsail.in/shop/api/v1/cart/price"
+    },
+    {
+      "source": "/shop/api/v1/delivery/check",
+      "destination": "https://thunikart-api-50047658361.development.catalystappsail.in/shop/api/v1/delivery/check"
+    },
+    {
       "source": "/shop/api/v1/:path*",
       "destination": "https://thunikart-api-50047658361.development.catalystappsail.in/api/v1/:path*"
     },

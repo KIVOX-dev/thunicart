@@ -23,7 +23,8 @@ const PHOTO_SLIDES: Slide[] = [
  */
 export function HeroSlider({ banners }: { banners: Banner[] }) {
   // The shop's banner pictures are used unless the store sends its own banners with real photos.
-  const slides: Slide[] = !banners.length || MOCK_MODE ? PHOTO_SLIDES : banners.map((b) => ({ ...b, bg: 'bg-navy', dark: true }));
+  // The store's own banners are shown the same way: the whole wide picture (2000 x 700), so nothing in it is cut off on a phone.
+  const slides: Slide[] = !banners.length || MOCK_MODE ? PHOTO_SLIDES : banners.map((b) => ({ ...b, art: b.desktopImage, alt: b.title, bg: 'bg-navy-50', dark: false }));
   const [i, setI] = useState(0);
   const [paused, setPaused] = useState(false);
   useEffect(() => { if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) setPaused(true); }, []);

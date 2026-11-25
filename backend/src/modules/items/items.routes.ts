@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import {
   barcodeBody, barcodeResponse, idParam, itemBody, itemDto, itemListFilters, itemUpdateBody, listQuery, listResponse, lookupQuery, lookupResponse,
-  labelPrintBody, objectId, okResponse, variantBody, variantDto, variantUpdateBody,
+  labelPrintBody, objectId, okResponse, saleTodayBody, variantBody, variantDto, variantUpdateBody,
 } from '@thunikart/shared';
 import { defineRoute } from '../../lib/route';
 import { LabelTemplate, Item, Variant } from '../../models';
@@ -38,6 +38,11 @@ export const itemRoutes = [
     method: 'PUT', path: '/items/:id', summary: 'Edit an item', tags: ['Items'], permission: 'items.edit',
     params: idParam, body: itemUpdateBody, response: itemDto, errors: [400, 404],
     handler: async ({ params, body, audit }) => svc.updateItem(params.id, body, audit),
+  }),
+  defineRoute({
+    method: 'PUT', path: '/items/:id/sale-today', summary: 'Set a sale price that lasts until midnight (India), or end it with price null', tags: ['Items'], permission: 'items.edit',
+    params: idParam, body: saleTodayBody, response: okResponse, errors: [400, 404],
+    handler: async ({ params, body, audit }) => svc.setSaleToday(params.id, body.price, audit),
   }),
   defineRoute({
     method: 'DELETE', path: '/items/:id', summary: 'Delete an item that has no stock history', tags: ['Items'], permission: 'items.delete',
