@@ -134,7 +134,9 @@ export const CUSTOMER_SOURCES = ['online', 'offline'] as const;
 export type CustomerSource = (typeof CUSTOMER_SOURCES)[number];
 export const customerDto = z.object({
   id: z.string(),
-  code: z.string(),
+  /** The mock API calls the customer number `code`, the live API calls it `customerId`. */
+  code: z.string().optional(),
+  customerId: z.string().optional(),
   accountGroup: z.string(),
   /** Older mock data has no source: it is worked out from the account group. */
   source: z.enum(CUSTOMER_SOURCES).optional(),
@@ -147,11 +149,15 @@ export const customerDto = z.object({
   gstin: z.string(),
   pan: z.string(),
   glAccount: z.string(),
-  /** Read only. */
-  outstanding: z.number().int(),
+  /** Read only. The live customer list does not send it. */
+  outstanding: z.number().int().default(0),
   loyaltyPoints: z.number().int(),
   walletBalance: z.number().int(),
-});
+}).transform(({ customerId, code, mobile, ...c }) => ({
+  ...c, code: code ?? customerId ?? '',
+  // A website sign up with no phone number yet carries a placeholder; show it as empty.
+  mobile: mobile.startsWith('pending-') ? '' : mobile,
+}));
 export type Customer = z.infer<typeof customerDto>;
 
 export const customerBody = z.object({

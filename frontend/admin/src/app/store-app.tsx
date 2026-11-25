@@ -37,7 +37,16 @@ function Body({ k, compact }: { k: string; compact: boolean }) {
     case 'orders': return <StoreOrders />;
     case 'returns': return <OnlineReturns />;
     case 'products': return <StoreProducts compact={compact} />;
-    case 'home': return <HomeLayoutEditor />;
+    case 'home': return (
+      <div className="flex flex-col gap-6">
+        <section aria-label="Top banners" className="flex flex-col gap-3 rounded border-2 border-navy-100 p-4">
+          <h2 className="text-xl">Top banners</h2>
+          <p className="text-sm text-muted">The big pictures at the top of the website. Changes here are saved straight away.</p>
+          <StoreBanners compact={compact} />
+        </section>
+        <HomeLayoutEditor />
+      </div>
+    );
     case 'banners': return <StoreBanners compact={compact} />;
     case 'content': return <StoreContent compact={compact} />;
     default: return <ResponsiveView desktop={<CustomersDesktop onlyOnline />} mobile={<CustomersMobile onlyOnline />} />;

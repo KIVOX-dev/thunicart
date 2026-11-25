@@ -91,7 +91,7 @@ export function HomeLayoutEditor() {
   if (!secs) return <ListSkeleton label="Loading home page" />;
   return (
     <div className="flex flex-col gap-4">
-      <p className="rounded border-2 border-navy-100 bg-navy-50 p-3 text-sm">The big pictures at the very top are in <strong>Banners</strong>. Everything below them is here, section by section, in the order the website shows it.</p>
+      <p className="rounded border-2 border-navy-100 bg-navy-50 p-3 text-sm">Everything below the top banners is here, section by section, in the order the website shows it.</p>
       {secs.map((s, i) => {
         const meta = META.get(s.key); if (!meta) return null;
         const size = meta.imageSize;

@@ -109,7 +109,7 @@ function Row({ r }: { r: ReviewRow }) {
             <Button size="sm" variant="primary" disabled={!Number(mrp)} onClick={() => save({ action: 'set', set: { mrp: rupeesToInt(mrp) } })}>Save</Button>
           </>)}
           {(r.issue === 'NO_COST' || r.issue === 'NEGATIVE_QTY' || r.issue === 'ODD_CODE') && <Link to={`/items/${r.itemId}`} className="text-sm underline">{r.issue === 'NEGATIVE_QTY' ? 'Open item. Correct it with a stock adjustment' : 'Open item to fix'}</Link>}
-          <Button size="sm" variant="ghost" onClick={() => save({ action: 'dismiss' })} aria-label={`Dismiss ${r.code}`}>Looks fine</Button>
+          <Button size="sm" variant="primary" onClick={() => save({ action: 'dismiss' })} aria-label={`Dismiss ${r.code}`}>Looks fine</Button>
         </div>
         {err && <span role="alert" className="mt-1 block text-xs text-danger">{err}</span>}
       </Td>
